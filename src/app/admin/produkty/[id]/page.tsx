@@ -7,6 +7,7 @@ import {
   ProductDetailClient,
   type SerializedProductDetail,
   type SerializedCategoryForModal,
+  type SerializedProductImage,
 } from './ProductDetailClient'
 
 interface Props {
@@ -26,6 +27,7 @@ export default async function ProductDetailPage({ params }: Props) {
             parent: { select: { id: true, name: true } },
           },
         },
+        images: { orderBy: { sortOrder: 'asc' } },
       },
     }),
     prisma.category.findMany({
@@ -87,6 +89,16 @@ export default async function ProductDetailPage({ params }: Props) {
     children: cat.children,
   }))
 
+  const serializedImages: SerializedProductImage[] = product.images.map((img) => ({
+    id: img.id,
+    url: img.url,
+    thumbnailUrl: img.thumbnailUrl,
+    storageKey: img.storageKey,
+    altText: img.altText,
+    sortOrder: img.sortOrder,
+    isPrimary: img.isPrimary,
+  }))
+
   return (
     <div className="flex min-h-screen bg-stone-50">
       <AdminSidebar role={user.role} currentPath="/admin/produkty" />
@@ -95,6 +107,7 @@ export default async function ProductDetailPage({ params }: Props) {
         <ProductDetailClient
           product={serializedProduct}
           categories={serializedCategories}
+          images={serializedImages}
         />
       </div>
     </div>

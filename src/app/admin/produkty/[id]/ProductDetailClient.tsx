@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatCZK, roundMoney } from '@/lib/pricing'
 import { updateProduct, deleteProduct, type UpdateProductData } from './actions'
+import { PhotoGallery } from './PhotoGallery'
 
 // ── Exportované typy (používá page.tsx) ───────────────────────────
 
@@ -36,6 +37,16 @@ export type SerializedProductDetail = {
   isActive: boolean
   createdAt: string
   updatedAt: string
+}
+
+export type SerializedProductImage = {
+  id: string
+  url: string
+  thumbnailUrl: string
+  storageKey: string
+  altText: string | null
+  sortOrder: number
+  isPrimary: boolean
 }
 
 export type SerializedCategoryForModal = {
@@ -77,17 +88,17 @@ const TABS = [
   { key: 'hlavni', label: 'Hlavní údaje' },
   { key: 'cenik', label: 'Ceník' },
   { key: 'sklad', label: 'Sklad' },
+  { key: 'fotogalerie', label: 'Fotogalerie' },
   { key: 'kategorie', label: 'Kategorie' },
   { key: 'logistika', label: 'Logistika' },
   { key: 'parametry', label: 'Parametry' },
-  { key: 'fotogalerie', label: 'Fotogalerie' },
   { key: 'varianty', label: 'Varianty' },
   { key: 'souvisejici', label: 'Související' },
   { key: 'pokrocile', label: 'Pokročilé' },
 ]
 
 const PLACEHOLDER_TABS = new Set([
-  'logistika', 'parametry', 'fotogalerie', 'varianty', 'souvisejici', 'pokrocile',
+  'logistika', 'parametry', 'varianty', 'souvisejici', 'pokrocile',
 ])
 
 const UNIT_OPTIONS = [
@@ -161,9 +172,10 @@ function ageDays(iso: string) {
 interface Props {
   product: SerializedProductDetail
   categories: SerializedCategoryForModal[]
+  images: SerializedProductImage[]
 }
 
-export function ProductDetailClient({ product, categories }: Props) {
+export function ProductDetailClient({ product, categories, images }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState('hlavni')
@@ -866,7 +878,7 @@ export function ProductDetailClient({ product, categories }: Props) {
               {activeTab === 'kategorie' && <TabKategorie />}
               {activeTab === 'logistika' && <PlaceholderTab sprint="Sprint 3-2b" />}
               {activeTab === 'parametry' && <PlaceholderTab sprint="Sprint 3-2b" />}
-              {activeTab === 'fotogalerie' && <PlaceholderTab sprint="Sprint 3-2c" />}
+              {activeTab === 'fotogalerie' && <PhotoGallery productId={product.id} initialImages={images} />}
               {activeTab === 'varianty' && <PlaceholderTab sprint="Sprint 3-2d" />}
               {activeTab === 'souvisejici' && <PlaceholderTab sprint="Sprint 3-2d" />}
               {activeTab === 'pokrocile' && <PlaceholderTab sprint="Sprint 3-2d" />}

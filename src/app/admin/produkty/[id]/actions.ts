@@ -6,6 +6,43 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-roles'
 import { roundMoney } from '@/lib/pricing'
 
+export async function reorderProductImages(productId: string, imageIds: string[]) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  const existing = await prisma.productImage.findMany({
+    where: { productId },
+    select: { id: true },
+  })
+  const existingIds = new Set(existing.map((i) => i.id))
+  if (!imageIds.every((id) => existingIds.has(id))) {
+    throw new Error('Neplatné ID obrázku.')
+  }
+
+  await prisma.$transaction(
+    imageIds.map((id, index) =>
+      prisma.productImage.update({ where: { id }, data: { sortOrder: index } }),
+    ),
+  )
+
+  revalidatePath(`/admin/produkty/${productId}`)
+}
+
+export async function setPrimaryImage(productId: string, imageId: string) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  const image = await prisma.productImage.findUnique({ where: { id: imageId } })
+  if (!image || image.productId !== productId) throw new Error('Obrázek nenalezen.')
+
+  await prisma.$transaction([
+    prisma.productImage.updateMany({ where: { productId }, data: { isPrimary: false } }),
+    prisma.productImage.update({ where: { id: imageId }, data: { isPrimary: true } }),
+  ])
+
+  revalidatePath(`/admin/produkty/${productId}`)
+}
+
 export type UpdateProductData = {
   name: string
   slug: string
