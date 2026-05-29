@@ -8,6 +8,8 @@ import {
   type SerializedProductDetail,
   type SerializedCategoryForModal,
   type SerializedProductImage,
+  type SerializedVariant,
+  type SerializedRelatedProduct,
 } from './ProductDetailClient'
 
 interface Props {
@@ -28,6 +30,20 @@ export default async function ProductDetailPage({ params }: Props) {
           },
         },
         images: { orderBy: { sortOrder: 'asc' } },
+        variants: { orderBy: { sortOrder: 'asc' } },
+        relatedFrom: {
+          include: {
+            related: {
+              include: {
+                images: {
+                  where: { isPrimary: true },
+                  select: { thumbnailUrl: true, url: true },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
       },
     }),
     prisma.category.findMany({
@@ -98,6 +114,13 @@ export default async function ProductDetailPage({ params }: Props) {
     producerAddress: product.producerAddress ?? null,
     useByInstructions: product.useByInstructions ?? null,
     storageInstructions: product.storageInstructions ?? null,
+    // SEO
+    metaTitle: product.metaTitle ?? null,
+    metaDescription: product.metaDescription ?? null,
+    isIndexable: product.isIndexable,
+    // Vazby (předáváme přes props, ne přes product)
+    variants: [],
+    related: [],
   }
 
   const serializedCategories: SerializedCategoryForModal[] = categories.map((cat) => ({
@@ -117,6 +140,25 @@ export default async function ProductDetailPage({ params }: Props) {
     isPrimary: img.isPrimary,
   }))
 
+  const serializedVariants: SerializedVariant[] = product.variants.map((v) => ({
+    id: v.id,
+    name: v.name,
+    sku: v.sku ?? null,
+    weightKg: v.weightKg ? Number(v.weightKg) : null,
+    priceWithoutVat: Number(v.priceWithoutVat),
+    priceWithVat: Number(v.priceWithVat),
+    stockQuantity: v.stockQuantity,
+    isActive: v.isActive,
+    sortOrder: v.sortOrder,
+  }))
+
+  const serializedRelated: SerializedRelatedProduct[] = product.relatedFrom.map((rel) => ({
+    id: rel.related.id,
+    name: rel.related.name,
+    priceWithVat: Number(rel.related.priceWithVat),
+    thumbnailUrl: rel.related.images[0]?.thumbnailUrl || rel.related.images[0]?.url || null,
+  }))
+
   return (
     <div className="flex min-h-screen bg-stone-50">
       <AdminSidebar role={user.role} currentPath="/admin/produkty" />
@@ -126,6 +168,8 @@ export default async function ProductDetailPage({ params }: Props) {
           product={serializedProduct}
           categories={serializedCategories}
           images={serializedImages}
+          variants={serializedVariants}
+          related={serializedRelated}
         />
       </div>
     </div>

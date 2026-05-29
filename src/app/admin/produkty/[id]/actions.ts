@@ -294,3 +294,219 @@ export async function deleteProduct(productId: string) {
 
   revalidatePath('/admin/produkty')
 }
+
+// ── Varianty ──────────────────────────────────────────────────────
+
+export type VariantData = {
+  name: string
+  sku: string | null
+  priceWithVat: number
+  weightKg: number | null
+  stockQuantity: number
+  isActive: boolean
+}
+
+export async function createProductVariant(productId: string, data: VariantData) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+  if (!data.name.trim()) throw new Error('Název varianty je povinný.')
+  if (data.priceWithVat < 0) throw new Error('Cena musí být nezáporná.')
+
+  const product = await prisma.product.findUniqueOrThrow({
+    where: { id: productId },
+    select: { vatRate: true },
+  })
+  const vatRate = Number(product.vatRate)
+  const priceWithoutVat = vatRate > 0
+    ? roundMoney(data.priceWithVat / (1 + vatRate / 100))
+    : data.priceWithVat
+
+  const sortOrder = await prisma.productVariant.count({ where: { productId } })
+
+  if (data.sku) {
+    const existing = await prisma.productVariant.findUnique({ where: { sku: data.sku }, select: { id: true } })
+    if (existing) throw new Error(`SKU „${data.sku}" je již použito jinou variantou.`)
+  }
+
+  await prisma.productVariant.create({
+    data: {
+      productId,
+      name: data.name.trim(),
+      sku: data.sku?.trim() || null,
+      priceWithVat: data.priceWithVat,
+      priceWithoutVat,
+      weightKg: data.weightKg,
+      stockQuantity: data.stockQuantity,
+      isActive: data.isActive,
+      sortOrder,
+    },
+  })
+
+  revalidatePath(`/admin/produkty/${productId}`)
+}
+
+export async function updateProductVariant(variantId: string, data: VariantData) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+  if (!data.name.trim()) throw new Error('Název varianty je povinný.')
+  if (data.priceWithVat < 0) throw new Error('Cena musí být nezáporná.')
+
+  const variant = await prisma.productVariant.findUniqueOrThrow({
+    where: { id: variantId },
+    include: { product: { select: { id: true, vatRate: true } } },
+  })
+  const vatRate = Number(variant.product.vatRate)
+  const priceWithoutVat = vatRate > 0
+    ? roundMoney(data.priceWithVat / (1 + vatRate / 100))
+    : data.priceWithVat
+
+  if (data.sku) {
+    const existing = await prisma.productVariant.findFirst({
+      where: { sku: data.sku, id: { not: variantId } },
+      select: { id: true },
+    })
+    if (existing) throw new Error(`SKU „${data.sku}" je již použito jinou variantou.`)
+  }
+
+  await prisma.productVariant.update({
+    where: { id: variantId },
+    data: {
+      name: data.name.trim(),
+      sku: data.sku?.trim() || null,
+      priceWithVat: data.priceWithVat,
+      priceWithoutVat,
+      weightKg: data.weightKg,
+      stockQuantity: data.stockQuantity,
+      isActive: data.isActive,
+    },
+  })
+
+  revalidatePath(`/admin/produkty/${variant.product.id}`)
+}
+
+export async function deleteProductVariant(variantId: string) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  const variant = await prisma.productVariant.findUniqueOrThrow({
+    where: { id: variantId },
+    select: { productId: true },
+  })
+
+  await prisma.productVariant.delete({ where: { id: variantId } })
+  revalidatePath(`/admin/produkty/${variant.productId}`)
+}
+
+export async function reorderProductVariants(productId: string, variantIds: string[]) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  await prisma.$transaction(
+    variantIds.map((id, index) =>
+      prisma.productVariant.update({ where: { id }, data: { sortOrder: index } })
+    )
+  )
+  revalidatePath(`/admin/produkty/${productId}`)
+}
+
+// ── Související produkty ──────────────────────────────────────────
+
+export async function addRelatedProduct(productId: string, relatedId: string) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+  if (productId === relatedId) throw new Error('Produkt nemůže být podobný sám sobě.')
+
+  await prisma.productRelation.upsert({
+    where: { productId_relatedId: { productId, relatedId } },
+    create: { productId, relatedId },
+    update: {},
+  })
+
+  revalidatePath(`/admin/produkty/${productId}`)
+}
+
+export async function removeRelatedProduct(productId: string, relatedId: string) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  await prisma.productRelation.delete({
+    where: { productId_relatedId: { productId, relatedId } },
+  })
+
+  revalidatePath(`/admin/produkty/${productId}`)
+}
+
+export async function searchProducts(query: string, excludeIds: string[]) {
+  await requireAuth()
+
+  if (!query.trim() || query.trim().length < 2) return []
+
+  const results = await prisma.product.findMany({
+    where: {
+      AND: [
+        { id: { notIn: excludeIds } },
+        { isActive: true },
+        {
+          OR: [
+            { name: { contains: query, mode: 'insensitive' } },
+            { sku: { contains: query, mode: 'insensitive' } },
+          ],
+        },
+      ],
+    },
+    select: {
+      id: true,
+      name: true,
+      sku: true,
+      priceWithVat: true,
+      images: {
+        where: { isPrimary: true },
+        select: { thumbnailUrl: true, url: true },
+        take: 1,
+      },
+    },
+    take: 10,
+    orderBy: { name: 'asc' },
+  })
+
+  return results.map((p) => ({
+    id: p.id,
+    name: p.name,
+    sku: p.sku,
+    priceWithVat: Number(p.priceWithVat),
+    thumbnailUrl: p.images[0]?.thumbnailUrl || p.images[0]?.url || null,
+  }))
+}
+
+// ── SEO / Pokročilé ───────────────────────────────────────────────
+
+export async function updateProductSEO(
+  productId: string,
+  data: { metaTitle: string | null; metaDescription: string | null; slug: string; isIndexable: boolean }
+) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  const slug = data.slug.trim().toLowerCase()
+  if (!slug) throw new Error('URL adresa je povinná.')
+  if (!/^[a-z0-9-]+$/.test(slug)) throw new Error('URL adresa může obsahovat pouze a-z, 0-9 a pomlčky.')
+
+  const existing = await prisma.product.findFirst({
+    where: { slug, id: { not: productId } },
+    select: { id: true },
+  })
+  if (existing) throw new Error('Tato URL adresa je již použita jiným produktem.')
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: {
+      metaTitle: data.metaTitle?.trim() || null,
+      metaDescription: data.metaDescription?.trim() || null,
+      slug,
+      isIndexable: data.isIndexable,
+    },
+  })
+
+  revalidatePath('/admin/produkty')
+  revalidatePath(`/admin/produkty/${productId}`)
+}

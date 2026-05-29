@@ -147,13 +147,18 @@ model Product {
   metaTitle       String?
   metaDescription String?
 
+  // SEO
+  isIndexable Boolean @default(true) // meta noindex pokud false
+
   // Stav
   isActive    Boolean   @default(true)
   publishedAt DateTime?
 
   // Vazby
-  orderItems OrderItem[]
-  cartItems  CartItem[]
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  relatedFrom ProductRelation[] @relation("RelatedFrom")
+  relatedTo   ProductRelation[] @relation("RelatedTo")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -193,7 +198,8 @@ model ProductVariant {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   name String // "250g", "500g", "1kg"
-  sku  String @unique
+  sku  String? @unique
+  isActive Boolean @default(true)
 
   weightKg        Decimal? @db.Decimal(10, 3)
   priceWithoutVat Decimal  @db.Decimal(10, 2)
@@ -230,6 +236,19 @@ model ProductImage {
   createdAt    DateTime @default(now())
 
   @@index([productId, sortOrder])
+}
+
+model ProductRelation {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation("RelatedFrom", fields: [productId], references: [id], onDelete: Cascade)
+  relatedId String
+  related   Product  @relation("RelatedTo", fields: [relatedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([productId, relatedId])
+  @@index([productId])
+  @@index([relatedId])
 }
 
 // ───────────────────────────────────────────────────────────────

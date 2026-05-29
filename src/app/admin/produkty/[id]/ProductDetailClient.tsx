@@ -9,6 +9,9 @@ import { PhotoGallery } from './PhotoGallery'
 import { CategoryTab } from './CategoryTab'
 import { LogisticsTab } from './LogisticsTab'
 import { ParametersTab } from './ParametersTab'
+import { VariantsTab } from './VariantsTab'
+import { RelatedTab } from './RelatedTab'
+import { AdvancedTab } from './AdvancedTab'
 
 // ── Exportované typy (používá page.tsx) ───────────────────────────
 
@@ -58,6 +61,13 @@ export type SerializedProductDetail = {
   producerAddress: string | null
   useByInstructions: string | null
   storageInstructions: string | null
+  // SEO
+  metaTitle: string | null
+  metaDescription: string | null
+  isIndexable: boolean
+  // Vazby
+  variants: SerializedVariant[]
+  related: SerializedRelatedProduct[]
 }
 
 export type SerializedProductImage = {
@@ -75,6 +85,25 @@ export type SerializedCategoryForModal = {
   name: string
   slug: string
   children: Array<{ id: string; name: string; slug: string }>
+}
+
+export type SerializedVariant = {
+  id: string
+  name: string
+  sku: string | null
+  weightKg: number | null
+  priceWithoutVat: number
+  priceWithVat: number
+  stockQuantity: number
+  isActive: boolean
+  sortOrder: number
+}
+
+export type SerializedRelatedProduct = {
+  id: string
+  name: string
+  priceWithVat: number
+  thumbnailUrl: string | null
 }
 
 // ── FormState ─────────────────────────────────────────────────────
@@ -118,9 +147,7 @@ const TABS = [
   { key: 'pokrocile', label: 'Pokročilé' },
 ]
 
-const PLACEHOLDER_TABS = new Set([
-  'varianty', 'souvisejici', 'pokrocile',
-])
+const PLACEHOLDER_TABS = new Set<string>([])
 
 const UNIT_OPTIONS = [
   { value: 'KS', label: 'kus (ks)' },
@@ -194,9 +221,11 @@ interface Props {
   product: SerializedProductDetail
   categories: SerializedCategoryForModal[]
   images: SerializedProductImage[]
+  variants: SerializedVariant[]
+  related: SerializedRelatedProduct[]
 }
 
-export function ProductDetailClient({ product, categories, images }: Props) {
+export function ProductDetailClient({ product, categories, images, variants, related }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState('hlavni')
@@ -771,9 +800,13 @@ export function ProductDetailClient({ product, categories, images }: Props) {
               {activeTab === 'logistika' && <LogisticsTab product={product} />}
               {activeTab === 'parametry' && <ParametersTab product={product} />}
               {activeTab === 'fotogalerie' && <PhotoGallery productId={product.id} initialImages={images} />}
-              {activeTab === 'varianty' && <PlaceholderTab sprint="Sprint 3-2d" />}
-              {activeTab === 'souvisejici' && <PlaceholderTab sprint="Sprint 3-2d" />}
-              {activeTab === 'pokrocile' && <PlaceholderTab sprint="Sprint 3-2d" />}
+              {activeTab === 'varianty' && (
+                <VariantsTab productId={product.id} variants={variants} />
+              )}
+              {activeTab === 'souvisejici' && (
+                <RelatedTab productId={product.id} related={related} />
+              )}
+              {activeTab === 'pokrocile' && <AdvancedTab product={product} />}
             </div>
           </div>
         </div>
