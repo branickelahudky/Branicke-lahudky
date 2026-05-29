@@ -7,7 +7,7 @@ const NAV_ITEMS: { label: string; href: string; roles: AdminRole[] }[] = [
   { label: 'Produkty', href: '/admin/produkty', roles: ['OWNER'] },
   { label: 'Zákazníci', href: '/admin/zakaznici', roles: ['OWNER', 'ADMIN'] },
   { label: 'Faktury', href: '/admin/faktury', roles: ['OWNER', 'ADMIN'] },
-  { label: 'Statistiky', href: '/admin/statistiky', roles: ['OWNER'] },
+  { label: 'Statistiky', href: '/admin/statistiky', roles: ['OWNER', 'ADMIN'] },
   { label: 'Nastavení', href: '/admin/nastaveni', roles: ['OWNER'] },
 ]
 
