@@ -1,0 +1,734 @@
+<?xml version="1.0" encoding="UTF-8"?><CUSTOMERS>    <CUSTOMER id="3">
+        <GUID>a818689c-7404-11ed-99b8-ecf4bbd49285</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2022-12-04 19:51:26</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Krutina Petr</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Křivenická 417/ 24  Praha 8 - Čimice, Česko</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 8 Cimice</CITY>
+            <ZIP>180 00</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>a8186e1e-7404-11ed-8292-ecf4bbd49285</GUID>
+                <EMAIL>baroka1234@seznam.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420604104493</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>2</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>1269.77</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>1</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="9">
+        <GUID>ecf8ce4a-78b7-11ed-9fb6-ecf4bbd49285</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2022-12-10 19:24:46</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Miroslav Šubrt</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Bílý potok pod Smrkem 18</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Bílý potok pod Smrkem</CITY>
+            <ZIP>46362</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>ecf8d462-78b7-11ed-bd45-ecf4bbd49285</GUID>
+                <EMAIL>mira.subrt@atlas.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420723385984</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>2</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>2</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="12">
+        <GUID>d97c4922-797b-11ed-973e-ecf4bbcda94d</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2022-12-11 18:47:15</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Gabriel MOLNAR</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Zakšínská 571/6</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 9</CITY>
+            <ZIP>19000</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>d97c4c9c-797b-11ed-b598-ecf4bbcda94d</GUID>
+                <EMAIL>gabrielmolnar@seznam.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420723396889</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>1355.34</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="18">
+        <GUID>c7650764-8084-11ed-8188-ecf4bbd49285</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2022-12-20 17:38:48</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Jana Coganová</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Ledvinova 1715/14</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha</CITY>
+            <ZIP>149 00</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>c7650bba-8084-11ed-a002-ecf4bbd49285</GUID>
+                <EMAIL>janacoganova@gmail.com</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420727816166</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>4</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>5200.21</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>1</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="24">
+        <GUID>738bb2e2-820e-11ed-aba8-ecf4bbcda94d</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2022-12-22 16:36:49</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Martin Kodet</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Vrbova 673/9</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 4</CITY>
+            <ZIP>14700</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>738bba6c-820e-11ed-ab5e-ecf4bbcda94d</GUID>
+                <EMAIL>kodymartin@post.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>723729626</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>535</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="30">
+        <GUID>2dc08d8a-92c3-11ed-bdff-ecf4bbd49285</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2023-01-12 22:50:50</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>David sep</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Libun 157i</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Libun</CITY>
+            <ZIP>50715</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>2dc092e4-92c3-11ed-a1b0-ecf4bbd49285</GUID>
+                <EMAIL>davidsep@seznam.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420732935351</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>1</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="36">
+        <GUID>842dea20-a0c2-11ed-83eb-ecf4bbd49285</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2023-01-30 18:21:22</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Jana Charalambidisová</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Pod Jiráskovou čtvrtí, 1769/6</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 4 - Braník</CITY>
+            <ZIP>14700</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>842dedf4-a0c2-11ed-9d65-ecf4bbd49285</GUID>
+                <EMAIL>charajana@centrum.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420737222469</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>547</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="42">
+        <GUID>eb885746-ad15-11ed-b6af-ecf4bbd49285</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2023-02-15 10:48:37</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Gwendoline Seunig</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Dyjákovičky 127, 669 02 Dyjákovičky</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Dyjákovičky</CITY>
+            <ZIP>66902</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+            <SHIPPING_ADDRESS>
+                <GUID>eb8a247c-ad15-11ed-b730-ecf4bbd49285</GUID>
+                <FULL_NAME>Petr Neužil</FULL_NAME>
+                <COMPANY>velkoobchod Ptáček - Petr Neužil</COMPANY>
+                <STREET>Družstevní 3471/22</STREET>
+                <HOUSE_NUMBER></HOUSE_NUMBER>
+                <CITY>Znojmo 2</CITY>
+                <ZIP>66902</ZIP>
+                <COUNTRY>Česká republika</COUNTRY>
+            </SHIPPING_ADDRESS>
+            <SHIPPING_ADDRESS>
+                <GUID>eb9d8a30-ad15-11ed-9177-ecf4bbd49285</GUID>
+                <FULL_NAME>Petr Neužil</FULL_NAME>
+                <COMPANY>velkoobchod Ptáček - Petr Neužil</COMPANY>
+                <STREET>Družstevní 3471/22</STREET>
+                <HOUSE_NUMBER></HOUSE_NUMBER>
+                <CITY>Znojmo 2</CITY>
+                <ZIP>66902</ZIP>
+                <COUNTRY>Česká republika</COUNTRY>
+            </SHIPPING_ADDRESS>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>eb885a34-ad15-11ed-b0d0-ecf4bbd49285</GUID>
+                <EMAIL>gwendoline92@seznam.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420724251421</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>1</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="48">
+        <GUID>01bd5cde-b377-11ed-9752-ecf4bbcda94d</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2023-02-23 13:38:42</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK>Vyzvednu dnes do 17.00</REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Jiří Zocher</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Pod vinohradem 180/22</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 4 Braník</CITY>
+            <ZIP>147 00</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>01bd610c-b377-11ed-8c2b-ecf4bbcda94d</GUID>
+                <EMAIL>zocherjiri@quick.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420603170902</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>1</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="54">
+        <GUID>94d85dcc-b8f7-11ed-b387-ecf4bbd49285</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2023-03-02 13:41:41</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Lenka Najfusová</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>U družstva Ideál 14</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 4</CITY>
+            <ZIP>14000</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>94d86178-b8f7-11ed-8bc2-ecf4bbd49285</GUID>
+                <EMAIL>lenka.najfusova@gmail.com</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420606900690</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>4</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>6418.48</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>1</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="57">
+        <GUID>6789437a-f47c-11ed-95ff-aa229da30aba</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2023-05-17 08:31:06</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Hřebík Petr</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Rumburská 257/9</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha9-Střížkov</CITY>
+            <ZIP>19000</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>67894550-f47c-11ed-8540-aa229da30aba</GUID>
+                <EMAIL>david.a.petr@seznam.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420605777533</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>1</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="59">
+        <GUID>bc0de3d2-2c4a-11ee-8f72-3e5eb9a3f9dd</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2023-07-27 08:56:38</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Soňa Šimánková Kapeková</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Dářská 795/46</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 9 Kyje</CITY>
+            <ZIP>19800</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>bc0de5a8-2c4a-11ee-b013-3e5eb9a3f9dd</GUID>
+                <EMAIL>sona.kapekova@seznam.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420773993545</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>1</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="64">
+        <GUID>a4c511ec-ba32-11ef-88ab-7e2ad47941cc</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2024-12-14 16:46:54</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Iveta Zajičková</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Velké náměstí 151</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Žlutice</CITY>
+            <ZIP>364 52</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>a4c51444-ba32-11ef-bfea-7e2ad47941cc</GUID>
+                <EMAIL>zajickova.iveta@seznam.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420720191170</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>0</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="67">
+        <GUID>5c733ed2-16a8-11f0-b786-7e2ad47941cc</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2025-04-11 09:41:20</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Miroslav Čožík</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Neklanova 6</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha</CITY>
+            <ZIP>128 00</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>5c7341e8-16a8-11f0-bed5-7e2ad47941cc</GUID>
+                <EMAIL>miroslavcozik@gmail.com</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420728222419</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>0</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="70">
+        <GUID>3a4035a6-ab34-11f0-a67d-222d32e08649</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2025-10-17 10:35:25</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Ctibor Dušek</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Písnická 765/25</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 4 - Kamýk</CITY>
+            <ZIP>14200</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+            <SHIPPING_ADDRESS>
+                <GUID>6d3d43c2-ab34-11f0-aa6a-365d8fd2f28f</GUID>
+                <FULL_NAME>Ctibor Dušek</FULL_NAME>
+                <COMPANY></COMPANY>
+                <STREET>Písnická 765/25</STREET>
+                <HOUSE_NUMBER></HOUSE_NUMBER>
+                <CITY>Praha 4 - Kamýk</CITY>
+                <ZIP>14200</ZIP>
+                <COUNTRY>Česká republika</COUNTRY>
+            </SHIPPING_ADDRESS>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>3a40392a-ab34-11f0-89cf-222d32e08649</GUID>
+                <EMAIL>cdusek@gmail.com</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420607610018</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>0</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="73">
+        <GUID>93d8c83a-d6b3-11f0-9c23-365d8fd2f28f</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2025-12-11 18:05:21</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Nikola Jurková</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>U Rokle 2287</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Brandýs nad Labem-Stará Boleslav</CITY>
+            <ZIP>25001</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>93d8cb00-d6b3-11f0-90a2-365d8fd2f28f</GUID>
+                <EMAIL>nikola.jurkova@email.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420774567959</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>571.5</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="76">
+        <GUID>b4816f62-33f4-11f1-950a-bc2411217be9</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2026-04-09 11:15:51</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Martin Lehocký</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Ke Krči 1873/60</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 4-Braník</CITY>
+            <ZIP>14700</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>b481726e-33f4-11f1-b9d0-bc2411217be9</GUID>
+                <EMAIL>akmlehocky@volny.cz</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420602367753</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>0</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>0</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="79">
+        <GUID>41478298-3f2a-11f1-ae87-bc2411217be9</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2026-04-23 17:36:54</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Petr Michálek</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Skálové 1874/2</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha</CITY>
+            <ZIP>14700</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>4147859a-3f2a-11f1-90d8-bc2411217be9</GUID>
+                <EMAIL>pida.michalek@gmail.com</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420725923972</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>507.4</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+    <CUSTOMER id="82">
+        <GUID>9a15ff4c-44d6-11f1-bd66-bc2411217be9</GUID>
+        <CUSTOMER_GROUP>Koncový zákazník</CUSTOMER_GROUP>
+        <PRICELIST>Hlavní ceník</PRICELIST>
+        <REGISTRATION_DATE>2026-04-30 22:53:12</REGISTRATION_DATE>
+        <DISCOUNT_PERCENT>0</DISCOUNT_PERCENT>
+        <REMARK></REMARK>
+        <BILLING_ADDRESS>
+            <FULL_NAME>Filip Mikulec</FULL_NAME>
+            <COMPANY></COMPANY>
+            <STREET>Na usedlosti 1556/2</STREET>
+            <HOUSE_NUMBER></HOUSE_NUMBER>
+            <CITY>Praha 4</CITY>
+            <ZIP>14700</ZIP>
+            <DISTRICT></DISTRICT>
+            <COUNTRY>Česká republika</COUNTRY>
+            <COMPANY_ID></COMPANY_ID>
+            <VAT_ID></VAT_ID>
+            <IDENTIFICATION_NUMBER></IDENTIFICATION_NUMBER>
+        </BILLING_ADDRESS>
+        <SHIPPING_ADDRESSES>
+        </SHIPPING_ADDRESSES>
+        <ACCOUNTS>
+            <ACCOUNT>
+                <GUID>9a1601ea-44d6-11f1-95b7-bc2411217be9</GUID>
+                <EMAIL>mikulecf@gmail.com</EMAIL>
+                <EMAIL_VERIFIED>0</EMAIL_VERIFIED>
+                <PHONE>+420777949508</PHONE>
+                <IS_ADMIN>1</IS_ADMIN>
+            </ACCOUNT>
+        </ACCOUNTS>
+        <ORDERS>
+            <TOTAL_ORDER_COUNT>1</TOTAL_ORDER_COUNT>
+            <TOTAL_ORDER_VALUE>890</TOTAL_ORDER_VALUE>
+            <TOTAL_CANCELED_ORDER_COUNT>0</TOTAL_CANCELED_ORDER_COUNT>
+        </ORDERS>
+    </CUSTOMER>
+</CUSTOMERS>

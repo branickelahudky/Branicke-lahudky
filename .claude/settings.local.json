@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(curl *)",
+      "Bash(npm install *)",
+      "Bash(npm list *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(grep -v '^\\\\s*$')",
+      "Bash(node -e 'const { PrismaClient } = require\\('\\\\''@prisma/client'\\\\''\\); const p = new PrismaClient\\(\\); console.log\\(Object.keys\\(p.customer.fields || {}\\).join\\('\\\\'', '\\\\''\\) || '\\\\''no fields api'\\\\''\\); p.$disconnect\\(\\);')",
+      "Bash(npx tsx *)",
+      "Bash(npx next *)",
+      "Bash(node *)",
+      "Bash(kill 24991)",
+      "Bash(kill 20895)",
+      "Bash(lsof -ti:3000)",
+      "Bash(ps -p 4249 -o pid,command)",
+      "Bash(ps -p 25486 -o pid,command)",
+      "Bash(xargs -I{} ps -p {} -o pid,command)",
+      "Bash(xargs kill -9)",
+      "Bash(echo \"Port 3000: $\\(lsof -ti:3000)",
+      "Bash(xargs -I{} ps -p {} -o command=)",
+      "Bash(xargs ls -la)"
+    ]
+  }
+}
