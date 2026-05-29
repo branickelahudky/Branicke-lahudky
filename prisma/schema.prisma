@@ -1068,3 +1068,27 @@ model OrderStatusConfig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ───────────────────────────────────────────────────────────────
+// STATICKÉ STRÁNKY (CMS)
+// ───────────────────────────────────────────────────────────────
+
+model Page {
+  id              String  @id @default(cuid())
+  slug            String  @unique
+  title           String
+  content         String? @db.Text
+  excerpt         String?
+  isPublished     Boolean @default(false)
+  metaTitle       String?
+  metaDescription String?
+  robotsIndex     Boolean @default(true)
+  sortOrder       Int     @default(0)
+  isSystem        Boolean @default(false) // systémové stránky nelze smazat
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isPublished])
+}

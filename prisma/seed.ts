@@ -520,6 +520,24 @@ async function main() {
     },
   })
 
+  // ─── SYSTÉMOVÉ STRÁNKY (idempotentní) ───────────────────────────
+  const systemPages = [
+    { slug: 'obchodni-podminky',    title: 'Obchodní podmínky',       sortOrder: 1 },
+    { slug: 'ochrana-osobnich-udaju', title: 'Ochrana osobních údajů', sortOrder: 2 },
+    { slug: 'reklamacni-rad',       title: 'Reklamační řád',           sortOrder: 3 },
+    { slug: 'kontakt',              title: 'Kontakt',                  sortOrder: 4 },
+    { slug: 'o-nas',                title: 'O nás',                    sortOrder: 5 },
+  ]
+
+  for (const page of systemPages) {
+    await prisma.page.upsert({
+      where: { slug: page.slug },
+      create: { ...page, isSystem: true, isPublished: false },
+      update: {}, // nikdy nepřepisuj existující obsah
+    })
+  }
+  console.log(`  ✔ Systémové stránky (${systemPages.length})`)
+
   console.log('✅ Seed dokončen.')
 }
 
