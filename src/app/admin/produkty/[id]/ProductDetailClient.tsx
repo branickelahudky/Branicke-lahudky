@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatCZK, roundMoney } from '@/lib/pricing'
 import { updateProduct, deleteProduct, type UpdateProductData } from './actions'
@@ -228,8 +228,26 @@ interface Props {
 export function ProductDetailClient({ product, categories, images, variants, related }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [activeTab, setActiveTab] = useState('hlavni')
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+
+  const VALID_TABS = ['hlavni', 'cenik', 'sklad', 'fotogalerie', 'kategorie',
+                      'logistika', 'parametry', 'varianty', 'souvisejici', 'pokrocile']
+  const rawTab = searchParams.get('tab') ?? 'hlavni'
+  const activeTab = VALID_TABS.includes(rawTab) ? rawTab : 'hlavni'
+
+  function changeTab(newTab: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (newTab === 'hlavni') {
+      params.delete('tab')
+    } else {
+      params.set('tab', newTab)
+    }
+    const qs = params.toString()
+    router.replace(`${pathname}${qs ? '?' + qs : ''}`, { scroll: false })
+  }
 
   const [formState, setFormState] = useState<FormState>(() => buildInitialState(product))
   const [savedState, setSavedState] = useState<FormState>(() => buildInitialState(product))
@@ -770,7 +788,7 @@ export function ProductDetailClient({ product, categories, images, variants, rel
               {TABS.map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => changeTab(tab.key)}
                   className={`relative whitespace-nowrap px-4 py-3 text-sm transition ${
                     activeTab === tab.key
                       ? 'font-semibold text-stone-900'
