@@ -640,19 +640,36 @@ model Review {
 // ADMIN
 // ───────────────────────────────────────────────────────────────
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  INVITED
+}
+
 model AdminUser {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String     @id @default(cuid())
+  email        String     @unique
   passwordHash String
   firstName    String
   lastName     String
-  role         AdminRole @default(STAFF)
+  role         AdminRole  @default(STAFF)
 
-  isActive    Boolean   @default(true)
+  isActive    Boolean    @default(true)
+  status      UserStatus @default(ACTIVE)
   lastLoginAt DateTime?
+  lastLoginIp String?
 
-  sessions    AdminSession[]
-  orderNotes  OrderNote[]
+  invitedById String?
+  invitedBy   AdminUser?  @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedAt   DateTime?
+  invitedUsers AdminUser[] @relation("InvitedBy")
+
+  sessions      AdminSession[]
+  orderNotes    OrderNote[]
+  invitations   AdminInvitation[]
+  auditLogs     AdminAuditLog[]
+  targetAudits  AdminAuditLog[]    @relation("AuditTarget")
+  resetTokens   PasswordResetToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -660,18 +677,61 @@ model AdminUser {
 
 model AdminSession {
   id          String    @id @default(cuid())
-  token       String    @unique // náhodný string z crypto.randomBytes
+  token       String    @unique
   adminUserId String
   adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  // Audit
   ipAddress String?
   userAgent String?
 
   @@index([adminUserId])
+  @@index([token])
+}
+
+model AdminInvitation {
+  id          String    @id @default(cuid())
+  email       String
+  role        AdminRole
+  token       String    @unique
+  invitedById String
+  invitedBy   AdminUser @relation(fields: [invitedById], references: [id])
+  invitedAt   DateTime  @default(now())
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  cancelledAt DateTime?
+
+  @@index([token])
+  @@index([email])
+}
+
+model AdminAuditLog {
+  id           String    @id @default(cuid())
+  userId       String?
+  user         AdminUser? @relation(fields: [userId], references: [id])
+  action       String
+  targetUserId String?
+  targetUser   AdminUser? @relation("AuditTarget", fields: [targetUserId], references: [id])
+  ipAddress    String?
+  userAgent    String?
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
   @@index([token])
 }
 

@@ -37,6 +37,7 @@ const NAV_GROUPS = [
     label: 'Administrace',
     items: [
       { label: 'Správci', href: '/admin/nastaveni/spravci' },
+      { label: 'Zabezpečení', href: '/admin/nastaveni/zabezpeceni' },
     ],
   },
 ]

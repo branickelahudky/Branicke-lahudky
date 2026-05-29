@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword, createSession } from '@/lib/auth'
+import { logAdminAction } from '@/lib/admin-audit'
 
 // VAROVÁNÍ: In-memory rate limit funguje pouze na single-server deploymentu.
 // Pro Vercel/serverless přepiš na Vercel KV / Upstash Redis — každý worker
@@ -46,21 +47,22 @@ export async function loginAction(formData: FormData) {
     await new Promise<void>((r) => setTimeout(r, 250))
   }
 
-  if (!user || !user.isActive || !valid) {
-    redirect(ERROR_URL)
-  }
-
   const headerStore = await headers()
-  // x-forwarded-for může obsahovat seznam "client, proxy1, proxy2" — bereme první
   const forwardedFor = headerStore.get('x-forwarded-for')
   const ip = forwardedFor?.split(',')[0]?.trim() ?? headerStore.get('x-real-ip') ?? 'unknown'
   const userAgent = headerStore.get('user-agent') ?? undefined
 
+  if (!user || !user.isActive || user.status !== 'ACTIVE' || !valid) {
+    await logAdminAction(user?.id ?? null, 'LOGIN_FAILED', null, { email }, ip, userAgent)
+    redirect(ERROR_URL)
+  }
+
   await createSession(user.id, ip, userAgent)
   await prisma.adminUser.update({
     where: { id: user.id },
-    data: { lastLoginAt: new Date() },
+    data: { lastLoginAt: new Date(), lastLoginIp: ip },
   })
+  await logAdminAction(user.id, 'LOGIN', null, null, ip, userAgent)
 
   redirect('/admin')
 }

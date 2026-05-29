@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { loginAction } from './actions'
 
 interface Props {
@@ -68,6 +69,12 @@ export default async function PrihlaseniAdmin({ searchParams }: Props) {
             >
               Přihlásit
             </button>
+
+            <div className="text-center">
+              <Link href="/zapomenute-heslo" className="text-xs text-stone-400 hover:text-stone-600 hover:underline">
+                Zapomněli jste heslo?
+              </Link>
+            </div>
           </form>
         </div>
 

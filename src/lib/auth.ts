@@ -60,7 +60,7 @@ export async function getSession() {
     return null
   }
 
-  if (!session.adminUser.isActive) return null
+  if (!session.adminUser.isActive || session.adminUser.status !== 'ACTIVE') return null
 
   return { user: session.adminUser, session }
 }
