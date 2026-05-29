@@ -1,10 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { Unit, StockStatus } from '@prisma/client'
+import { Unit, StockStatus, StorageTemp, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-roles'
 import { roundMoney } from '@/lib/pricing'
+import { ALLERGENS } from '@/lib/product-constants'
+
+const VALID_ALLERGEN_CODES = new Set(ALLERGENS.map((a) => a.code))
 
 export async function reorderProductImages(productId: string, imageIds: string[]) {
   const { user } = await requireAuth()
@@ -142,6 +145,133 @@ export async function updateProduct(productId: string, data: UpdateProductData) 
 
   revalidatePath('/admin/produkty')
   revalidatePath(`/admin/produkty/${productId}`)
+}
+
+export async function updateProductCategory(productId: string, categoryId: string) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  const category = await prisma.category.findUnique({ where: { id: categoryId }, select: { id: true } })
+  if (!category) throw new Error('Kategorie nenalezena.')
+
+  await prisma.product.update({ where: { id: productId }, data: { categoryId } })
+  revalidatePath('/admin/produkty')
+  revalidatePath(`/admin/produkty/${productId}`)
+}
+
+export type LogisticsData = {
+  weightGrams: number | null
+  lengthMm: number | null
+  widthMm: number | null
+  heightMm: number | null
+  storageTemp: string
+  shelfLifeDays: number | null
+  isFragile: boolean
+}
+
+export async function updateProductLogistics(productId: string, data: LogisticsData) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  if (data.weightGrams !== null && data.weightGrams < 0) throw new Error('Hmotnost musí být nezáporná.')
+  if (data.lengthMm !== null && data.lengthMm < 0) throw new Error('Délka musí být nezáporná.')
+  if (data.widthMm !== null && data.widthMm < 0) throw new Error('Šířka musí být nezáporná.')
+  if (data.heightMm !== null && data.heightMm < 0) throw new Error('Výška musí být nezáporná.')
+  if (data.shelfLifeDays !== null && data.shelfLifeDays < 0) throw new Error('Trvanlivost musí být nezáporná.')
+  if (!Object.values(StorageTemp).includes(data.storageTemp as StorageTemp)) {
+    throw new Error('Neplatná skladovací teplota.')
+  }
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: {
+      weightGrams: data.weightGrams,
+      lengthMm: data.lengthMm,
+      widthMm: data.widthMm,
+      heightMm: data.heightMm,
+      storageTemp: data.storageTemp as StorageTemp,
+      shelfLifeDays: data.shelfLifeDays,
+      isFragile: data.isFragile,
+    },
+  })
+
+  revalidatePath(`/admin/produkty/${productId}`)
+}
+
+export type ParametersData = {
+  nutritionPer100g: {
+    energyKj: string
+    energyKcal: string
+    fat: string
+    saturatedFat: string
+    carbohydrates: string
+    sugars: string
+    protein: string
+    salt: string
+    fiber: string
+  } | null
+  allergenCodes: string[]
+  allergenInfo: string | null
+  ingredients: string | null
+  countryOfOrigin: string | null
+  producerName: string | null
+  producerAddress: string | null
+  useByInstructions: string | null
+  storageInstructions: string | null
+}
+
+export async function updateProductParameters(productId: string, data: ParametersData) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  if (!Array.isArray(data.allergenCodes)) throw new Error('Alergeny musí být pole.')
+  for (const code of data.allergenCodes) {
+    if (!VALID_ALLERGEN_CODES.has(code)) throw new Error(`Neplatný kód alergenu: ${code}`)
+  }
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: {
+      nutritionPer100g: data.nutritionPer100g ?? undefined,
+      allergenCodes: data.allergenCodes.length > 0 ? data.allergenCodes : Prisma.DbNull,
+      allergenInfo: data.allergenInfo?.trim() || null,
+      ingredients: data.ingredients?.trim() || null,
+      countryOfOrigin: data.countryOfOrigin?.trim() || null,
+      producerName: data.producerName?.trim() || null,
+      producerAddress: data.producerAddress?.trim() || null,
+      useByInstructions: data.useByInstructions?.trim() || null,
+      storageInstructions: data.storageInstructions?.trim() || null,
+    },
+  })
+
+  revalidatePath(`/admin/produkty/${productId}`)
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export async function createCategory(name: string, parentId: string | null) {
+  const { user } = await requireAuth()
+  if (user.role === 'STAFF') throw new Error('Nedostatečná oprávnění')
+
+  if (!name.trim()) throw new Error('Název kategorie je povinný.')
+
+  let slug = slugify(name)
+  const existing = await prisma.category.findUnique({ where: { slug }, select: { id: true } })
+  if (existing) slug = `${slug}-${Date.now()}`
+
+  const category = await prisma.category.create({
+    data: { name: name.trim(), slug, parentId: parentId || null },
+  })
+
+  revalidatePath('/admin/produkty')
+  return category
 }
 
 export async function deleteProduct(productId: string) {

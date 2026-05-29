@@ -80,6 +80,24 @@ export default async function ProductDetailPage({ params }: Props) {
     isActive: product.isActive,
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
+    // Logistika
+    weightGrams: product.weightGrams ?? null,
+    lengthMm: product.lengthMm ?? null,
+    widthMm: product.widthMm ?? null,
+    heightMm: product.heightMm ?? null,
+    storageTemp: product.storageTemp,
+    shelfLifeDays: product.shelfLifeDays ?? null,
+    isFragile: product.isFragile,
+    // Parametry
+    nutritionPer100g: product.nutritionPer100g ?? null,
+    allergenCodes: product.allergenCodes ?? null,
+    allergenInfo: product.allergenInfo ?? null,
+    ingredients: product.ingredients ?? null,
+    countryOfOrigin: product.countryOfOrigin ?? null,
+    producerName: product.producerName ?? null,
+    producerAddress: product.producerAddress ?? null,
+    useByInstructions: product.useByInstructions ?? null,
+    storageInstructions: product.storageInstructions ?? null,
   }
 
   const serializedCategories: SerializedCategoryForModal[] = categories.map((cat) => ({

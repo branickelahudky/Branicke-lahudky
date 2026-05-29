@@ -25,7 +25,8 @@
       "Bash(xargs -I{} ps -p {} -o command=)",
       "Bash(xargs ls -la)",
       "Bash(mkdir -p /Users/dnbtv/branicke-lahudkarstvi/src/app/pozvanka/\\\\[token\\\\])",
-      "Bash(mkdir -p /Users/dnbtv/branicke-lahudkarstvi/src/app/reset-hesla/\\\\[token\\\\])"
+      "Bash(mkdir -p /Users/dnbtv/branicke-lahudkarstvi/src/app/reset-hesla/\\\\[token\\\\])",
+      "Bash(grep -v \"^$\")"
     ]
   }
 }

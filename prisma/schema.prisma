@@ -108,11 +108,35 @@ model Product {
 
   // Potravinářské údaje (povinné dle EU 1169/2011)
   ingredients   String? @db.Text // složení
-  allergens     String? // alergeny (zvýrazněné v složení)
-  nutritionInfo Json? // výživové hodnoty na 100g
-  origin        String? // země původu
-  storageInfo   String? // podmínky skladování ("uchovávat při 0-4°C")
+  allergens     String? // alergeny (zvýrazněné v složení) - legacy string field
+  nutritionInfo Json? // výživové hodnoty na 100g - legacy
+  origin        String? // země původu - legacy
+  storageInfo   String? // podmínky skladování - legacy
   shelfLifeDays Int? // trvanlivost ve dnech od výroby
+
+  // LOGISTIKA
+  weightGrams Int?
+  lengthMm    Int?
+  widthMm     Int?
+  heightMm    Int?
+  storageTemp StorageTemp @default(ROOM_TEMP)
+  isFragile   Boolean     @default(false)
+
+  // PARAMETRY - VÝŽIVA (na 100 g)
+  nutritionPer100g Json? // { energyKj, energyKcal, fat, saturatedFat, carbohydrates, sugars, protein, salt, fiber }
+
+  // PARAMETRY - ALERGENY EU 1169/2011
+  allergenCodes Json?   // string[] z kódů, např. ["1", "3", "7"]
+  allergenInfo  String? // doplňující poznámka o alergenech
+
+  // PARAMETRY - PŮVOD A SLOŽENÍ
+  countryOfOrigin String? // kód země, např. "CZ", "IT"
+  producerName    String?
+  producerAddress String?
+
+  // PARAMETRY - SPOTŘEBA
+  useByInstructions   String? // po otevření spotřebovat do...
+  storageInstructions String? // skladovací pokyny pro zákazníka
 
   // Hodnocení
   reviews       Review[]
@@ -138,6 +162,13 @@ model Product {
   @@index([slug])
   @@index([stockStatus])
   @@index([isActive, publishedAt])
+}
+
+enum StorageTemp {
+  FROZEN       // mraženo (-18°C a méně)
+  REFRIGERATED // chladnička (0-5°C)
+  COOL         // chladno (do 14°C)
+  ROOM_TEMP    // pokojová teplota (15-25°C)
 }
 
 enum Unit {

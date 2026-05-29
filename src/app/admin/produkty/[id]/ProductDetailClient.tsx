@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useEffect, useTransition, useRef } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatCZK, roundMoney } from '@/lib/pricing'
 import { updateProduct, deleteProduct, type UpdateProductData } from './actions'
 import { PhotoGallery } from './PhotoGallery'
+import { CategoryTab } from './CategoryTab'
+import { LogisticsTab } from './LogisticsTab'
+import { ParametersTab } from './ParametersTab'
 
 // ── Exportované typy (používá page.tsx) ───────────────────────────
 
@@ -37,6 +40,24 @@ export type SerializedProductDetail = {
   isActive: boolean
   createdAt: string
   updatedAt: string
+  // Logistika
+  weightGrams: number | null
+  lengthMm: number | null
+  widthMm: number | null
+  heightMm: number | null
+  storageTemp: string
+  shelfLifeDays: number | null
+  isFragile: boolean
+  // Parametry
+  nutritionPer100g: unknown
+  allergenCodes: unknown
+  allergenInfo: string | null
+  ingredients: string | null
+  countryOfOrigin: string | null
+  producerName: string | null
+  producerAddress: string | null
+  useByInstructions: string | null
+  storageInstructions: string | null
 }
 
 export type SerializedProductImage = {
@@ -98,7 +119,7 @@ const TABS = [
 ]
 
 const PLACEHOLDER_TABS = new Set([
-  'logistika', 'parametry', 'varianty', 'souvisejici', 'pokrocile',
+  'varianty', 'souvisejici', 'pokrocile',
 ])
 
 const UNIT_OPTIONS = [
@@ -179,8 +200,6 @@ export function ProductDetailClient({ product, categories, images }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState('hlavni')
-  const [showCategoryModal, setShowCategoryModal] = useState(false)
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const [formState, setFormState] = useState<FormState>(() => buildInitialState(product))
@@ -314,17 +333,6 @@ export function ProductDetailClient({ product, categories, images }: Props) {
     router.push('/admin/produkty')
   }
 
-  // ── Kategorie modal helpers ────────────────────────────────────
-
-  const currentCatLabel = (() => {
-    if (formState.categoryId === product.categoryId && !isDirty) return product.categoryPath
-    for (const cat of categories) {
-      if (cat.id === formState.categoryId) return cat.name
-      const child = cat.children.find((c) => c.id === formState.categoryId)
-      if (child) return `${cat.name} › ${child.name}`
-    }
-    return formState.categoryId
-  })()
 
   // ── Sub-komponenty ─────────────────────────────────────────────
 
@@ -666,128 +674,6 @@ export function ProductDetailClient({ product, categories, images }: Props) {
     )
   }
 
-  // ── Tab: Kategorie ─────────────────────────────────────────────
-
-  function TabKategorie() {
-    return (
-      <div className="space-y-4">
-        <div>
-          <p className="mb-1 text-sm font-medium text-stone-700">Aktuální kategorie</p>
-          <div className="flex items-center gap-3 rounded-lg border border-stone-200 bg-stone-50 px-4 py-3">
-            <span className="text-sm text-stone-800">{currentCatLabel}</span>
-            <button
-              type="button"
-              onClick={() => setShowCategoryModal(true)}
-              className="ml-auto rounded border border-blue-300 px-3 py-1 text-xs text-blue-600 hover:bg-blue-50"
-            >
-              Změnit kategorii
-            </button>
-          </div>
-        </div>
-
-        <p className="text-xs text-stone-400">
-          Produkt může být zařazen pouze v jedné kategorii. Povolena je celá hierarchie — kliknutím
-          vyberete libovolnou úroveň.
-        </p>
-      </div>
-    )
-  }
-
-  // ── Modal: Výběr kategorie ─────────────────────────────────────
-
-  function CategoryModal() {
-    const modalRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-      const handler = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') setShowCategoryModal(false)
-      }
-      window.addEventListener('keydown', handler)
-      return () => window.removeEventListener('keydown', handler)
-    }, [])
-
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) setShowCategoryModal(false)
-        }}
-      >
-        <div ref={modalRef} className="w-full max-w-sm rounded-lg bg-white shadow-xl">
-          <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
-            <h3 className="font-semibold text-stone-900">Vybrat kategorii</h3>
-            <button
-              onClick={() => setShowCategoryModal(false)}
-              className="text-stone-400 hover:text-stone-700"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="max-h-96 overflow-y-auto py-2">
-            {categories.map((cat) => (
-              <div key={cat.id}>
-                <div className="flex items-center">
-                  <button
-                    onClick={() => {
-                      setField('categoryId', cat.id)
-                      setShowCategoryModal(false)
-                    }}
-                    className={`flex-1 px-4 py-2 text-left text-sm hover:bg-stone-50 ${
-                      formState.categoryId === cat.id
-                        ? 'font-semibold text-blue-600'
-                        : 'text-stone-700'
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                  {cat.children.length > 0 && (
-                    <button
-                      onClick={() =>
-                        setExpandedCats((prev) => {
-                          const next = new Set(prev)
-                          if (next.has(cat.id)) next.delete(cat.id)
-                          else next.add(cat.id)
-                          return next
-                        })
-                      }
-                      className="px-3 py-2 text-xs text-stone-400 hover:text-stone-700"
-                    >
-                      {expandedCats.has(cat.id) ? '▲' : '▶'}
-                    </button>
-                  )}
-                </div>
-                {expandedCats.has(cat.id) &&
-                  cat.children.map((child) => (
-                    <button
-                      key={child.id}
-                      onClick={() => {
-                        setField('categoryId', child.id)
-                        setShowCategoryModal(false)
-                      }}
-                      className={`w-full py-2 pl-9 pr-4 text-left text-sm hover:bg-stone-50 ${
-                        formState.categoryId === child.id
-                          ? 'font-semibold text-blue-600'
-                          : 'text-stone-500'
-                      }`}
-                    >
-                      {child.name}
-                    </button>
-                  ))}
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-stone-200 px-5 py-3 text-right">
-            <button
-              onClick={() => setShowCategoryModal(false)}
-              className="rounded border border-stone-300 px-4 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
-            >
-              Zavřít
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   // ── Render ─────────────────────────────────────────────────────
 
@@ -875,9 +761,15 @@ export function ProductDetailClient({ product, categories, images }: Props) {
               {activeTab === 'hlavni' && <TabHlavni />}
               {activeTab === 'cenik' && <TabCenik />}
               {activeTab === 'sklad' && <TabSklad />}
-              {activeTab === 'kategorie' && <TabKategorie />}
-              {activeTab === 'logistika' && <PlaceholderTab sprint="Sprint 3-2b" />}
-              {activeTab === 'parametry' && <PlaceholderTab sprint="Sprint 3-2b" />}
+              {activeTab === 'kategorie' && (
+                <CategoryTab
+                  productId={product.id}
+                  currentCategoryId={product.categoryId}
+                  categories={categories}
+                />
+              )}
+              {activeTab === 'logistika' && <LogisticsTab product={product} />}
+              {activeTab === 'parametry' && <ParametersTab product={product} />}
               {activeTab === 'fotogalerie' && <PhotoGallery productId={product.id} initialImages={images} />}
               {activeTab === 'varianty' && <PlaceholderTab sprint="Sprint 3-2d" />}
               {activeTab === 'souvisejici' && <PlaceholderTab sprint="Sprint 3-2d" />}
@@ -980,8 +872,6 @@ export function ProductDetailClient({ product, categories, images }: Props) {
         </div>
       </div>
 
-      {/* Modal: výběr kategorie */}
-      {showCategoryModal && <CategoryModal />}
     </div>
   )
 }
