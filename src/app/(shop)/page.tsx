@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { CarouselClient, type CarouselSlide } from './_components/CarouselClient'
 import { ProductCard, type ProductCardData } from './_components/ProductCard'
+import { HorizontalShelf } from './_components/HorizontalShelf'
 
 // ── Dlaždice top-level kategorií ──────────────────────────────────
 
@@ -17,7 +18,7 @@ async function CategoryTiles() {
   return (
     <div className="border-b border-shop-border">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="flex gap-2 overflow-x-auto py-3 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto py-3 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
           {categories.map((cat) => (
             <Link key={cat.id} href={`/kategorie/${cat.slug}`}
               className="flex shrink-0 items-center gap-1.5 rounded-full border border-shop-border bg-shop-surface px-4 py-2 text-sm text-stone-300 whitespace-nowrap hover:border-gold/50 hover:text-gold transition">
@@ -51,59 +52,42 @@ function serializeProduct(p: {
   }
 }
 
-// ── Horizontální regál produktů ───────────────────────────────────
-
-function ProductShelf({ title, products }: { title: string | null; products: ProductCardData[] }) {
-  return (
-    <section className="py-10">
-      <div className="mx-auto max-w-7xl px-4">
-        {title && (
-          <h2 className="mb-6 text-2xl font-bold text-white">
-            {title}
-          </h2>
-        )}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ── Sekce kategorií ───────────────────────────────────────────────
+// ── Sekce kategorií — horizontální regál dlaždic ──────────────────
 
 async function FeaturedCategoriesSection({ title, categoryIds }: { title: string | null; categoryIds: string[] }) {
   const cats = await prisma.category.findMany({
     where: { id: { in: categoryIds }, isActive: true },
     select: { id: true, name: true, slug: true },
   })
-  // Zachováme pořadí z config
   const ordered = categoryIds.map((id) => cats.find((c) => c.id === id)).filter(Boolean) as typeof cats
 
   if (!ordered.length) return null
 
   return (
-    <section className="py-10 border-t border-shop-border">
-      <div className="mx-auto max-w-7xl px-4">
-        {title && <h2 className="mb-6 text-2xl font-bold text-white">{title}</h2>}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {ordered.map((cat) => (
-            <Link key={cat.id} href={`/kategorie/${cat.slug}`}
-              className="group flex items-center justify-center rounded-xl border border-shop-border bg-shop-surface p-6 text-center transition hover:border-gold/40 hover:bg-shop-card">
-              <span className="font-semibold text-stone-200 group-hover:text-gold transition">
-                {cat.name}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
+    <HorizontalShelf title={title}>
+      {ordered.map((cat) => (
+        <Link
+          key={cat.id}
+          href={`/kategorie/${cat.slug}`}
+          className="
+            group flex shrink-0 snap-start
+            w-[47vw] sm:w-44
+            items-center justify-center rounded-xl
+            border border-shop-border bg-shop-surface
+            p-6 text-center
+            transition hover:border-gold/40 hover:bg-shop-card
+          "
+        >
+          <span className="text-sm font-semibold text-stone-200 group-hover:text-gold transition">
+            {cat.name}
+          </span>
+        </Link>
+      ))}
+    </HorizontalShelf>
   )
 }
 
-// ── Sekce produktů ────────────────────────────────────────────────
+// ── Sekce produktů — horizontální regál karet ─────────────────────
 
 async function FeaturedProductsSection({ title, mode, productIds, limit }: {
   title: string | null
@@ -134,7 +118,14 @@ async function FeaturedProductsSection({ title, mode, productIds, limit }: {
   if (!products.length) return null
 
   const cards = products.map(serializeProduct)
-  return <ProductShelf title={title} products={cards} />
+
+  return (
+    <HorizontalShelf title={title}>
+      {cards.map((p) => (
+        <ProductCard key={p.id} product={p} />
+      ))}
+    </HorizontalShelf>
+  )
 }
 
 // ── Sekce O nás ───────────────────────────────────────────────────
@@ -158,9 +149,7 @@ async function CarouselSection({ title }: { title: string | null }) {
   const banners = await prisma.banner.findMany({
     where: { isVisible: true },
     orderBy: { sortOrder: 'asc' },
-    include: {
-      page: { select: { slug: true } },
-    },
+    include: { page: { select: { slug: true } } },
   })
 
   if (!banners.length) return null
@@ -170,7 +159,6 @@ async function CarouselSection({ title }: { title: string | null }) {
     if (b.linkType === 'PAGE' && b.page?.slug) href = `/${b.page.slug}`
     else if (b.linkType === 'CATEGORY' && b.categoryId) href = `/kategorie/${b.categoryId}`
     else if (b.linkType === 'URL' && b.url) href = b.url
-
     return { id: b.id, imageUrl: b.imageUrl, imageAlt: b.imageAlt, href, openNewTab: b.openNewTab }
   })
 
@@ -208,28 +196,14 @@ export default async function HomePage() {
         if (section.type === 'FEATURED_CATEGORIES') {
           const ids = (cfg.categoryIds as string[]) ?? []
           if (!ids.length) return null
-          return (
-            <FeaturedCategoriesSection
-              key={section.id}
-              title={section.title}
-              categoryIds={ids}
-            />
-          )
+          return <FeaturedCategoriesSection key={section.id} title={section.title} categoryIds={ids} />
         }
 
         if (section.type === 'FEATURED_PRODUCTS') {
           const mode = (cfg.mode as string) ?? 'featured'
           const ids = (cfg.productIds as string[]) ?? []
           const limit = Number(cfg.limit ?? 8)
-          return (
-            <FeaturedProductsSection
-              key={section.id}
-              title={section.title}
-              mode={mode}
-              productIds={ids}
-              limit={limit}
-            />
-          )
+          return <FeaturedProductsSection key={section.id} title={section.title} mode={mode} productIds={ids} limit={limit} />
         }
 
         if (section.type === 'ABOUT_TEXT') {
