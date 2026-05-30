@@ -36,6 +36,7 @@ model Category {
 
   products   Product[]
   menuItems  MenuItem[]
+  banners    Banner[]
 
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)
@@ -1088,6 +1089,7 @@ model Page {
   isSystem        Boolean @default(false) // systémové stránky nelze smazat
   menuItems       MenuItem[]
   cookieSettings  CookieSettings[]
+  banners         Banner[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1175,4 +1177,36 @@ model CookieSettings {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ───────────────────────────────────────────────────────────────
+// BANNERY (homepage carousel)
+// ───────────────────────────────────────────────────────────────
+
+enum BannerLinkType {
+  NONE     // jen obrázek, bez odkazu
+  PAGE     // interní stránka (CMS)
+  CATEGORY // kategorie produktů
+  URL      // vlastní URL
+}
+
+model Banner {
+  id              String         @id @default(cuid())
+  imageUrl        String
+  imageStorageKey String
+  imageAlt        String?
+  linkType        BannerLinkType @default(NONE)
+  pageId          String?
+  page            Page?          @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  categoryId      String?
+  category        Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  url             String?
+  openNewTab      Boolean        @default(false)
+  sortOrder       Int            @default(0)
+  isVisible       Boolean        @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
 }
