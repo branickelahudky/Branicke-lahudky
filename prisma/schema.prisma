@@ -1129,3 +1129,31 @@ model MenuItem {
 
   @@index([location, sortOrder])
 }
+
+// ───────────────────────────────────────────────────────────────
+// IDENTITA WEBU (singleton)
+// ───────────────────────────────────────────────────────────────
+
+model SiteIdentity {
+  id              String  @id @default(cuid())
+
+  // Logo & favicon (URL v R2)
+  logoUrl         String?
+  logoStorageKey  String?
+  logoAlt         String?
+  faviconUrl      String?
+  faviconStorageKey String?
+
+  // Sociální sítě
+  socialFacebook  String?
+  socialInstagram String?
+  socialYoutube   String?
+  socialTiktok    String?
+
+  // Patička
+  footerText      String? @db.Text
+  footerCopyright String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

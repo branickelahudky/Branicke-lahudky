@@ -30,8 +30,9 @@ const NAV: NavEntry[] = [
     label: 'Vzhled webu',
     roles: ['OWNER'],
     items: [
-      { label: 'Stránky', href: '/admin/vzhled/stranky' },
-      { label: 'Menu',    href: '/admin/vzhled/menu' },
+      { label: 'Stránky',            href: '/admin/vzhled/stranky' },
+      { label: 'Menu',               href: '/admin/vzhled/menu' },
+      { label: 'Identita & patička', href: '/admin/vzhled/identita' },
     ],
   },
 ]

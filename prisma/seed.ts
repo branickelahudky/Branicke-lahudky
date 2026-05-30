@@ -429,6 +429,15 @@ async function main() {
     })
   }
 
+  // ─── IDENTITA WEBU (singleton) ─────────────────────────────────────
+  const identityExists = await prisma.siteIdentity.findFirst({ select: { id: true } })
+  if (!identityExists) {
+    await prisma.siteIdentity.create({
+      data: { footerCopyright: `© ${new Date().getFullYear()} Branické lahůdkářství` },
+    })
+    console.log('  ✔ SiteIdentity singleton vytvořen')
+  }
+
   // ─── NAVIGAČNÍ MENU (idempotentní — vytvoří jen chybějící) ────────
   console.log('🔗 Menu...')
 
