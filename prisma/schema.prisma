@@ -1087,6 +1087,7 @@ model Page {
   sortOrder       Int     @default(0)
   isSystem        Boolean @default(false) // systémové stránky nelze smazat
   menuItems       MenuItem[]
+  cookieSettings  CookieSettings[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1153,6 +1154,24 @@ model SiteIdentity {
   // Patička
   footerText      String? @db.Text
   footerCopyright String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ───────────────────────────────────────────────────────────────
+// COOKIES NASTAVENÍ (singleton)
+// ───────────────────────────────────────────────────────────────
+
+model CookieSettings {
+  id              String  @id @default(cuid())
+  enabled         Boolean @default(true)
+  bannerTitle     String  @default("Používáme cookies")
+  bannerText      String? @db.Text
+  acceptAllLabel  String  @default("Přijmout vše")
+  rejectLabel     String  @default("Odmítnout")
+  policyPageId    String?
+  policyPage      Page?   @relation(fields: [policyPageId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -429,6 +429,23 @@ async function main() {
     })
   }
 
+  // ─── COOKIES NASTAVENÍ (singleton) ────────────────────────────────────
+  const cookiesExists = await prisma.cookieSettings.findFirst({ select: { id: true } })
+  if (!cookiesExists) {
+    await prisma.cookieSettings.create({
+      data: {
+        enabled: true,
+        bannerTitle: 'Používáme cookies',
+        bannerText:
+          'Tento web používá cookies pro zajištění správné funkce a zlepšení vašeho zážitku. ' +
+          'Kliknutím na „Přijmout vše" souhlasíte s jejich použitím. Více informací najdete v zásadách cookies.',
+        acceptAllLabel: 'Přijmout vše',
+        rejectLabel: 'Odmítnout',
+      },
+    })
+    console.log('  ✔ CookieSettings singleton vytvořen')
+  }
+
   // ─── IDENTITA WEBU (singleton) ─────────────────────────────────────
   const identityExists = await prisma.siteIdentity.findFirst({ select: { id: true } })
   if (!identityExists) {
@@ -490,6 +507,7 @@ async function main() {
     { slug: 'reklamacni-rad',         title: 'Reklamační řád',           sortOrder: 3 },
     { slug: 'kontakt',                title: 'Kontakt',                  sortOrder: 4 },
     { slug: 'o-nas',                  title: 'O nás',                    sortOrder: 5 },
+    { slug: 'zasady-cookies',         title: 'Zásady používání cookies', sortOrder: 6 },
   ]
   for (const page of systemPages) {
     await prisma.page.upsert({
