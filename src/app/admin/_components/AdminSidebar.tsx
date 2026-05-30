@@ -35,6 +35,7 @@ const NAV: NavEntry[] = [
       { label: 'Identita & patička', href: '/admin/vzhled/identita' },
       { label: 'Cookies',            href: '/admin/vzhled/cookies' },
       { label: 'Bannery',            href: '/admin/vzhled/bannery' },
+      { label: 'Titulní strana',     href: '/admin/vzhled/titulni-strana' },
     ],
   },
 ]

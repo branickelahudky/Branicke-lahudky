@@ -1210,3 +1210,28 @@ model Banner {
 
   @@index([sortOrder])
 }
+
+// ───────────────────────────────────────────────────────────────
+// HOMEPAGE SEKCE (pevná sada, konfigurovatelné pořadí a obsah)
+// ───────────────────────────────────────────────────────────────
+
+enum HomepageSectionType {
+  CAROUSEL             // carousel bannerů (data z modelu Banner)
+  FEATURED_CATEGORIES  // výběr kategorií
+  FEATURED_PRODUCTS    // doporučené nebo ručně vybrané produkty
+  ABOUT_TEXT           // krátký text o provozovně
+}
+
+model HomepageSection {
+  id        String              @id @default(cuid())
+  type      HomepageSectionType @unique // max 1 sekce každého typu
+  isVisible Boolean             @default(true)
+  sortOrder Int                 @default(0)
+  title     String?
+  config    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
