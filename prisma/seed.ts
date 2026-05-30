@@ -429,6 +429,51 @@ async function main() {
     })
   }
 
+  // ─── NAVIGAČNÍ MENU (idempotentní — vytvoří jen chybějící) ────────
+  console.log('🔗 Menu...')
+
+  // Načti stránky pro seed
+  const pagesBySlug = Object.fromEntries(
+    (await prisma.page.findMany({ select: { id: true, slug: true } }))
+      .map((p) => [p.slug, p.id])
+  )
+
+  const seedMenuItems: Array<{
+    location: 'HEADER' | 'FOOTER'
+    label: string
+    linkType: 'PAGE' | 'CATEGORY' | 'URL'
+    pageSlug?: string
+    url?: string
+    sortOrder: number
+  }> = [
+    { location: 'HEADER', label: 'Domů',    linkType: 'URL', url: '/',                    sortOrder: 1 },
+    { location: 'HEADER', label: 'Kontakt', linkType: 'PAGE', pageSlug: 'kontakt',         sortOrder: 2 },
+    { location: 'FOOTER', label: 'Obchodní podmínky',      linkType: 'PAGE', pageSlug: 'obchodni-podminky',      sortOrder: 1 },
+    { location: 'FOOTER', label: 'Ochrana osobních údajů', linkType: 'PAGE', pageSlug: 'ochrana-osobnich-udaju', sortOrder: 2 },
+    { location: 'FOOTER', label: 'Reklamační řád',         linkType: 'PAGE', pageSlug: 'reklamacni-rad',         sortOrder: 3 },
+    { location: 'FOOTER', label: 'O nás',                  linkType: 'PAGE', pageSlug: 'o-nas',                 sortOrder: 4 },
+  ]
+
+  for (const item of seedMenuItems) {
+    const exists = await prisma.menuItem.findFirst({
+      where: { location: item.location, label: item.label },
+    })
+    if (!exists) {
+      const pageId = item.pageSlug ? (pagesBySlug[item.pageSlug] ?? null) : null
+      await prisma.menuItem.create({
+        data: {
+          location: item.location,
+          label: item.label,
+          linkType: item.linkType,
+          pageId,
+          url: item.url ?? null,
+          sortOrder: item.sortOrder,
+        },
+      })
+    }
+  }
+  console.log('  ✔ Menu položky')
+
   // ─── SYSTÉMOVÉ STRÁNKY (vždy idempotentní) ──────────────────────
   const systemPages = [
     { slug: 'obchodni-podminky',      title: 'Obchodní podmínky',       sortOrder: 1 },

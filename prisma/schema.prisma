@@ -34,7 +34,8 @@ model Category {
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
 
-  products Product[]
+  products   Product[]
+  menuItems  MenuItem[]
 
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)
@@ -1085,10 +1086,46 @@ model Page {
   robotsIndex     Boolean @default(true)
   sortOrder       Int     @default(0)
   isSystem        Boolean @default(false) // systémové stránky nelze smazat
+  menuItems       MenuItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([isPublished])
+}
+
+// ───────────────────────────────────────────────────────────────
+// NAVIGAČNÍ MENU
+// ───────────────────────────────────────────────────────────────
+
+enum MenuLocation {
+  HEADER // hlavní navigace
+  FOOTER // patička
+}
+
+enum MenuLinkType {
+  PAGE     // interní stránka (CMS)
+  CATEGORY // kategorie produktů
+  URL      // vlastní URL
+}
+
+model MenuItem {
+  id         String       @id @default(cuid())
+  location   MenuLocation
+  label      String
+  linkType   MenuLinkType
+  pageId     String?
+  page       Page?        @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  categoryId String?
+  category   Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  url        String?
+  openNewTab Boolean      @default(false)
+  sortOrder  Int          @default(0)
+  isVisible  Boolean      @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([location, sortOrder])
 }

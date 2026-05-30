@@ -31,6 +31,7 @@ const NAV: NavEntry[] = [
     roles: ['OWNER'],
     items: [
       { label: 'Stránky', href: '/admin/vzhled/stranky' },
+      { label: 'Menu',    href: '/admin/vzhled/menu' },
     ],
   },
 ]
