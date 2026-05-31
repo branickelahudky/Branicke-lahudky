@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useCart } from '../_context/CartContext'
 
 export type NavItem = { id: string; label: string; href: string; openNewTab: boolean }
 
@@ -14,6 +15,7 @@ interface Props {
 
 export function Header({ logoUrl, logoAlt, navItems }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { totalQty, openCart } = useCart()
 
   return (
     <header className="sticky top-0 z-50 bg-shop-bg border-b border-shop-border">
@@ -60,13 +62,16 @@ export function Header({ logoUrl, logoAlt, navItems }: Props) {
             </button>
 
             {/* Košík */}
-            <Link href="/kosik"
-              className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-medium text-shop-bg hover:bg-gold/90 transition">
+            <button
+              onClick={openCart}
+              className="relative flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-medium text-shop-bg hover:bg-gold/90 transition"
+              aria-label="Košík"
+            >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <span>0</span>
-            </Link>
+              <span>{totalQty}</span>
+            </button>
 
             {/* Hamburger — mobile */}
             <button

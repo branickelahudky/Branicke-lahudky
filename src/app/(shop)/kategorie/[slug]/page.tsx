@@ -54,19 +54,26 @@ export default async function KategoriePage({ params, searchParams }: Props) {
     orderBy: { name: 'asc' },
     take: 48,
     select: {
-      id: true, slug: true, name: true, priceWithVat: true,
+      id: true, slug: true, sku: true, name: true,
+      priceWithVat: true, priceWithoutVat: true, vatRate: true,
       isWeightBased: true, unit: true, weightGrams: true,
       isNew: true, isOnSale: true, isFeatured: true,
+      stockQuantity: true, stockStatus: true, trackStock: true,
       images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true }, take: 1 },
     },
   })
 
   const cards: ProductCardData[] = products.map((p) => ({
-    id: p.id, slug: p.slug, name: p.name,
+    id: p.id, slug: p.slug, sku: p.sku, name: p.name,
     priceWithVat: Number(p.priceWithVat),
+    priceWithoutVat: Number(p.priceWithoutVat),
+    vatRate: Number(p.vatRate),
     isWeightBased: p.isWeightBased,
     unit: p.unit, weightGrams: p.weightGrams,
     isNew: p.isNew, isOnSale: p.isOnSale, isFeatured: p.isFeatured,
+    stockQuantity: p.stockQuantity,
+    stockStatus: p.stockStatus,
+    trackStock: p.trackStock,
     thumbnailUrl: p.images[0]?.thumbnailUrl || p.images[0]?.url || null,
   }))
 

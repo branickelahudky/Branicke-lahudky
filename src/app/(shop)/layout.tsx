@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { Header, type NavItem } from './_components/Header'
 import { Footer, type FooterNavItem } from './_components/Footer'
+import { CartProvider } from './_context/CartContext'
+import { CartDrawer } from './_components/CartDrawer'
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const [identity, headerMenuItems, footerMenuItems, branch] = await Promise.all([
@@ -34,6 +36,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   }))
 
   return (
+    <CartProvider>
     <div className="min-h-screen bg-shop-bg text-white">
       <Header
         logoUrl={identity?.logoUrl ?? null}
@@ -64,6 +67,8 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
           tiktok: identity?.socialTiktok ?? null,
         }}
       />
+      <CartDrawer />
     </div>
+    </CartProvider>
   )
 }

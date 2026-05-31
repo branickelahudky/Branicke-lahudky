@@ -34,20 +34,24 @@ async function CategoryTiles() {
 // ── Pomocná funkce pro produktová data ────────────────────────────
 
 function serializeProduct(p: {
-  id: string; slug: string; name: string; priceWithVat: unknown
+  id: string; slug: string; sku: string; name: string
+  priceWithVat: unknown; priceWithoutVat: unknown; vatRate: unknown
   isWeightBased: boolean; unit: string; weightGrams: number | null
   isNew: boolean; isOnSale: boolean; isFeatured: boolean
+  stockQuantity: number; stockStatus: string; trackStock: boolean
   images: Array<{ thumbnailUrl: string; url: string }>
 }): ProductCardData {
   return {
-    id: p.id, slug: p.slug, name: p.name,
+    id: p.id, slug: p.slug, sku: p.sku, name: p.name,
     priceWithVat: Number(p.priceWithVat),
+    priceWithoutVat: Number(p.priceWithoutVat),
+    vatRate: Number(p.vatRate),
     isWeightBased: p.isWeightBased,
-    unit: p.unit,
-    weightGrams: p.weightGrams,
-    isNew: p.isNew,
-    isOnSale: p.isOnSale,
-    isFeatured: p.isFeatured,
+    unit: p.unit, weightGrams: p.weightGrams,
+    isNew: p.isNew, isOnSale: p.isOnSale, isFeatured: p.isFeatured,
+    stockQuantity: p.stockQuantity,
+    stockStatus: p.stockStatus,
+    trackStock: p.trackStock,
     thumbnailUrl: p.images[0]?.thumbnailUrl || p.images[0]?.url || null,
   }
 }
@@ -91,9 +95,11 @@ async function FeaturedCategoriesSection({ title, categoryIds }: { title: string
 //    později možno nahradit dedikovaným polem data zařazení do regálu) ─
 
 const FLAG_SELECT = {
-  id: true, slug: true, name: true, priceWithVat: true,
+  id: true, slug: true, sku: true, name: true,
+  priceWithVat: true, priceWithoutVat: true, vatRate: true,
   isWeightBased: true, unit: true, weightGrams: true,
   isNew: true, isOnSale: true, isFeatured: true,
+  stockQuantity: true, stockStatus: true, trackStock: true,
   images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true }, take: 1 },
 } as const
 
@@ -139,12 +145,7 @@ async function FeaturedProductsSection({ title, mode, productIds, limit }: {
   productIds: string[]
   limit: number
 }) {
-  const select = {
-    id: true, slug: true, name: true, priceWithVat: true,
-    isWeightBased: true, unit: true, weightGrams: true,
-    isNew: true, isOnSale: true, isFeatured: true,
-    images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true }, take: 1 },
-  }
+  const select = FLAG_SELECT
 
   const products = mode === 'manual' && productIds.length > 0
     ? await prisma.product.findMany({
