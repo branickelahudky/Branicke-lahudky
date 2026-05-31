@@ -53,13 +53,13 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       "
     >
       {/* Fotka */}
-      <div className="relative aspect-square bg-stone-100 overflow-hidden">
+      <div className="relative aspect-square bg-white overflow-hidden">
         {product.thumbnailUrl ? (
           <Image
             src={product.thumbnailUrl}
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-contain p-2"
             sizes="(max-width: 640px) 47vw, 176px"
             unoptimized
           />
