@@ -53,13 +53,13 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       "
     >
       {/* Fotka */}
-      <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden">
+      <div className="relative aspect-square bg-stone-100 overflow-hidden">
         {product.thumbnailUrl ? (
           <Image
             src={product.thumbnailUrl}
             alt={product.name}
             fill
-            className="object-cover object-center"
+            className="object-contain object-center p-1"
             sizes="(max-width: 640px) 47vw, 176px"
             unoptimized
           />
