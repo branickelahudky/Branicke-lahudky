@@ -84,7 +84,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     <div className="group relative flex shrink-0 snap-start flex-col w-[47vw] sm:w-48 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 
       {/* Fotka */}
-      <div className="relative w-full h-44 bg-stone-100 flex items-center justify-center overflow-hidden p-2">
+      <div className="relative w-full h-44 bg-white flex items-center justify-center overflow-hidden p-2">
         {product.thumbnailUrl ? (
           <Image src={product.thumbnailUrl} alt={product.name}
             width={300} height={200}
