@@ -87,6 +87,50 @@ async function FeaturedCategoriesSection({ title, categoryIds }: { title: string
   )
 }
 
+// ── Pevné regály dle příznaku (řazeno dle updatedAt — viz dohoda,
+//    později možno nahradit dedikovaným polem data zařazení do regálu) ─
+
+const FLAG_SELECT = {
+  id: true, slug: true, name: true, priceWithVat: true,
+  isWeightBased: true, unit: true, weightGrams: true,
+  isNew: true, isOnSale: true, isFeatured: true,
+  images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true }, take: 1 },
+} as const
+
+async function AkceSection() {
+  const products = await prisma.product.findMany({
+    where: { isActive: true, isOnSale: true },
+    orderBy: { updatedAt: 'desc' },
+    select: FLAG_SELECT,
+    take: 12,
+  })
+  if (!products.length) return null
+  return (
+    <HorizontalShelf title="Akce" moreHref="#">
+      {products.map(serializeProduct).map((p) => (
+        <ProductCard key={p.id} product={p} />
+      ))}
+    </HorizontalShelf>
+  )
+}
+
+async function NovinkySekce() {
+  const products = await prisma.product.findMany({
+    where: { isActive: true, isNew: true },
+    orderBy: { updatedAt: 'desc' },
+    select: FLAG_SELECT,
+    take: 12,
+  })
+  if (!products.length) return null
+  return (
+    <HorizontalShelf title="Novinky" moreHref="#">
+      {products.map(serializeProduct).map((p) => (
+        <ProductCard key={p.id} product={p} />
+      ))}
+    </HorizontalShelf>
+  )
+}
+
 // ── Sekce produktů — horizontální regál karet ─────────────────────
 
 async function FeaturedProductsSection({ title, mode, productIds, limit }: {
@@ -185,6 +229,8 @@ export default async function HomePage() {
   return (
     <>
       <CategoryTiles />
+      <AkceSection />
+      <NovinkySekce />
 
       {sections.map((section) => {
         const cfg = (section.config ?? {}) as Record<string, unknown>
