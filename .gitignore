@@ -13,3 +13,5 @@ coverage/
 .env.save
 .env.bak
 .env.*
+scripts/_backup_images/
+scripts/_preview/
