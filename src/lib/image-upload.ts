@@ -22,16 +22,22 @@ export async function processAndUpload(
   const storageKey = `products/${productId}/${hex}.jpg`
   const thumbnailKey = `products/${productId}/${hex}-thumb.jpg`
 
+  const WHITE = { r: 255, g: 255, b: 255, alpha: 1 }
+
   const [mainResult, thumbBuffer] = await Promise.all([
+    // Hlavní: čtverec 800×800, celá fotka (contain), bílé pozadí
     sharp(buffer)
       .rotate()
-      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 })
+      .resize(800, 800, { fit: 'contain', background: WHITE })
+      .flatten({ background: '#ffffff' })
+      .jpeg({ quality: 85, progressive: true })
       .toBuffer({ resolveWithObject: true }),
+    // Thumbnail: čtverec 400×400, celá fotka (contain), bílé pozadí
     sharp(buffer)
       .rotate()
-      .resize(200, 200, { fit: 'cover' })
-      .jpeg({ quality: 80 })
+      .resize(400, 400, { fit: 'contain', background: WHITE })
+      .flatten({ background: '#ffffff' })
+      .jpeg({ quality: 82, progressive: true })
       .toBuffer(),
   ])
 

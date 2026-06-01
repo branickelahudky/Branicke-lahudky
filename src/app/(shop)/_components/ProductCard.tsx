@@ -84,17 +84,18 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     <div className="group relative flex shrink-0 snap-start flex-col w-[47vw] sm:w-48 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 
       {/* Fotka */}
-      <div className="relative w-full h-44 bg-white flex items-center justify-center overflow-hidden p-2">
+      <div className="relative w-full aspect-square bg-white overflow-hidden">
         {product.thumbnailUrl ? (
-          <Image src={product.thumbnailUrl} alt={product.name}
-            width={300} height={200}
-            className="max-h-full max-w-full w-auto h-auto object-contain"
-            unoptimized />
+          <Image src={product.thumbnailUrl} alt={product.name} fill
+            className="object-cover"
+            sizes="(max-width: 640px) 47vw, 192px" unoptimized />
         ) : (
-          <svg className="h-10 w-10 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+          <div className="flex h-full items-center justify-center">
+            <svg className="h-10 w-10 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
         )}
 
         {/* Štítek vlevo nahoře */}
