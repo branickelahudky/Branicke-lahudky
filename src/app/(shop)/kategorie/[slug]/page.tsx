@@ -59,7 +59,7 @@ export default async function KategoriePage({ params, searchParams }: Props) {
       isWeightBased: true, unit: true, weightGrams: true,
       isNew: true, isOnSale: true, isFeatured: true,
       stockQuantity: true, stockStatus: true, trackStock: true,
-      images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true }, take: 1 },
+      images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true, fileSize: true }, take: 1 },
     },
   })
 
@@ -74,7 +74,12 @@ export default async function KategoriePage({ params, searchParams }: Props) {
     stockQuantity: p.stockQuantity,
     stockStatus: p.stockStatus,
     trackStock: p.trackStock,
-    thumbnailUrl: p.images[0]?.thumbnailUrl || p.images[0]?.url || null,
+    thumbnailUrl: (() => {
+      const img = p.images[0]
+      if (!img) return null
+      const base = img.thumbnailUrl || img.url
+      return img.fileSize > 0 ? `${base}?v=${img.fileSize}` : base
+    })(),
   }))
 
   // Podkategorie s počtem produktů v daném filtru (zobraz jen ty s produkty)

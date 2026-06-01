@@ -39,7 +39,7 @@ function serializeProduct(p: {
   isWeightBased: boolean; unit: string; weightGrams: number | null
   isNew: boolean; isOnSale: boolean; isFeatured: boolean
   stockQuantity: number; stockStatus: string; trackStock: boolean
-  images: Array<{ thumbnailUrl: string; url: string }>
+  images: Array<{ thumbnailUrl: string; url: string; fileSize: number }>
 }): ProductCardData {
   return {
     id: p.id, slug: p.slug, sku: p.sku, name: p.name,
@@ -52,7 +52,12 @@ function serializeProduct(p: {
     stockQuantity: p.stockQuantity,
     stockStatus: p.stockStatus,
     trackStock: p.trackStock,
-    thumbnailUrl: p.images[0]?.thumbnailUrl || p.images[0]?.url || null,
+    thumbnailUrl: (() => {
+      const img = p.images[0]
+      if (!img) return null
+      const base = img.thumbnailUrl || img.url
+      return img.fileSize > 0 ? `${base}?v=${img.fileSize}` : base
+    })(),
   }
 }
 
@@ -100,7 +105,7 @@ const FLAG_SELECT = {
   isWeightBased: true, unit: true, weightGrams: true,
   isNew: true, isOnSale: true, isFeatured: true,
   stockQuantity: true, stockStatus: true, trackStock: true,
-  images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true }, take: 1 },
+  images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true, fileSize: true }, take: 1 },
 } as const
 
 async function AkceSection() {
