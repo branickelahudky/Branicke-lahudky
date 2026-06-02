@@ -4,7 +4,13 @@ import { Footer, type FooterNavItem } from './_components/Footer'
 import { CartProvider } from './_context/CartContext'
 import { CartDrawer } from './_components/CartDrawer'
 
-export default async function ShopLayout({ children }: { children: React.ReactNode }) {
+export default async function ShopLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode
+  modal: React.ReactNode
+}) {
   const [identity, headerMenuItems, footerMenuItems, branch] = await Promise.all([
     prisma.siteIdentity.findFirst(),
     prisma.menuItem.findMany({
@@ -37,13 +43,14 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
 
   return (
     <CartProvider>
-    <div id="shop-root" data-theme="light" className="min-h-screen bg-shop-bg text-shop-fg">
+    <div id="shop-root" data-theme="dark" className="min-h-screen bg-shop-bg text-shop-fg">
       <Header
         logoUrl={identity?.logoUrl ?? null}
         logoAlt={identity?.logoAlt ?? null}
         navItems={headerNavItems}
       />
       <main>{children}</main>
+      {modal}
       <Footer
         logoUrl={identity?.logoUrl ?? null}
         logoAlt={identity?.logoAlt ?? null}

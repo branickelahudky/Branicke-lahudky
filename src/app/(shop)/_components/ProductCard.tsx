@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { toast } from 'sonner'
@@ -14,14 +13,15 @@ export type ProductCardData = {
   priceWithVat: number
   priceWithoutVat: number
   vatRate: number
+  salePriceWithVat: number | null
   isWeightBased: boolean
   unit: string
   weightGrams: number | null
   isNew: boolean
   isOnSale: boolean
   isFeatured: boolean
-  stockQuantity: number
   stockStatus: string
+  stockQuantity: number
   trackStock: boolean
   thumbnailUrl: string | null
 }
@@ -32,63 +32,65 @@ function fmtKc(n: number) {
   }).format(n)
 }
 
-function StockBadge({ trackStock, stockStatus, stockQuantity }: {
-  trackStock: boolean; stockStatus: string; stockQuantity: number
-}) {
-  if (!trackStock || stockStatus === 'IN_STOCK') {
-    return <span className="text-[10px] font-medium text-green-600">● Skladem</span>
-  }
-  if (stockStatus === 'LOW_STOCK') {
-    return <span className="text-[10px] font-medium text-amber-500">● Skladem ({stockQuantity} ks)</span>
-  }
-  if (stockStatus === 'OUT_OF_STOCK') {
-    return <span className="text-[10px] font-medium text-red-500">● Není skladem</span>
-  }
-  if (stockStatus === 'ON_REQUEST') {
-    return <span className="text-[10px] font-medium text-stone-400">● Na dotaz</span>
-  }
-  return <span className="text-[10px] font-medium text-stone-400">● Dočasně nedostupné</span>
-}
-
 export function ProductCard({ product }: { product: ProductCardData }) {
-  const cart = useCart()
-  const [qty, setQty] = useState(1)
+  const { addItem } = useCart()
 
   const isAvailable = product.stockStatus !== 'OUT_OF_STOCK'
-  const hasPrice = product.priceWithVat > 0
+  const hasPrice    = product.priceWithVat > 0
+
+  const activeSalePrice =
+    product.isOnSale && product.salePriceWithVat && product.salePriceWithVat > 0
+      ? product.salePriceWithVat
+      : null
+  const displayPrice = activeSalePrice ?? product.priceWithVat
   const prefix = product.isWeightBased ? 'od ' : ''
 
-  const badge = product.isOnSale  ? { label: 'Akce',    cls: 'bg-red-500 text-white' }
-    : product.isNew               ? { label: 'Novinka', cls: 'bg-gold text-shop-bg' }
-    : product.isFeatured          ? { label: 'Tip',     cls: 'bg-blue-600 text-white' }
+  const badge = product.isOnSale ? { label: 'Akce',    cls: 'bg-red-500 text-white' }
+    : product.isNew              ? { label: 'Novinka', cls: 'bg-gold text-shop-bg'  }
+    : product.isFeatured         ? { label: 'Tip',     cls: 'bg-blue-600 text-white' }
     : null
 
-  function handleAddToCart() {
-    cart.addItem({
+  const weightLabel = product.weightGrams
+    ? product.weightGrams >= 1000
+      ? `${(product.weightGrams / 1000).toLocaleString('cs-CZ', { maximumFractionDigits: 2 })} kg`
+      : `${product.weightGrams} g`
+    : null
+
+  function handleAdd(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isAvailable || !hasPrice) return
+    addItem({
       productId: product.id,
-      slug: product.slug,
-      sku: product.sku,
-      name: product.name,
-      thumbnailUrl: product.thumbnailUrl,
-      unitPriceWithVat: product.priceWithVat,
-      unitPriceWithoutVat: product.priceWithoutVat,
-      vatRate: product.vatRate,
-      isWeightBased: product.isWeightBased,
-      unit: product.unit,
-    }, qty)
+      slug:      product.slug,
+      sku:       product.sku,
+      name:      product.name,
+      thumbnailUrl:          product.thumbnailUrl,
+      unitPriceWithVat:     displayPrice,
+      unitPriceWithoutVat:  product.priceWithoutVat,
+      vatRate:              product.vatRate,
+      isWeightBased:        product.isWeightBased,
+      unit:                 product.unit,
+    }, 1)
     toast.success(`„${product.name}" přidáno do košíku`)
-    setQty(1)
   }
 
   return (
-    <div className="group relative flex shrink-0 snap-start flex-col w-[47vw] sm:w-48 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-
-      {/* Fotka */}
-      <div className="relative w-full aspect-square bg-white overflow-hidden">
+    <Link
+      href={`/produkt/${product.slug}`}
+      className="group flex shrink-0 snap-start flex-col w-[44vw] sm:w-[160px] focus:outline-none"
+    >
+      {/* Foto */}
+      <div className="relative aspect-square rounded-2xl overflow-hidden bg-stone-100">
         {product.thumbnailUrl ? (
-          <Image src={product.thumbnailUrl} alt={product.name} fill
+          <Image
+            src={product.thumbnailUrl}
+            alt={product.name}
+            fill
             className="object-cover"
-            sizes="(max-width: 640px) 47vw, 192px" unoptimized />
+            sizes="(max-width: 640px) 44vw, 160px"
+            unoptimized
+          />
         ) : (
           <div className="flex h-full items-center justify-center">
             <svg className="h-10 w-10 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,82 +100,53 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </div>
         )}
 
-        {/* Štítek vlevo nahoře */}
+        {/* Štítek */}
         {badge && (
           <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${badge.cls}`}>
             {badge.label}
           </span>
         )}
 
-        {/* SKU badge vpravo nahoře */}
-        {product.sku && (
-          <span className="absolute right-2 top-2 rounded bg-black/30 px-1.5 py-0.5 text-[9px] text-white/80">
-            {product.sku}
-          </span>
+        {/* + tlačítko */}
+        <button
+          onClick={handleAdd}
+          disabled={!isAvailable || !hasPrice}
+          aria-label="Přidat do košíku"
+          className="
+            absolute bottom-2 right-2
+            flex h-9 w-9 items-center justify-center
+            rounded-full bg-gold text-shop-bg text-xl font-bold
+            shadow-md hover:scale-110 active:scale-95 transition-transform
+            disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100
+          "
+        >
+          +
+        </button>
+      </div>
+
+      {/* Info */}
+      <div className="mt-2 px-0.5">
+        {!hasPrice ? (
+          <p className="text-sm font-semibold text-shop-muted">Cena na dotaz</p>
+        ) : (
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-[15px] font-bold text-shop-fg leading-tight">
+              {prefix}{fmtKc(displayPrice)}
+            </span>
+            {activeSalePrice && (
+              <span className="text-xs text-shop-muted line-through">{fmtKc(product.priceWithVat)}</span>
+            )}
+          </div>
+        )}
+
+        <p className="mt-0.5 text-xs font-medium text-shop-fg line-clamp-2 leading-snug">
+          {product.name}
+        </p>
+
+        {weightLabel && (
+          <p className="mt-0.5 text-[10px] text-shop-muted">{weightLabel}</p>
         )}
       </div>
-
-      {/* Tělo */}
-      <div className="flex flex-1 flex-col p-2.5">
-        <h3 className="line-clamp-2 text-xs font-semibold text-stone-900 leading-snug mb-1">
-          {product.name}
-        </h3>
-
-        <StockBadge
-          trackStock={product.trackStock}
-          stockStatus={product.stockStatus}
-          stockQuantity={product.stockQuantity}
-        />
-
-        {/* Ceny */}
-        <div className="mt-1.5">
-          {!hasPrice ? (
-            <p className="text-sm font-bold text-stone-500">Cena na dotaz</p>
-          ) : (
-            <>
-              <p className="text-[10px] text-stone-400">
-                {prefix}{fmtKc(product.priceWithoutVat)} bez DPH
-              </p>
-              <p className="text-sm font-bold text-stone-900 leading-tight">
-                {prefix}{fmtKc(product.priceWithVat)}
-              </p>
-            </>
-          )}
-        </div>
-
-        {/* Akce — spodek karty */}
-        <div className="mt-2 space-y-1.5">
-          {/* Počítadlo + Detail */}
-          <div className="flex items-center gap-1.5">
-            {/* Qty counter */}
-            <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 overflow-hidden">
-              <button
-                onClick={() => setQty(q => Math.max(1, q - 1))}
-                className="flex h-7 w-7 items-center justify-center text-stone-500 hover:bg-stone-100 transition text-sm"
-              >−</button>
-              <span className="min-w-[1.5rem] text-center text-xs font-semibold text-stone-900">{qty}</span>
-              <button
-                onClick={() => setQty(q => q + 1)}
-                className="flex h-7 w-7 items-center justify-center text-stone-500 hover:bg-stone-100 transition text-sm"
-              >+</button>
-            </div>
-
-            <Link href={`/produkty/${product.slug}`}
-              className="flex-1 rounded-lg border border-stone-200 py-1 text-center text-[10px] font-medium text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition">
-              Detail
-            </Link>
-          </div>
-
-          {/* Do košíku */}
-          <button
-            onClick={handleAddToCart}
-            disabled={!isAvailable || !hasPrice}
-            className="w-full rounded-lg bg-gold py-1.5 text-xs font-bold text-shop-bg hover:bg-gold/90 transition disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            🛒 Do košíku
-          </button>
-        </div>
-      </div>
-    </div>
+    </Link>
   )
 }

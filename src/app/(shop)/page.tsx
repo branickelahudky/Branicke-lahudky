@@ -36,6 +36,7 @@ async function CategoryTiles() {
 function serializeProduct(p: {
   id: string; slug: string; sku: string; name: string
   priceWithVat: unknown; priceWithoutVat: unknown; vatRate: unknown
+  salePriceWithVat: unknown
   isWeightBased: boolean; unit: string; weightGrams: number | null
   isNew: boolean; isOnSale: boolean; isFeatured: boolean
   stockQuantity: number; stockStatus: string; trackStock: boolean
@@ -43,15 +44,16 @@ function serializeProduct(p: {
 }): ProductCardData {
   return {
     id: p.id, slug: p.slug, sku: p.sku, name: p.name,
-    priceWithVat: Number(p.priceWithVat),
+    priceWithVat:    Number(p.priceWithVat),
     priceWithoutVat: Number(p.priceWithoutVat),
-    vatRate: Number(p.vatRate),
+    vatRate:         Number(p.vatRate),
+    salePriceWithVat: p.salePriceWithVat ? Number(p.salePriceWithVat) : null,
     isWeightBased: p.isWeightBased,
     unit: p.unit, weightGrams: p.weightGrams,
     isNew: p.isNew, isOnSale: p.isOnSale, isFeatured: p.isFeatured,
     stockQuantity: p.stockQuantity,
-    stockStatus: p.stockStatus,
-    trackStock: p.trackStock,
+    stockStatus:   p.stockStatus,
+    trackStock:    p.trackStock,
     thumbnailUrl: (() => {
       const img = p.images[0]
       if (!img) return null
@@ -102,6 +104,7 @@ async function FeaturedCategoriesSection({ title, categoryIds }: { title: string
 const FLAG_SELECT = {
   id: true, slug: true, sku: true, name: true,
   priceWithVat: true, priceWithoutVat: true, vatRate: true,
+  salePriceWithVat: true,
   isWeightBased: true, unit: true, weightGrams: true,
   isNew: true, isOnSale: true, isFeatured: true,
   stockQuantity: true, stockStatus: true, trackStock: true,

@@ -56,6 +56,7 @@ export default async function KategoriePage({ params, searchParams }: Props) {
     select: {
       id: true, slug: true, sku: true, name: true,
       priceWithVat: true, priceWithoutVat: true, vatRate: true,
+      salePriceWithVat: true,
       isWeightBased: true, unit: true, weightGrams: true,
       isNew: true, isOnSale: true, isFeatured: true,
       stockQuantity: true, stockStatus: true, trackStock: true,
@@ -65,15 +66,16 @@ export default async function KategoriePage({ params, searchParams }: Props) {
 
   const cards: ProductCardData[] = products.map((p) => ({
     id: p.id, slug: p.slug, sku: p.sku, name: p.name,
-    priceWithVat: Number(p.priceWithVat),
+    priceWithVat:    Number(p.priceWithVat),
     priceWithoutVat: Number(p.priceWithoutVat),
-    vatRate: Number(p.vatRate),
+    vatRate:         Number(p.vatRate),
+    salePriceWithVat: p.salePriceWithVat ? Number(p.salePriceWithVat) : null,
     isWeightBased: p.isWeightBased,
     unit: p.unit, weightGrams: p.weightGrams,
     isNew: p.isNew, isOnSale: p.isOnSale, isFeatured: p.isFeatured,
     stockQuantity: p.stockQuantity,
-    stockStatus: p.stockStatus,
-    trackStock: p.trackStock,
+    stockStatus:   p.stockStatus,
+    trackStock:    p.trackStock,
     thumbnailUrl: (() => {
       const img = p.images[0]
       if (!img) return null
