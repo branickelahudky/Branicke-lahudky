@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { ThemeToggle } from './ThemeToggle'
 
 export type FooterNavItem = { id: string; label: string; href: string; openNewTab: boolean }
 
@@ -96,7 +97,7 @@ export function Footer({ logoUrl, logoAlt, footerText, footerCopyright, navItems
             <div>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gold">Kontakt</h3>
               <div className="space-y-1 text-sm text-shop-muted">
-                <p className="text-white">{branch.name}</p>
+                <p className="text-shop-fg">{branch.name}</p>
                 <p>{branch.street}, {branch.zip} {branch.city}</p>
                 {branch.phone1 && <p>{branch.phone1}</p>}
                 {branch.phone2 && <p>{branch.phone2}</p>}
@@ -139,10 +140,11 @@ export function Footer({ logoUrl, logoAlt, footerText, footerCopyright, navItems
 
       {/* Copyright bar */}
       <div className="border-t border-shop-border">
-        <div className="mx-auto max-w-7xl px-4 py-4">
-          <p className="text-xs text-shop-muted text-center">
+        <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between gap-4">
+          <p className="text-xs text-shop-muted">
             {footerCopyright ?? `© ${new Date().getFullYear()} Branické lahůdkářství`}
           </p>
+          <ThemeToggle />
         </div>
       </div>
     </footer>

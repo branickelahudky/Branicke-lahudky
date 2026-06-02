@@ -1,3 +1,47 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Shop theme tokens ──────────────────────────────────────────────
+   Výchozí: tmavá (dark). Světlá se aktivuje atributem
+   data-theme="light" na kořenovém divu shop layoutu (#shop-root).
+   ------------------------------------------------------------------ */
+
+:root {
+  --shop-bg:      #0a0a0a;
+  --shop-surface: #141414;
+  --shop-card:    #1c1c1c;
+  --shop-border:  #2a2a2a;
+  --shop-muted:   #6b6b6b;
+  --shop-fg:      #ffffff;
+}
+
+[data-theme="light"] {
+  --shop-bg:      #fafafa;
+  --shop-surface: #ffffff;
+  --shop-card:    #f3f4f6;
+  --shop-border:  #e5e7eb;
+  --shop-muted:   #6b7280;
+  --shop-fg:      #1a1a1a;
+}
+
+/* ── Text overrides pro světlý režim ────────────────────────────────
+   Tailwind třídy jako text-stone-300 byly navrženy pro tmavé pozadí
+   a v light módu by byly nečitelné. Přepínáme je na tmavší hodnotu.
+   Scope na [data-theme] zaručuje, že admin se vůbec nedotkne.
+   ------------------------------------------------------------------ */
+
+/* Sekundární text (navigace, popisky) — byl světle šedý na tmavém bg */
+[data-theme="light"] .text-stone-300,
+[data-theme="light"] .text-stone-200 {
+  color: #4b5563;
+}
+
+/* text-shop-bg používáme VÝHRADNĚ jako text na zlatých tlačítkách
+   (bg-gold text-shop-bg). V tmavém módu shop-bg=#0a0a0a → tmavý text.
+   V světlém módu shop-bg=#fafafa → světlý text na zlatém → nečitelné.
+   Vždy chceme tmavý text na zlatém, bez ohledu na téma. */
+[data-theme="light"] .text-shop-bg,
+[data-theme="light"] .hover\:text-shop-bg:hover {
+  color: #1a1a1a;
+}

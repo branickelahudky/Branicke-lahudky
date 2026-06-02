@@ -111,7 +111,7 @@ export default async function KategoriePage({ params, searchParams }: Props) {
 
       {/* Nadpis */}
       <div className="mb-6 flex items-baseline gap-3">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-bold text-shop-fg">
           {activeSub ? activeSub.name : category.name}
         </h1>
         <span className="text-sm text-shop-muted">{cards.length} produktů</span>

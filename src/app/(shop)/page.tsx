@@ -186,7 +186,7 @@ function AboutTextSection({ title, text }: { title: string | null; text: string 
   return (
     <section className="py-10 border-t border-shop-border">
       <div className="mx-auto max-w-3xl px-4 text-center">
-        {title && <h2 className="mb-4 text-2xl font-bold text-white">{title}</h2>}
+        {title && <h2 className="mb-4 text-2xl font-bold text-shop-fg">{title}</h2>}
         <p className="leading-relaxed text-stone-300">{text}</p>
       </div>
     </section>
@@ -216,7 +216,7 @@ async function CarouselSection({ title }: { title: string | null }) {
     <section>
       {title && (
         <div className="mx-auto max-w-7xl px-4 pt-8 pb-4">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
+          <h2 className="text-xl font-bold text-shop-fg">{title}</h2>
         </div>
       )}
       <CarouselClient slides={slides} />

@@ -25,10 +25,10 @@ export function CartDrawer() {
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-shop-border px-5 py-4">
-          <h2 className="text-lg font-bold text-white">
+          <h2 className="text-lg font-bold text-shop-fg">
             Košík {totalQty > 0 && <span className="ml-1 text-gold">({totalQty})</span>}
           </h2>
-          <button onClick={closeCart} className="rounded p-1 text-shop-muted hover:text-white transition" aria-label="Zavřít košík">
+          <button onClick={closeCart} className="rounded p-1 text-shop-muted hover:text-shop-fg transition" aria-label="Zavřít košík">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -57,7 +57,7 @@ export function CartDrawer() {
 
                   {/* Info */}
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-sm font-medium text-white leading-snug">{item.name}</p>
+                    <p className="line-clamp-2 text-sm font-medium text-shop-fg leading-snug">{item.name}</p>
                     <p className="mt-0.5 text-xs text-shop-muted">
                       {fmtKc(item.unitPriceWithVat)}{item.isWeightBased ? ` / ${item.unit.toLowerCase()}` : ' / ks'}
                     </p>
@@ -66,10 +66,10 @@ export function CartDrawer() {
                       {/* Qty */}
                       <div className="flex items-center gap-1">
                         <button onClick={() => updateQty(item.productId, item.qty - 1)}
-                          className="flex h-6 w-6 items-center justify-center rounded bg-shop-border text-sm text-white hover:bg-shop-muted/50 transition">−</button>
-                        <span className="min-w-[1.5rem] text-center text-sm font-medium text-white">{item.qty}</span>
+                          className="flex h-6 w-6 items-center justify-center rounded bg-shop-border text-sm text-shop-fg hover:bg-shop-muted/50 transition">−</button>
+                        <span className="min-w-[1.5rem] text-center text-sm font-medium text-shop-fg">{item.qty}</span>
                         <button onClick={() => updateQty(item.productId, item.qty + 1)}
-                          className="flex h-6 w-6 items-center justify-center rounded bg-shop-border text-sm text-white hover:bg-shop-muted/50 transition">+</button>
+                          className="flex h-6 w-6 items-center justify-center rounded bg-shop-border text-sm text-shop-fg hover:bg-shop-muted/50 transition">+</button>
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
@@ -94,7 +94,7 @@ export function CartDrawer() {
           <div className="border-t border-shop-border px-5 py-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-stone-300 text-sm">Mezisoučet (s DPH)</span>
-              <span className="text-xl font-bold text-white">{fmtKc(subtotalWithVat)}</span>
+              <span className="text-xl font-bold text-shop-fg">{fmtKc(subtotalWithVat)}</span>
             </div>
             <p className="text-xs text-shop-muted">Doprava se spočítá v pokladně.</p>
             <button disabled

@@ -37,7 +37,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
 
   return (
     <CartProvider>
-    <div className="min-h-screen bg-shop-bg text-white">
+    <div id="shop-root" data-theme="light" className="min-h-screen bg-shop-bg text-shop-fg">
       <Header
         logoUrl={identity?.logoUrl ?? null}
         logoAlt={identity?.logoAlt ?? null}

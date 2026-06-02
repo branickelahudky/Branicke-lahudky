@@ -42,7 +42,7 @@ export function Header({ logoUrl, logoAlt, navItems }: Props) {
               <input
                 type="search"
                 placeholder="Hledat produkty…"
-                className="w-full rounded-full bg-shop-surface border border-shop-border px-5 py-2 text-sm text-white placeholder-shop-muted focus:outline-none focus:border-gold/50"
+                className="w-full rounded-full bg-shop-surface border border-shop-border px-5 py-2 text-sm text-shop-fg placeholder-shop-muted focus:outline-none focus:border-gold/50"
                 readOnly
               />
               <button className="absolute right-3 top-1/2 -translate-y-1/2 text-shop-muted hover:text-gold">
@@ -55,7 +55,7 @@ export function Header({ logoUrl, logoAlt, navItems }: Props) {
 
           <div className="ml-auto flex items-center gap-3">
             {/* Search icon — mobile */}
-            <button className="md:hidden text-shop-muted hover:text-white p-1">
+            <button className="md:hidden text-shop-muted hover:text-shop-fg p-1">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -75,7 +75,7 @@ export function Header({ logoUrl, logoAlt, navItems }: Props) {
 
             {/* Hamburger — mobile */}
             <button
-              className="md:hidden p-1 text-shop-muted hover:text-white"
+              className="md:hidden p-1 text-shop-muted hover:text-shop-fg"
               onClick={() => setMenuOpen((o) => !o)}
               aria-label="Menu"
             >
@@ -100,7 +100,7 @@ export function Header({ logoUrl, logoAlt, navItems }: Props) {
                 key={item.id}
                 href={item.href}
                 target={item.openNewTab ? '_blank' : undefined}
-                className="whitespace-nowrap rounded px-3 py-1 text-sm text-stone-300 hover:text-white hover:bg-shop-surface transition"
+                className="whitespace-nowrap rounded px-3 py-1 text-sm text-stone-300 hover:text-shop-fg hover:bg-shop-surface transition"
               >
                 {item.label}
               </Link>
@@ -117,7 +117,7 @@ export function Header({ logoUrl, logoAlt, navItems }: Props) {
             <input
               type="search"
               placeholder="Hledat produkty…"
-              className="w-full rounded-full bg-shop-card border border-shop-border px-4 py-2 text-sm text-white placeholder-shop-muted focus:outline-none"
+              className="w-full rounded-full bg-shop-card border border-shop-border px-4 py-2 text-sm text-shop-fg placeholder-shop-muted focus:outline-none"
               readOnly
             />
           </div>
@@ -128,7 +128,7 @@ export function Header({ logoUrl, logoAlt, navItems }: Props) {
                 key={item.id}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
-                className="rounded px-3 py-2 text-sm text-stone-300 hover:text-white hover:bg-shop-card transition"
+                className="rounded px-3 py-2 text-sm text-stone-300 hover:text-shop-fg hover:bg-shop-card transition"
               >
                 {item.label}
               </Link>
