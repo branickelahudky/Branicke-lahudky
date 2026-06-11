@@ -298,11 +298,22 @@ async function main() {
       // Slug: prefer name-based; ensure uniqueness by appending shoptetId if needed
       let slug = slugify(name)
 
-      // Descriptions (strip CDATA wrapper if present)
+      // Descriptions — CDATA s HTML parser vrací jako { __cdata: "<p>…" },
+      // proto čteme z .__cdata (fallback na #text / string).
       const stripCdata = (v: unknown): string => {
-        if (!v) return ''
-        const s = String(v)
-        return s.replace(/<!\[CDATA\[|\]\]>/g, '').trim()
+        if (v == null) return ''
+        if (typeof v === 'string') return v.replace(/<!\[CDATA\[|\]\]>/g, '').trim()
+        if (typeof v === 'number' || typeof v === 'boolean') return String(v)
+        if (typeof v === 'object') {
+          const o = v as Record<string, unknown>
+          if ('__cdata' in o && o.__cdata != null) {
+            const c = o.__cdata
+            const s = Array.isArray(c) ? c.map((x) => String(x)).join('') : String(c)
+            return s.replace(/<!\[CDATA\[|\]\]>/g, '').trim()
+          }
+          if ('#text' in o && o['#text'] != null) return String(o['#text']).trim()
+        }
+        return ''
       }
       const shortDescription = stripCdata(item.SHORT_DESCRIPTION)
       const description = stripCdata(item.DESCRIPTION)

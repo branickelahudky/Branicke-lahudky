@@ -17,7 +17,8 @@
     "admin:reset-password": "tsx scripts/reset-admin-password.ts",
     "db:test-orders": "tsx scripts/create-test-orders.ts",
     "db:import-shoptet": "tsx scripts/import-shoptet.ts",
-    "db:import-customers": "tsx scripts/import-shoptet-customers.ts"
+    "db:import-customers": "tsx scripts/import-shoptet-customers.ts",
+    "db:reimport-descriptions": "tsx scripts/reimport-descriptions.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1056.0",
