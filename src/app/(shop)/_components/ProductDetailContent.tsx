@@ -152,7 +152,7 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
                 src={mainSrc}
                 alt={mainImage?.altText ?? product.name}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="(max-width: 640px) 90vw, 400px"
                 priority
                 unoptimized

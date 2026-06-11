@@ -1,7 +1,7 @@
 import crypto from 'crypto'
-import sharp from 'sharp'
 import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { r2Client, R2_BUCKET, R2_PUBLIC_URL } from './r2-client'
+import { trimToContent, padToSquare, keptAreaRatio, MIN_KEPT_RATIO } from './normalize-image'
 
 type UploadResult = {
   url: string
@@ -22,26 +22,15 @@ export async function processAndUpload(
   const storageKey = `products/${productId}/${hex}.jpg`
   const thumbnailKey = `products/${productId}/${hex}-thumb.jpg`
 
-  const WHITE = { r: 255, g: 255, b: 255, alpha: 1 }
+  // Trim jednolitého pozadí + jednotné usazení produktu (~82 % plochy).
+  // Když by trim ořízl >95 % plochy, použij celý obrázek (fotku nezničíme).
+  const trim = await trimToContent(buffer)
+  const content = keptAreaRatio(trim) < MIN_KEPT_RATIO ? trim.preBuffer : trim.trimmedBuffer
 
-  const [mainResult, thumbBuffer] = await Promise.all([
-    // Hlavní: čtverec 800×800, celá fotka (contain), bílé pozadí
-    sharp(buffer)
-      .rotate()
-      .resize(800, 800, { fit: 'contain', background: WHITE })
-      .flatten({ background: '#ffffff' })
-      .jpeg({ quality: 85, progressive: true })
-      .toBuffer({ resolveWithObject: true }),
-    // Thumbnail: čtverec 400×400, celá fotka (contain), bílé pozadí
-    sharp(buffer)
-      .rotate()
-      .resize(400, 400, { fit: 'contain', background: WHITE })
-      .flatten({ background: '#ffffff' })
-      .jpeg({ quality: 82, progressive: true })
-      .toBuffer(),
+  const [mainBuffer, thumbBuffer] = await Promise.all([
+    padToSquare(content, 800, undefined, 85), // hlavní 800×800
+    padToSquare(content, 400, undefined, 82), // thumbnail 400×400
   ])
-
-  const { data: mainBuffer, info } = mainResult
 
   await Promise.all([
     r2Client.send(
@@ -67,8 +56,8 @@ export async function processAndUpload(
     thumbnailUrl: `${R2_PUBLIC_URL}/${thumbnailKey}`,
     storageKey,
     thumbnailKey,
-    width: info.width,
-    height: info.height,
+    width: 800,
+    height: 800,
     fileSize: mainBuffer.length,
     mimeType: 'image/jpeg',
   }

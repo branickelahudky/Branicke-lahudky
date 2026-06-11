@@ -87,7 +87,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             src={product.thumbnailUrl}
             alt={product.name}
             fill
-            className="object-cover"
+            className="object-contain"
             sizes="(max-width: 640px) 44vw, 160px"
             unoptimized
           />
