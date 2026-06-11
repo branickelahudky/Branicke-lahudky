@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { BannerLinkType } from '@prisma/client'
+import { BannerLinkType, BannerPlacement } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-roles'
 import { deleteFromR2 } from '@/lib/image-upload'
@@ -15,6 +15,9 @@ export type BannerFormData = {
   imageUrl: string
   imageStorageKey: string
   imageAlt: string | null
+  placement: BannerPlacement
+  title: string | null
+  subtitle: string | null
   linkType: BannerLinkType
   pageId: string | null
   categoryId: string | null
@@ -27,13 +30,17 @@ export async function createBanner(data: BannerFormData) {
   if (!data.imageUrl) throw new Error('Obrázek banneru je povinný.')
   validateLink(data)
 
-  const sortOrder = await prisma.banner.count()
+  // Řazení v rámci stejného umístění (nový banner se přidá na konec své pozice)
+  const sortOrder = await prisma.banner.count({ where: { placement: data.placement } })
 
   await prisma.banner.create({
     data: {
       imageUrl: data.imageUrl,
       imageStorageKey: data.imageStorageKey,
       imageAlt: data.imageAlt?.trim() || null,
+      placement: data.placement,
+      title: data.title?.trim() || null,
+      subtitle: data.subtitle?.trim() || null,
       linkType: data.linkType,
       pageId: data.linkType === 'PAGE' ? data.pageId : null,
       categoryId: data.linkType === 'CATEGORY' ? data.categoryId : null,
@@ -44,6 +51,7 @@ export async function createBanner(data: BannerFormData) {
   })
 
   revalidatePath('/admin/vzhled/bannery')
+  revalidatePath('/')
 }
 
 export async function updateBanner(id: string, data: Omit<BannerFormData, 'imageUrl' | 'imageStorageKey'> & {
@@ -65,6 +73,9 @@ export async function updateBanner(id: string, data: Omit<BannerFormData, 'image
     data: {
       ...(data.imageUrl && { imageUrl: data.imageUrl, imageStorageKey: data.imageStorageKey }),
       imageAlt: data.imageAlt?.trim() || null,
+      placement: data.placement,
+      title: data.title?.trim() || null,
+      subtitle: data.subtitle?.trim() || null,
       linkType: data.linkType,
       pageId: data.linkType === 'PAGE' ? data.pageId : null,
       categoryId: data.linkType === 'CATEGORY' ? data.categoryId : null,
@@ -74,6 +85,7 @@ export async function updateBanner(id: string, data: Omit<BannerFormData, 'image
   })
 
   revalidatePath('/admin/vzhled/bannery')
+  revalidatePath('/')
 }
 
 export async function deleteBanner(id: string) {
@@ -87,6 +99,7 @@ export async function deleteBanner(id: string) {
   await deleteFromR2(banner.imageStorageKey).catch(() => {})
   await prisma.banner.delete({ where: { id } })
   revalidatePath('/admin/vzhled/bannery')
+  revalidatePath('/')
 }
 
 export async function toggleBannerVisibility(id: string) {
@@ -94,6 +107,7 @@ export async function toggleBannerVisibility(id: string) {
   const b = await prisma.banner.findUniqueOrThrow({ where: { id }, select: { isVisible: true } })
   await prisma.banner.update({ where: { id }, data: { isVisible: !b.isVisible } })
   revalidatePath('/admin/vzhled/bannery')
+  revalidatePath('/')
 }
 
 export async function reorderBanners(ids: string[]) {
@@ -102,6 +116,7 @@ export async function reorderBanners(ids: string[]) {
     ids.map((id, index) => prisma.banner.update({ where: { id }, data: { sortOrder: index } }))
   )
   revalidatePath('/admin/vzhled/bannery')
+  revalidatePath('/')
 }
 
 function validateLink(data: Pick<BannerFormData, 'linkType' | 'pageId' | 'categoryId' | 'url'>) {

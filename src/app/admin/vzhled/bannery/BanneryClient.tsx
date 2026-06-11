@@ -14,7 +14,7 @@ import {
   createBanner, updateBanner, deleteBanner, toggleBannerVisibility, reorderBanners,
   type BannerFormData,
 } from './actions'
-import type { BannerLinkType } from '@prisma/client'
+import type { BannerLinkType, BannerPlacement } from '@prisma/client'
 
 // ── Typy ─────────────────────────────────────────────────────────
 
@@ -23,6 +23,9 @@ export type SerializedBanner = {
   imageUrl: string
   imageStorageKey: string
   imageAlt: string | null
+  placement: BannerPlacement
+  title: string | null
+  subtitle: string | null
   linkType: BannerLinkType
   pageId: string | null
   pageName: string | null
@@ -50,14 +53,33 @@ const LINK_LABELS: Record<BannerLinkType, string> = {
   NONE: 'Bez odkazu', PAGE: 'Stránka', CATEGORY: 'Kategorie', URL: 'Vlastní URL',
 }
 
+// ── Umístění bannerů ──────────────────────────────────────────────
+
+type PlacementMeta = { value: BannerPlacement; label: string; short: string; dims: string; aspect: string }
+
+const PLACEMENTS: PlacementMeta[] = [
+  { value: 'CAROUSEL',    label: 'Carousel (hlavní nahoře)',        short: 'Carousel',       dims: '1920×720 (16:6)', aspect: 'aspect-[16/6]'  },
+  { value: 'PROMO_TILE',  label: 'Promo dlaždice (pod carouselem)', short: 'Promo dlaždice', dims: '600×400 (3:2)',   aspect: 'aspect-[3/2]'   },
+  { value: 'MID_WIDE',    label: 'Široký banner (mezi regály)',     short: 'Široký banner',  dims: '1920×480 (4:1)',  aspect: 'aspect-[4/1]'   },
+  { value: 'FOOTER_CARD', label: 'Karta nad patičkou',              short: 'Karta patička',  dims: '800×500 (16:10)', aspect: 'aspect-[16/10]' },
+]
+
+const PLACEMENT_META: Record<BannerPlacement, PlacementMeta> = Object.fromEntries(
+  PLACEMENTS.map((p) => [p.value, p]),
+) as Record<BannerPlacement, PlacementMeta>
+
 // ── Upload widget ─────────────────────────────────────────────────
 
 function ImageUpload({
   currentUrl,
   onUploaded,
+  aspect = 'aspect-[16/6]',
+  hint,
 }: {
   currentUrl: string | null
   onUploaded: (imageUrl: string, storageKey: string) => void
+  aspect?: string
+  hint?: string
 }) {
   const [uploading, setUploading] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -90,7 +112,7 @@ function ImageUpload({
     <div className="space-y-2">
       {/* Preview */}
       {currentUrl && (
-        <div className="relative w-full aspect-[16/6] overflow-hidden rounded-lg border border-stone-200 bg-stone-100">
+        <div className={`relative w-full ${aspect} overflow-hidden rounded-lg border border-stone-200 bg-stone-100`}>
           <Image src={currentUrl} alt="Náhled banneru" fill className="object-cover" unoptimized />
         </div>
       )}
@@ -113,7 +135,7 @@ function ImageUpload({
             </span>
         }
       </div>
-      <p className="text-xs text-stone-400">JPG, PNG, WebP · max {MAX_MB} MB · doporučený poměr 16:6, šířka min. 1600 px</p>
+      <p className="text-xs text-stone-400">JPG, PNG, WebP · max {MAX_MB} MB{hint ? ` · ${hint}` : ''}</p>
       <input ref={inputRef} type="file" accept={ALLOWED.join(',')} className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f) }} />
     </div>
@@ -124,12 +146,14 @@ function ImageUpload({
 
 function BannerForm({
   initial,
+  defaultPlacement,
   pages,
   categories,
   onClose,
   onSave,
 }: {
   initial?: SerializedBanner
+  defaultPlacement?: BannerPlacement
   pages: PageOption[]
   categories: CategoryOption[]
   onClose: () => void
@@ -138,12 +162,17 @@ function BannerForm({
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? '')
   const [storageKey, setStorageKey] = useState(initial?.imageStorageKey ?? '')
   const [imageAlt, setImageAlt] = useState(initial?.imageAlt ?? '')
+  const [placement, setPlacement] = useState<BannerPlacement>(initial?.placement ?? defaultPlacement ?? 'CAROUSEL')
+  const [title, setTitle] = useState(initial?.title ?? '')
+  const [subtitle, setSubtitle] = useState(initial?.subtitle ?? '')
   const [linkType, setLinkType] = useState<BannerLinkType>(initial?.linkType ?? 'NONE')
   const [pageId, setPageId] = useState(initial?.pageId ?? '')
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '')
   const [url, setUrl] = useState(initial?.url ?? '')
   const [openNewTab, setOpenNewTab] = useState(initial?.openNewTab ?? false)
   const [isPending, startTransition] = useTransition()
+
+  const placementMeta = PLACEMENT_META[placement]
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -159,6 +188,9 @@ function BannerForm({
           id: initial?.id,
           imageUrl, imageStorageKey: storageKey,
           imageAlt: imageAlt || null,
+          placement,
+          title: title || null,
+          subtitle: subtitle || null,
           linkType,
           pageId: pageId || null,
           categoryId: categoryId || null,
@@ -183,14 +215,44 @@ function BannerForm({
         </div>
 
         <div className="space-y-4 px-5 py-4">
+          {/* Umístění */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-stone-700">Umístění</label>
+            <select value={placement} onChange={(e) => setPlacement(e.target.value as BannerPlacement)} className={inputCls}>
+              {PLACEMENTS.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-stone-400">Doporučený rozměr: {placementMeta.dims}</p>
+          </div>
+
           {/* Upload */}
           <div>
             <label className="mb-1 block text-sm font-medium text-stone-700">Obrázek *</label>
             <ImageUpload
               currentUrl={imageUrl || null}
               onUploaded={(u, k) => { setImageUrl(u); setStorageKey(k) }}
+              aspect={placementMeta.aspect}
+              hint={`doporučený rozměr ${placementMeta.dims}`}
             />
           </div>
+
+          {/* Titulek + podtitulek */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-stone-700">Titulek (nepovinný)</label>
+              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+                placeholder="např. Cenové trháky týdne" className={inputCls} />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-stone-700">Podtitulek (nepovinný)</label>
+              <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)}
+                placeholder="např. sleva až 53 %" className={inputCls} />
+            </div>
+          </div>
+          <p className="-mt-2 text-xs text-stone-400">
+            Titulek/podtitulek se zobrazí u promo dlaždic, širokého banneru a karet nad patičkou.
+          </p>
 
           {/* Alt */}
           <div>
@@ -295,7 +357,7 @@ function SortableBannerCard({
       }`}
     >
       {/* Obrázek */}
-      <div className="relative aspect-[16/6] bg-stone-100">
+      <div className={`relative ${PLACEMENT_META[banner.placement].aspect} bg-stone-100`}>
         <Image src={banner.imageUrl} alt={banner.imageAlt ?? 'Banner'} fill
           className="object-cover" unoptimized />
         {/* Drag handle */}
@@ -314,6 +376,12 @@ function SortableBannerCard({
 
       {/* Info + akce */}
       <div className="px-3 py-2.5">
+        {(banner.title || banner.subtitle) && (
+          <p className="mb-1 truncate text-sm font-medium text-stone-800">
+            {banner.title}
+            {banner.subtitle && <span className="ml-1.5 font-normal text-stone-400">{banner.subtitle}</span>}
+          </p>
+        )}
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <span className="rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-500">
@@ -351,22 +419,27 @@ function SortableBannerCard({
 
 export function BanneryClient({ banners: initialBanners, pages, categories }: Props) {
   const [banners, setBanners] = useState<SerializedBanner[]>(initialBanners)
+  const [activePlacement, setActivePlacement] = useState<BannerPlacement>('CAROUSEL')
   const [showAdd, setShowAdd] = useState(false)
   const [editTarget, setEditTarget] = useState<SerializedBanner | null>(null)
   const [, startTransition] = useTransition()
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
+  const visible = banners.filter((b) => b.placement === activePlacement)
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    setBanners((prev) => {
-      const oldIdx = prev.findIndex((b) => b.id === active.id)
-      const newIdx = prev.findIndex((b) => b.id === over.id)
-      const next = arrayMove(prev, oldIdx, newIdx)
-      reorderBanners(next.map((b) => b.id)).catch(() => toast.error('Chyba při ukládání pořadí'))
-      return next
-    })
+    const group = banners.filter((b) => b.placement === activePlacement)
+    const oldIdx = group.findIndex((b) => b.id === active.id)
+    const newIdx = group.findIndex((b) => b.id === over.id)
+    if (oldIdx < 0 || newIdx < 0) return
+    const reordered = arrayMove(group, oldIdx, newIdx)
+    // Slož zpět: ostatní umístění beze změny + přerovnaná skupina
+    const others = banners.filter((b) => b.placement !== activePlacement)
+    setBanners([...others, ...reordered])
+    reorderBanners(reordered.map((b) => b.id)).catch(() => toast.error('Chyba při ukládání pořadí'))
   }
 
   async function handleCreate(data: BannerFormData & { id?: string }) {
@@ -400,11 +473,31 @@ export function BanneryClient({ banners: initialBanners, pages, categories }: Pr
     }
   }
 
+  const activeMeta = PLACEMENT_META[activePlacement]
+
   return (
     <div className="space-y-4">
+      {/* Záložky umístění */}
+      <div className="flex flex-wrap gap-1.5 border-b border-stone-200 pb-3">
+        {PLACEMENTS.map((p) => {
+          const count = banners.filter((b) => b.placement === p.value).length
+          const active = activePlacement === p.value
+          return (
+            <button key={p.value} onClick={() => setActivePlacement(p.value)}
+              className={`rounded-full border px-3 py-1 text-sm transition ${
+                active ? 'border-blue-500 bg-blue-50 font-medium text-blue-700' : 'border-stone-300 text-stone-600 hover:bg-stone-50'
+              }`}>
+              {p.short}
+              <span className={`ml-1.5 text-xs ${active ? 'text-blue-400' : 'text-stone-400'}`}>{count}</span>
+            </button>
+          )
+        })}
+      </div>
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-stone-500">
-          {banners.length === 0 ? 'Zatím žádné bannery.' : `${banners.length} banner${banners.length > 1 ? 'y' : ''} · Přetažením měňte pořadí.`}
+          <span className="font-medium text-stone-700">{activeMeta.label}</span>
+          <span className="ml-2 text-stone-400">doporučený rozměr {activeMeta.dims}</span>
         </p>
         <button onClick={() => setShowAdd(true)}
           className="rounded bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700">
@@ -412,17 +505,17 @@ export function BanneryClient({ banners: initialBanners, pages, categories }: Pr
         </button>
       </div>
 
-      {banners.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-200 py-16 text-center">
           <div className="mb-3 text-5xl text-stone-200">🖼</div>
-          <p className="font-medium text-stone-500">Zatím žádné bannery</p>
-          <p className="mt-1 text-sm text-stone-400">Přidejte první banner tlačítkem výše.</p>
+          <p className="font-medium text-stone-500">Žádné bannery v této pozici</p>
+          <p className="mt-1 text-sm text-stone-400">Přidejte banner tlačítkem výše — uloží se do „{activeMeta.short}".</p>
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={banners.map((b) => b.id)} strategy={rectSortingStrategy}>
+          <SortableContext items={visible.map((b) => b.id)} strategy={rectSortingStrategy}>
             <div className="space-y-3">
-              {banners.map((banner) => (
+              {visible.map((banner) => (
                 <SortableBannerCard
                   key={banner.id}
                   banner={banner}
@@ -437,7 +530,7 @@ export function BanneryClient({ banners: initialBanners, pages, categories }: Pr
       )}
 
       {showAdd && (
-        <BannerForm pages={pages} categories={categories}
+        <BannerForm defaultPlacement={activePlacement} pages={pages} categories={categories}
           onClose={() => setShowAdd(false)} onSave={handleCreate} />
       )}
       {editTarget && (

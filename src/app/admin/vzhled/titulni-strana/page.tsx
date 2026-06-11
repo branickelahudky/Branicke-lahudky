@@ -11,15 +11,22 @@ import {
 export default async function TitulniStranaPage() {
   const { user } = await requireAuth()
 
-  const [sections, cats, activeBannerCount] = await Promise.all([
+  const [sections, cats, bannerGroups] = await Promise.all([
     prisma.homepageSection.findMany({ orderBy: { sortOrder: 'asc' } }),
     prisma.category.findMany({
       where: { isActive: true },
       orderBy: [{ parentId: 'asc' }, { name: 'asc' }],
       select: { id: true, name: true, parent: { select: { name: true } } },
     }),
-    prisma.banner.count({ where: { isVisible: true } }),
+    prisma.banner.groupBy({
+      by: ['placement'],
+      where: { isVisible: true },
+      _count: { _all: true },
+    }),
   ])
+
+  const bannerCounts: Record<string, number> = {}
+  for (const g of bannerGroups) bannerCounts[g.placement] = g._count._all
 
   const serializedSections: SerializedSection[] = sections.map((s) => ({
     id: s.id,
@@ -47,7 +54,7 @@ export default async function TitulniStranaPage() {
           <HomepageClient
             sections={serializedSections}
             categories={serializedCategories}
-            activeBannerCount={activeBannerCount}
+            bannerCounts={bannerCounts}
           />
         </div>
       </div>

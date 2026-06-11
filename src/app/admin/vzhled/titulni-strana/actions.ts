@@ -15,6 +15,7 @@ export async function toggleSectionVisibility(id: string) {
   const s = await prisma.homepageSection.findUniqueOrThrow({ where: { id }, select: { isVisible: true } })
   await prisma.homepageSection.update({ where: { id }, data: { isVisible: !s.isVisible } })
   revalidatePath('/admin/vzhled/titulni-strana')
+  revalidatePath('/')
 }
 
 export async function reorderSections(ids: string[]) {
@@ -23,6 +24,7 @@ export async function reorderSections(ids: string[]) {
     ids.map((id, i) => prisma.homepageSection.update({ where: { id }, data: { sortOrder: i } }))
   )
   revalidatePath('/admin/vzhled/titulni-strana')
+  revalidatePath('/')
 }
 
 // CAROUSEL — žádná konfigurace, jen title
@@ -30,6 +32,16 @@ export async function saveCarouselSection(id: string, title: string | null) {
   await authCheck()
   await prisma.homepageSection.update({ where: { id }, data: { title: title?.trim() || null } })
   revalidatePath('/admin/vzhled/titulni-strana')
+  revalidatePath('/')
+}
+
+// Banner-based sekce (PROMO_TILES, MID_BANNER, FOOTER_CARDS) — jen title,
+// obsah se řídí bannery s odpovídajícím umístěním
+export async function saveSectionTitle(id: string, title: string | null) {
+  await authCheck()
+  await prisma.homepageSection.update({ where: { id }, data: { title: title?.trim() || null } })
+  revalidatePath('/admin/vzhled/titulni-strana')
+  revalidatePath('/')
 }
 
 // FEATURED_CATEGORIES
@@ -42,6 +54,7 @@ export async function saveFeaturedCategories(id: string, categoryIds: string[], 
     data: { title: title?.trim() || null, config: { categoryIds } },
   })
   revalidatePath('/admin/vzhled/titulni-strana')
+  revalidatePath('/')
 }
 
 // FEATURED_PRODUCTS
@@ -65,6 +78,7 @@ export async function saveFeaturedProducts(
     },
   })
   revalidatePath('/admin/vzhled/titulni-strana')
+  revalidatePath('/')
 }
 
 // ABOUT_TEXT
@@ -75,6 +89,7 @@ export async function saveAboutText(id: string, text: string, title: string | nu
     data: { title: title?.trim() || null, config: { text: text.trim() } },
   })
   revalidatePath('/admin/vzhled/titulni-strana')
+  revalidatePath('/')
 }
 
 // Live search produktů pro ruční výběr

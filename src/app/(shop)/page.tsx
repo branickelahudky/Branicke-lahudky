@@ -1,8 +1,30 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { CarouselClient, type CarouselSlide } from './_components/CarouselClient'
 import { ProductCard, type ProductCardData } from './_components/ProductCard'
 import { HorizontalShelf } from './_components/HorizontalShelf'
+
+// ── Sdílené řešení odkazu banneru dle linkType ────────────────────
+
+type BannerLinkSource = {
+  linkType: string
+  page: { slug: string } | null
+  category: { slug: string } | null
+  url: string | null
+}
+
+function resolveBannerHref(b: BannerLinkSource): string | null {
+  if (b.linkType === 'PAGE' && b.page?.slug) return `/${b.page.slug}`
+  if (b.linkType === 'CATEGORY' && b.category?.slug) return `/kategorie/${b.category.slug}`
+  if (b.linkType === 'URL' && b.url) return b.url
+  return null
+}
+
+const BANNER_LINK_INCLUDE = {
+  page: { select: { slug: true } },
+  category: { select: { slug: true } },
+} as const
 
 // ── Dlaždice top-level kategorií ──────────────────────────────────
 
@@ -200,20 +222,17 @@ function AboutTextSection({ title, text }: { title: string | null; text: string 
 
 async function CarouselSection({ title }: { title: string | null }) {
   const banners = await prisma.banner.findMany({
-    where: { isVisible: true },
+    where: { isVisible: true, placement: 'CAROUSEL' },
     orderBy: { sortOrder: 'asc' },
-    include: { page: { select: { slug: true } } },
+    include: BANNER_LINK_INCLUDE,
   })
 
   if (!banners.length) return null
 
-  const slides: CarouselSlide[] = banners.map((b) => {
-    let href: string | null = null
-    if (b.linkType === 'PAGE' && b.page?.slug) href = `/${b.page.slug}`
-    else if (b.linkType === 'CATEGORY' && b.categoryId) href = `/kategorie/${b.categoryId}`
-    else if (b.linkType === 'URL' && b.url) href = b.url
-    return { id: b.id, imageUrl: b.imageUrl, imageAlt: b.imageAlt, href, openNewTab: b.openNewTab }
-  })
+  const slides: CarouselSlide[] = banners.map((b) => ({
+    id: b.id, imageUrl: b.imageUrl, imageAlt: b.imageAlt,
+    href: resolveBannerHref(b), openNewTab: b.openNewTab,
+  }))
 
   return (
     <section>
@@ -223,6 +242,121 @@ async function CarouselSection({ title }: { title: string | null }) {
         </div>
       )}
       <CarouselClient slides={slides} />
+    </section>
+  )
+}
+
+// ── A) Promo dlaždice (placement = PROMO_TILE) ────────────────────
+
+async function PromoTilesSection() {
+  const banners = await prisma.banner.findMany({
+    where: { isVisible: true, placement: 'PROMO_TILE' },
+    orderBy: { sortOrder: 'asc' },
+    include: BANNER_LINK_INCLUDE,
+  })
+  if (!banners.length) return null
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {banners.map((b) => {
+          const href = resolveBannerHref(b)
+          const inner = (
+            <div className="group relative aspect-[3/2] overflow-hidden rounded-2xl bg-shop-card">
+              <Image src={b.imageUrl} alt={b.imageAlt ?? b.title ?? ''} fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 640px) 50vw, 20vw" unoptimized />
+              {(b.title || b.subtitle) && (
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-3">
+                  {b.title && <p className="text-sm font-bold leading-tight text-white">{b.title}</p>}
+                  {b.subtitle && <p className="mt-0.5 text-xs text-white/85">{b.subtitle}</p>}
+                </div>
+              )}
+            </div>
+          )
+          return href ? (
+            <Link key={b.id} href={href} target={b.openNewTab ? '_blank' : undefined}>{inner}</Link>
+          ) : (
+            <div key={b.id}>{inner}</div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+// ── B) Široký banner mezi regály (placement = MID_WIDE) ───────────
+
+async function MidBannerSection() {
+  const b = await prisma.banner.findFirst({
+    where: { isVisible: true, placement: 'MID_WIDE' },
+    orderBy: { sortOrder: 'asc' },
+    include: BANNER_LINK_INCLUDE,
+  })
+  if (!b) return null
+
+  const href = resolveBannerHref(b)
+  const inner = (
+    <div className="group relative aspect-[4/1] overflow-hidden rounded-2xl bg-shop-card">
+      <Image src={b.imageUrl} alt={b.imageAlt ?? b.title ?? ''} fill
+        className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        sizes="(max-width: 1280px) 100vw, 1280px" unoptimized />
+      {(b.title || b.subtitle) && (
+        <div className="absolute inset-0 flex flex-col justify-center bg-gradient-to-r from-black/65 via-black/25 to-transparent p-6 sm:p-10">
+          {b.title && <p className="text-lg font-bold text-white sm:text-2xl">{b.title}</p>}
+          {b.subtitle && <p className="mt-1 text-sm text-white/85 sm:text-base">{b.subtitle}</p>}
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-6">
+      {href ? (
+        <Link href={href} target={b.openNewTab ? '_blank' : undefined}>{inner}</Link>
+      ) : inner}
+    </section>
+  )
+}
+
+// ── C) Trojice karet nad patičkou (placement = FOOTER_CARD) ───────
+
+async function FooterCardsSection() {
+  const banners = await prisma.banner.findMany({
+    where: { isVisible: true, placement: 'FOOTER_CARD' },
+    orderBy: { sortOrder: 'asc' },
+    take: 3,
+    include: BANNER_LINK_INCLUDE,
+  })
+  if (!banners.length) return null
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-8">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {banners.map((b) => {
+          const href = resolveBannerHref(b)
+          const inner = (
+            <div className="group">
+              <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-shop-card">
+                <Image src={b.imageUrl} alt={b.imageAlt ?? b.title ?? ''} fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 640px) 100vw, 33vw" unoptimized />
+              </div>
+              {(b.title || b.subtitle) && (
+                <div className="pt-3">
+                  {b.title && <p className="text-base font-bold text-shop-fg transition group-hover:text-gold">{b.title}</p>}
+                  {b.subtitle && <p className="mt-0.5 text-sm text-shop-muted">{b.subtitle}</p>}
+                </div>
+              )}
+            </div>
+          )
+          return href ? (
+            <Link key={b.id} href={href} target={b.openNewTab ? '_blank' : undefined}>{inner}</Link>
+          ) : (
+            <div key={b.id}>{inner}</div>
+          )
+        })}
+      </div>
     </section>
   )
 }
@@ -264,6 +398,18 @@ export default async function HomePage() {
         if (section.type === 'ABOUT_TEXT') {
           const text = (cfg.text as string) ?? ''
           return <AboutTextSection key={section.id} title={section.title} text={text} />
+        }
+
+        if (section.type === 'PROMO_TILES') {
+          return <PromoTilesSection key={section.id} />
+        }
+
+        if (section.type === 'MID_BANNER') {
+          return <MidBannerSection key={section.id} />
+        }
+
+        if (section.type === 'FOOTER_CARDS') {
+          return <FooterCardsSection key={section.id} />
         }
 
         return null

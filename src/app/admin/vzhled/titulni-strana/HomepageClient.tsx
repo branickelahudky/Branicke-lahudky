@@ -13,7 +13,7 @@ import { CSS } from '@dnd-kit/utilities'
 import {
   toggleSectionVisibility, reorderSections,
   saveCarouselSection, saveFeaturedCategories,
-  saveFeaturedProducts, saveAboutText,
+  saveFeaturedProducts, saveAboutText, saveSectionTitle,
   searchProductsForHomepage, type FeaturedProductsMode,
 } from './actions'
 import type { HomepageSectionType } from '@prisma/client'
@@ -37,7 +37,7 @@ export type ProductSearchResult = {
 interface Props {
   sections: SerializedSection[]
   categories: CategoryOption[]
-  activeBannerCount: number
+  bannerCounts: Record<string, number>
 }
 
 const TYPE_LABELS: Record<HomepageSectionType, string> = {
@@ -45,6 +45,17 @@ const TYPE_LABELS: Record<HomepageSectionType, string> = {
   FEATURED_CATEGORIES: 'Vybrané kategorie',
   FEATURED_PRODUCTS: 'Doporučené produkty',
   ABOUT_TEXT: 'O nás',
+  PROMO_TILES: 'Promo dlaždice',
+  MID_BANNER: 'Široký banner',
+  FOOTER_CARDS: 'Karty nad patičkou',
+}
+
+// Sekce řízené bannery → odpovídající BannerPlacement + popis pro admin
+const BANNER_SECTIONS: Partial<Record<HomepageSectionType, { placement: string; note: string }>> = {
+  CAROUSEL:     { placement: 'CAROUSEL',    note: 'hlavní carousel nahoře' },
+  PROMO_TILES:  { placement: 'PROMO_TILE',  note: 'mřížka promo dlaždic pod carouselem' },
+  MID_BANNER:   { placement: 'MID_WIDE',    note: 'široký banner mezi regály (zobrazí se první aktivní)' },
+  FOOTER_CARDS: { placement: 'FOOTER_CARD', note: 'trojice karet nad patičkou (max 3)' },
 }
 
 const inputCls = 'w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:outline-none focus:border-blue-400'
@@ -70,6 +81,40 @@ function CarouselConfig({ section }: { section: SerializedSection }) {
         disabled={isPending}
         onClick={() => startTransition(async () => {
           try { await saveCarouselSection(section.id, title || null); toast.success('Uloženo') }
+          catch (err) { toast.error(err instanceof Error ? err.message : 'Chyba') }
+        })}
+        className="rounded bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40"
+      >
+        {isPending ? 'Ukládám…' : 'Uložit'}
+      </button>
+    </div>
+  )
+}
+
+// ── Konfigurace banner sekcí (PROMO_TILES, MID_BANNER, FOOTER_CARDS) ─
+
+function BannerSectionConfig({ section, count }: { section: SerializedSection; count: number }) {
+  const [title, setTitle] = useState(section.title ?? '')
+  const [isPending, startTransition] = useTransition()
+  const meta = BANNER_SECTIONS[section.type]
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md bg-stone-50 border border-stone-200 px-3 py-2 text-xs text-stone-500">
+        Obsah ({meta?.note}) spravujte v sekci{' '}
+        <a href="/admin/vzhled/bannery" className="underline text-blue-600">Vzhled webu → Bannery</a>
+        {' '}u banneru zvolte umístění odpovídající této sekci.
+        <span className="mt-1 block font-medium text-stone-600">{count} aktivních bannerů v této pozici</span>
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-stone-600">Nadpis sekce (volitelný)</label>
+        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+          placeholder="např. Tipy pro vás" className={inputCls} />
+      </div>
+      <button
+        disabled={isPending}
+        onClick={() => startTransition(async () => {
+          try { await saveSectionTitle(section.id, title || null); toast.success('Uloženo') }
           catch (err) { toast.error(err instanceof Error ? err.message : 'Chyba') }
         })}
         className="rounded bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40"
@@ -322,12 +367,14 @@ function AboutTextConfig({ section }: { section: SerializedSection }) {
 // ── Sortable karta sekce ──────────────────────────────────────────
 
 function SortableSectionCard({
-  section, categories, activeBannerCount,
+  section, categories, bannerCounts,
 }: {
   section: SerializedSection
   categories: CategoryOption[]
-  activeBannerCount: number
+  bannerCounts: Record<string, number>
 }) {
+  const bannerMeta = BANNER_SECTIONS[section.type]
+  const bannerCount = bannerMeta ? (bannerCounts[bannerMeta.placement] ?? 0) : 0
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
 
@@ -354,8 +401,8 @@ function SortableSectionCard({
           {TYPE_LABELS[section.type]}
         </span>
 
-        {section.type === 'CAROUSEL' && (
-          <span className="text-xs text-stone-400">{activeBannerCount} aktivních bannerů</span>
+        {bannerMeta && (
+          <span className="text-xs text-stone-400">{bannerCount} aktivních bannerů</span>
         )}
 
         <button
@@ -382,6 +429,9 @@ function SortableSectionCard({
           {section.type === 'FEATURED_CATEGORIES' && <FeaturedCategoriesConfig section={section} categories={categories} />}
           {section.type === 'FEATURED_PRODUCTS' && <FeaturedProductsConfig section={section} />}
           {section.type === 'ABOUT_TEXT' && <AboutTextConfig section={section} />}
+          {(section.type === 'PROMO_TILES' || section.type === 'MID_BANNER' || section.type === 'FOOTER_CARDS') && (
+            <BannerSectionConfig section={section} count={bannerCount} />
+          )}
         </div>
       )}
     </div>
@@ -390,7 +440,7 @@ function SortableSectionCard({
 
 // ── Hlavní komponenta ─────────────────────────────────────────────
 
-export function HomepageClient({ sections: initialSections, categories, activeBannerCount }: Props) {
+export function HomepageClient({ sections: initialSections, categories, bannerCounts }: Props) {
   const [sections, setSections] = useState<SerializedSection[]>(initialSections)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -417,7 +467,7 @@ export function HomepageClient({ sections: initialSections, categories, activeBa
           <div className="space-y-3">
             {sections.map((section) => (
               <SortableSectionCard key={section.id} section={section}
-                categories={categories} activeBannerCount={activeBannerCount} />
+                categories={categories} bannerCounts={bannerCounts} />
             ))}
           </div>
         </SortableContext>

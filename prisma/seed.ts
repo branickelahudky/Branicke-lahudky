@@ -430,11 +430,14 @@ async function main() {
   }
 
   // ─── HOMEPAGE SEKCE (pevná sada, idempotentní) ────────────────────────
-  const homepageDefs: Array<{ type: 'CAROUSEL' | 'FEATURED_CATEGORIES' | 'FEATURED_PRODUCTS' | 'ABOUT_TEXT'; sortOrder: number; isVisible: boolean; config?: object }> = [
+  const homepageDefs: Array<{ type: 'CAROUSEL' | 'FEATURED_CATEGORIES' | 'FEATURED_PRODUCTS' | 'ABOUT_TEXT' | 'PROMO_TILES' | 'MID_BANNER' | 'FOOTER_CARDS'; sortOrder: number; isVisible: boolean; config?: object }> = [
     { type: 'CAROUSEL',            sortOrder: 0, isVisible: true },
-    { type: 'FEATURED_CATEGORIES', sortOrder: 1, isVisible: true,  config: { categoryIds: [] } },
-    { type: 'FEATURED_PRODUCTS',   sortOrder: 2, isVisible: true,  config: { mode: 'featured', limit: 8 } },
-    { type: 'ABOUT_TEXT',          sortOrder: 3, isVisible: false, config: { text: '' } },
+    { type: 'PROMO_TILES',         sortOrder: 1, isVisible: true },
+    { type: 'FEATURED_CATEGORIES', sortOrder: 2, isVisible: true,  config: { categoryIds: [] } },
+    { type: 'FEATURED_PRODUCTS',   sortOrder: 3, isVisible: true,  config: { mode: 'featured', limit: 8 } },
+    { type: 'MID_BANNER',          sortOrder: 4, isVisible: true },
+    { type: 'ABOUT_TEXT',          sortOrder: 5, isVisible: false, config: { text: '' } },
+    { type: 'FOOTER_CARDS',        sortOrder: 6, isVisible: true },
   ]
   for (const def of homepageDefs) {
     await prisma.homepageSection.upsert({

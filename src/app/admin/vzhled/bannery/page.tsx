@@ -14,7 +14,7 @@ export default async function BanneryPage() {
 
   const [banners, pages, cats] = await Promise.all([
     prisma.banner.findMany({
-      orderBy: { sortOrder: 'asc' },
+      orderBy: [{ placement: 'asc' }, { sortOrder: 'asc' }],
       include: {
         page: { select: { title: true } },
         category: { select: { name: true, parent: { select: { name: true } } } },
@@ -33,6 +33,9 @@ export default async function BanneryPage() {
     imageUrl: b.imageUrl,
     imageStorageKey: b.imageStorageKey,
     imageAlt: b.imageAlt,
+    placement: b.placement,
+    title: b.title,
+    subtitle: b.subtitle,
     linkType: b.linkType,
     pageId: b.pageId,
     pageName: b.page?.title ?? null,
@@ -62,7 +65,9 @@ export default async function BanneryPage() {
         <AdminHeader title="Bannery" user={user} />
         <div className="p-6 max-w-3xl">
           <p className="mb-4 text-sm text-stone-500">
-            Carousel obrázků pro homepage. Doporučený poměr stran 16:6, šířka min. 1600 px.
+            Reklamní obrázky pro homepage. U každého banneru zvolte umístění (carousel,
+            promo dlaždice, široký banner, karta nad patičkou). Pořadí v rámci umístění
+            měňte přetažením.
           </p>
           <BanneryClient
             banners={serializedBanners}
