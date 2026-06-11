@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { Header, type NavItem } from './_components/Header'
+import type { MegaCategory } from './_components/CategoryMegaMenu'
 import { Footer, type FooterNavItem } from './_components/Footer'
 import { CartProvider } from './_context/CartContext'
 import { CartDrawer } from './_components/CartDrawer'
@@ -11,7 +12,7 @@ export default async function ShopLayout({
   children: React.ReactNode
   modal: React.ReactNode
 }) {
-  const [identity, headerMenuItems, footerMenuItems, branch] = await Promise.all([
+  const [identity, headerMenuItems, footerMenuItems, branch, categoryTree] = await Promise.all([
     prisma.siteIdentity.findFirst(),
     prisma.menuItem.findMany({
       where: { location: 'HEADER', isVisible: true },
@@ -24,7 +25,32 @@ export default async function ShopLayout({
       include: { page: { select: { slug: true } } },
     }),
     prisma.branchSettings.findFirst(),
+    prisma.category.findMany({
+      where: { parentId: null, isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          include: { _count: { select: { products: { where: { isActive: true } } } } },
+        },
+        _count: { select: { products: { where: { isActive: true } } } },
+      },
+    }),
   ])
+
+  const categories: MegaCategory[] = categoryTree.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    productCount: c._count.products,
+    children: c.children.map((s) => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      productCount: s._count.products,
+    })),
+  }))
 
   function resolveHref(item: typeof headerMenuItems[0]): string {
     if (item.linkType === 'PAGE' && item.page?.slug) return `/${item.page.slug}`
@@ -48,6 +74,7 @@ export default async function ShopLayout({
         logoUrl={identity?.logoUrl ?? null}
         logoAlt={identity?.logoAlt ?? null}
         navItems={headerNavItems}
+        categories={categories}
       />
       <main>{children}</main>
       {modal}

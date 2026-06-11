@@ -4,6 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '../_context/CartContext'
+import { CategoryMegaMenu, type MegaCategory } from './CategoryMegaMenu'
+import { MobileCategoryMenu } from './MobileCategoryMenu'
+import { SearchBox } from './SearchBox'
 
 export type NavItem = { id: string; label: string; href: string; openNewTab: boolean }
 
@@ -11,10 +14,12 @@ interface Props {
   logoUrl: string | null
   logoAlt: string | null
   navItems: NavItem[]
+  categories: MegaCategory[]
 }
 
-export function Header({ logoUrl, logoAlt, navItems }: Props) {
+export function Header({ logoUrl, logoAlt, navItems, categories }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const { totalQty, openCart } = useCart()
 
   return (
@@ -38,24 +43,19 @@ export function Header({ logoUrl, logoAlt, navItems }: Props) {
 
           {/* Search — desktop */}
           <div className="hidden flex-1 md:block">
-            <div className="relative mx-auto max-w-lg">
-              <input
-                type="search"
-                placeholder="Hledat produkty…"
-                className="w-full rounded-full bg-shop-surface border border-shop-border px-5 py-2 text-sm text-shop-fg placeholder-shop-muted focus:outline-none focus:border-gold/50"
-                readOnly
-              />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-shop-muted hover:text-gold">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
+            <div className="mx-auto max-w-lg">
+              <SearchBox />
             </div>
           </div>
 
           <div className="ml-auto flex items-center gap-3">
             {/* Search icon — mobile */}
-            <button className="md:hidden text-shop-muted hover:text-shop-fg p-1">
+            <button
+              className="md:hidden text-shop-muted hover:text-shop-fg p-1"
+              onClick={() => setSearchOpen((o) => !o)}
+              aria-label="Hledat"
+              aria-expanded={searchOpen}
+            >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -92,48 +92,54 @@ export function Header({ logoUrl, logoAlt, navItems }: Props) {
           </div>
         </div>
 
-        {/* Navigation — desktop */}
-        {navItems.length > 0 && (
-          <nav className="hidden md:flex h-10 items-center gap-1 overflow-x-auto">
-            {navItems.map((item) => (
-              <Link
-                key={item.id}
-                href={item.href}
-                target={item.openNewTab ? '_blank' : undefined}
-                className="whitespace-nowrap rounded px-3 py-1 text-sm text-stone-300 hover:text-shop-fg hover:bg-shop-surface transition"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+        {/* Mobile search — přes celou šířku */}
+        {searchOpen && (
+          <div className="md:hidden pb-3">
+            <SearchBox onNavigate={() => setSearchOpen(false)} />
+          </div>
         )}
+
+        {/* Druhá řada — desktop: Kategorie + nav */}
+        <div className="hidden md:flex h-12 items-center gap-2">
+          <CategoryMegaMenu categories={categories} />
+          {navItems.length > 0 && (
+            <nav className="flex items-center gap-1 overflow-x-auto">
+              {navItems.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  target={item.openNewTab ? '_blank' : undefined}
+                  className="whitespace-nowrap rounded px-3 py-1 text-sm text-stone-300 hover:text-shop-fg hover:bg-shop-surface transition"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          )}
+        </div>
       </div>
 
       {/* Mobile drawer */}
       {menuOpen && (
         <div className="md:hidden border-t border-shop-border bg-shop-surface px-4 py-3">
-          {/* Mobile search */}
-          <div className="relative mb-3">
-            <input
-              type="search"
-              placeholder="Hledat produkty…"
-              className="w-full rounded-full bg-shop-card border border-shop-border px-4 py-2 text-sm text-shop-fg placeholder-shop-muted focus:outline-none"
-              readOnly
-            />
-          </div>
-          {/* Mobile nav */}
-          <nav className="flex flex-col gap-0.5">
-            {navItems.map((item) => (
-              <Link
-                key={item.id}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                className="rounded px-3 py-2 text-sm text-stone-300 hover:text-shop-fg hover:bg-shop-card transition"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          {/* Kategorie — accordion */}
+          <MobileCategoryMenu categories={categories} onNavigate={() => setMenuOpen(false)} />
+
+          {/* Ostatní nav */}
+          {navItems.length > 0 && (
+            <nav className="mt-3 flex flex-col gap-0.5 border-t border-shop-border pt-3">
+              {navItems.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded px-3 py-2 text-sm text-stone-300 hover:text-shop-fg hover:bg-shop-card transition"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          )}
         </div>
       )}
     </header>
