@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { prepareDescription } from '@/lib/sanitizeHtml'
 import type { ProductCardData } from '../_components/ProductCard'
 
 export type NutritionData = {
@@ -19,7 +20,9 @@ export type ProductDetail = {
   sku: string
   name: string
   shortDescription: string | null
+  shortDescriptionIsHtml: boolean
   description: string | null
+  descriptionIsHtml: boolean
   priceWithVat: number
   priceWithoutVat: number
   vatRate: number
@@ -126,6 +129,9 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
 
   if (!raw) return null
 
+  const shortDesc = prepareDescription(raw.shortDescription)
+  const longDesc = prepareDescription(raw.description)
+
   const relatedProducts: ProductCardData[] = raw.relatedTo.map(({ related: r }) => ({
     id: r.id, slug: r.slug, sku: r.sku, name: r.name,
     priceWithVat: Number(r.priceWithVat),
@@ -147,8 +153,10 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
 
   return {
     id: raw.id, slug: raw.slug, sku: raw.sku, name: raw.name,
-    shortDescription: raw.shortDescription,
-    description: raw.description,
+    shortDescription: shortDesc.value,
+    shortDescriptionIsHtml: shortDesc.isHtml,
+    description: longDesc.value,
+    descriptionIsHtml: longDesc.isHtml,
     priceWithVat: Number(raw.priceWithVat),
     priceWithoutVat: Number(raw.priceWithoutVat),
     vatRate: Number(raw.vatRate),

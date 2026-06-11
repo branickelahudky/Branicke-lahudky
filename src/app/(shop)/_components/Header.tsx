@@ -27,16 +27,17 @@ export function Header({ logoUrl, logoAlt, navItems, categories }: Props) {
       <div className="mx-auto max-w-7xl px-4">
         {/* Hlavní řada */}
         <div className="flex h-16 items-center gap-4">
-          {/* Logo */}
+          {/* Logo — tmavý kulatý podklad (logo má vlastní černé pozadí,
+              na bílé hlavičce by jinak působilo jako černý hranatý blok) */}
           <Link href="/" className="shrink-0 flex items-center">
             {logoUrl ? (
-              <div className="relative h-10 w-32">
-                <Image src={logoUrl} alt={logoAlt ?? 'Branické lahůdkářství'}
-                  fill className="object-contain object-left" unoptimized />
+              <div className="relative h-11 w-11 overflow-hidden rounded-xl bg-[#0a0a0a]">
+                <Image src={logoUrl} alt={logoAlt ?? 'Markes lahůdkářství'}
+                  fill className="object-contain" sizes="44px" unoptimized />
               </div>
             ) : (
               <span className="text-lg font-bold text-gold leading-tight">
-                Branické<br className="hidden" /> lahůdkářství
+                Markes<br className="hidden" /> lahůdkářství
               </span>
             )}
           </Link>

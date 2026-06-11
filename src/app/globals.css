@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 /* ── Shop theme tokens ──────────────────────────────────────────────
-   Výchozí: tmavá (dark). Světlá se aktivuje atributem
-   data-theme="light" na kořenovém divu shop layoutu (#shop-root).
+   Výchozí: světlá (light) — aktivuje se atributem data-theme="light"
+   na kořenovém divu shop layoutu (#shop-root). Tmavá (:root tokeny)
+   zůstává jako přepínatelná alternativa přes ThemeToggle v patičce.
    ------------------------------------------------------------------ */
 
 :root {
@@ -17,9 +18,9 @@
 }
 
 [data-theme="light"] {
-  --shop-bg:      #fafafa;
-  --shop-surface: #ffffff;
-  --shop-card:    #f3f4f6;
+  --shop-bg:      #ffffff;  /* čistě bílá — pozadí webu */
+  --shop-surface: #fafafa;  /* jemně odlišené panely (mega-menu, drawer, patička) */
+  --shop-card:    #f3f4f6;  /* karty/řádky v panelech */
   --shop-border:  #e5e7eb;
   --shop-muted:   #6b7280;
   --shop-fg:      #1a1a1a;
@@ -37,6 +38,11 @@
   color: #4b5563;
 }
 
+/* Nadpisy prázdných stavů apod. — stone-400 by na bílé byl nečitelný */
+[data-theme="light"] .text-stone-400 {
+  color: #57534e;
+}
+
 /* text-shop-bg používáme VÝHRADNĚ jako text na zlatých tlačítkách
    (bg-gold text-shop-bg). V tmavém módu shop-bg=#0a0a0a → tmavý text.
    V světlém módu shop-bg=#fafafa → světlý text na zlatém → nečitelné.
@@ -45,3 +51,35 @@
 [data-theme="light"] .hover\:text-shop-bg:hover {
   color: #1a1a1a;
 }
+
+/* ── Rich-text popis produktu (HTML z importu Shoptetu) ─────────────
+   Strukturální styly pro sanitizovaný HTML popis. Barvy dědí z wrapperu
+   (text-shop-fg / text-stone-300), takže to funguje v obou tématech.
+   ------------------------------------------------------------------ */
+.product-richtext { line-height: 1.65; word-break: break-word; }
+.product-richtext > :first-child { margin-top: 0; }
+.product-richtext > :last-child { margin-bottom: 0; }
+.product-richtext p { margin: 0 0 0.75rem; }
+.product-richtext ul,
+.product-richtext ol { margin: 0 0 0.75rem 1.25rem; padding: 0; }
+.product-richtext ul { list-style: disc; }
+.product-richtext ol { list-style: decimal; }
+.product-richtext li { margin: 0.15rem 0; }
+.product-richtext h2,
+.product-richtext h3,
+.product-richtext h4,
+.product-richtext h5 { font-weight: 600; margin: 1.1rem 0 0.5rem; color: var(--shop-fg); }
+.product-richtext h2 { font-size: 1.05rem; }
+.product-richtext h3 { font-size: 1rem; }
+.product-richtext a { color: #C9A961; text-decoration: underline; }
+.product-richtext strong,
+.product-richtext b { font-weight: 600; color: var(--shop-fg); }
+.product-richtext blockquote {
+  border-left: 3px solid var(--shop-border);
+  padding-left: 0.75rem; margin: 0 0 0.75rem; font-style: italic;
+}
+.product-richtext table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
+.product-richtext td,
+.product-richtext th { border: 1px solid var(--shop-border); padding: 0.35rem 0.5rem; text-align: left; }
+.product-richtext img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0; }
+.product-richtext hr { border: 0; border-top: 1px solid var(--shop-border); margin: 1rem 0; }

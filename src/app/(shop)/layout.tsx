@@ -69,7 +69,7 @@ export default async function ShopLayout({
 
   return (
     <CartProvider>
-    <div id="shop-root" data-theme="dark" className="min-h-screen bg-shop-bg text-shop-fg">
+    <div id="shop-root" data-theme="light" className="min-h-screen bg-shop-bg text-shop-fg">
       <Header
         logoUrl={identity?.logoUrl ?? null}
         logoAlt={identity?.logoAlt ?? null}

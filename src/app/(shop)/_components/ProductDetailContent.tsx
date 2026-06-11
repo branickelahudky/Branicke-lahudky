@@ -41,11 +41,11 @@ const ALLERGEN_NAMES: Record<string, string> = {
 
 function StockBadge({ status, qty, track }: { status: string; qty: number; track: boolean }) {
   if (!track || status === 'IN_STOCK')
-    return <span className="inline-flex items-center gap-1 text-sm text-green-500">● Skladem</span>
+    return <span className="inline-flex items-center gap-1 text-sm text-green-600">● Skladem</span>
   if (status === 'LOW_STOCK')
-    return <span className="inline-flex items-center gap-1 text-sm text-amber-400">● Poslední kusy ({qty})</span>
+    return <span className="inline-flex items-center gap-1 text-sm text-amber-600">● Poslední kusy ({qty})</span>
   if (status === 'OUT_OF_STOCK')
-    return <span className="inline-flex items-center gap-1 text-sm text-red-400">● Není skladem</span>
+    return <span className="inline-flex items-center gap-1 text-sm text-red-600">● Není skladem</span>
   if (status === 'ON_REQUEST')
     return <span className="inline-flex items-center gap-1 text-sm text-shop-muted">● Na dotaz</span>
   return <span className="inline-flex items-center gap-1 text-sm text-shop-muted">● Dočasně nedostupné</span>
@@ -288,9 +288,16 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
 
           {/* Krátký popis */}
           {product.shortDescription && (
-            <p className="text-sm text-stone-300 leading-relaxed border-t border-shop-border pt-3 mt-1">
-              {product.shortDescription}
-            </p>
+            product.shortDescriptionIsHtml ? (
+              <div
+                className="product-richtext text-sm text-stone-300 leading-relaxed border-t border-shop-border pt-3 mt-1"
+                dangerouslySetInnerHTML={{ __html: product.shortDescription }}
+              />
+            ) : (
+              <p className="text-sm text-stone-300 leading-relaxed border-t border-shop-border pt-3 mt-1">
+                {product.shortDescription}
+              </p>
+            )
           )}
         </div>
       </div>
@@ -301,9 +308,16 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
       {product.description && (
         <section className="mt-8 border-t border-shop-border pt-6">
           <h2 className="mb-3 text-base font-semibold text-shop-fg">Popis</h2>
-          <div className="text-sm text-stone-300 leading-relaxed whitespace-pre-line">
-            {product.description}
-          </div>
+          {product.descriptionIsHtml ? (
+            <div
+              className="product-richtext text-sm text-stone-300 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
+          ) : (
+            <div className="text-sm text-stone-300 leading-relaxed whitespace-pre-line">
+              {product.description}
+            </div>
+          )}
         </section>
       )}
 

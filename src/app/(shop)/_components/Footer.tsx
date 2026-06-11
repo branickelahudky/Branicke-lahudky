@@ -48,12 +48,12 @@ export function Footer({ logoUrl, logoAlt, footerText, footerCopyright, navItems
           {/* Brand */}
           <div className="md:col-span-1">
             {logoUrl ? (
-              <div className="relative mb-3 h-10 w-36">
-                <Image src={logoUrl} alt={logoAlt ?? 'Branické lahůdkářství'}
-                  fill className="object-contain object-left" unoptimized />
+              <div className="relative mb-3 h-14 w-14 overflow-hidden rounded-xl bg-[#0a0a0a]">
+                <Image src={logoUrl} alt={logoAlt ?? 'Markes lahůdkářství'}
+                  fill className="object-contain" sizes="56px" unoptimized />
               </div>
             ) : (
-              <p className="mb-3 text-lg font-bold text-gold">Branické lahůdkářství</p>
+              <p className="mb-3 text-lg font-bold text-gold">Markes lahůdkářství</p>
             )}
             {footerText && (
               <p className="text-sm leading-relaxed text-shop-muted">{footerText}</p>
