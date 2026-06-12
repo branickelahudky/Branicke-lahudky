@@ -26,33 +26,6 @@ const BANNER_LINK_INCLUDE = {
   category: { select: { slug: true } },
 } as const
 
-// ── Dlaždice top-level kategorií ──────────────────────────────────
-
-async function CategoryTiles() {
-  const categories = await prisma.category.findMany({
-    where: { parentId: null, isActive: true },
-    orderBy: { sortOrder: 'asc' },
-    select: { id: true, name: true, slug: true },
-  })
-
-  if (!categories.length) return null
-
-  return (
-    <div className="border-b border-shop-border">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="flex gap-2 overflow-x-auto py-3 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-          {categories.map((cat) => (
-            <Link key={cat.id} href={`/kategorie/${cat.slug}`}
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-shop-border bg-shop-surface px-4 py-2 text-sm text-stone-300 whitespace-nowrap hover:border-gold/50 hover:text-gold transition">
-              {cat.name}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ── Pomocná funkce pro produktová data ────────────────────────────
 
 function serializeProduct(p: {
@@ -120,8 +93,8 @@ async function FeaturedCategoriesSection({ title, categoryIds }: { title: string
   )
 }
 
-// ── Pevné regály dle příznaku (řazeno dle updatedAt — viz dohoda,
-//    později možno nahradit dedikovaným polem data zařazení do regálu) ─
+// ── Produktové regály dle příznaku (Akce / Novinky / Doporučujeme) ─
+//    Každý je samostatná sekce; řazení dle updatedAt desc, prázdný se skryje.
 
 const FLAG_SELECT = {
   id: true, slug: true, sku: true, name: true,
@@ -133,70 +106,26 @@ const FLAG_SELECT = {
   images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true, fileSize: true }, take: 1 },
 } as const
 
-async function AkceSection() {
+type ShelfKind = 'SHELF_SALE' | 'SHELF_NEW' | 'SHELF_FEATURED'
+
+const SHELF_DEFS: Record<ShelfKind, { defaultTitle: string; where: { isOnSale: true } | { isNew: true } | { isFeatured: true }; limit: number; moreHref: string }> = {
+  SHELF_SALE:     { defaultTitle: 'Akce',        where: { isOnSale: true },   limit: 60, moreHref: '/akce' },
+  SHELF_NEW:      { defaultTitle: 'Novinky',     where: { isNew: true },      limit: 6,  moreHref: '/novinky' },
+  SHELF_FEATURED: { defaultTitle: 'Doporučujeme', where: { isFeatured: true }, limit: 18, moreHref: '/doporucujeme' },
+}
+
+async function ShelfSection({ kind, title }: { kind: ShelfKind; title: string | null }) {
+  const def = SHELF_DEFS[kind]
   const products = await prisma.product.findMany({
-    where: { isActive: true, isOnSale: true },
+    where: { isActive: true, ...def.where },
     orderBy: { updatedAt: 'desc' },
     select: FLAG_SELECT,
-    take: 12,
+    take: def.limit,
   })
   if (!products.length) return null
   return (
-    <HorizontalShelf title="Akce" moreHref="#">
+    <HorizontalShelf title={title?.trim() || def.defaultTitle} moreHref={def.moreHref}>
       {products.map(serializeProduct).map((p) => (
-        <ProductCard key={p.id} product={p} />
-      ))}
-    </HorizontalShelf>
-  )
-}
-
-async function NovinkySekce() {
-  const products = await prisma.product.findMany({
-    where: { isActive: true, isNew: true },
-    orderBy: { updatedAt: 'desc' },
-    select: FLAG_SELECT,
-    take: 12,
-  })
-  if (!products.length) return null
-  return (
-    <HorizontalShelf title="Novinky" moreHref="#">
-      {products.map(serializeProduct).map((p) => (
-        <ProductCard key={p.id} product={p} />
-      ))}
-    </HorizontalShelf>
-  )
-}
-
-// ── Sekce produktů — horizontální regál karet ─────────────────────
-
-async function FeaturedProductsSection({ title, mode, productIds, limit }: {
-  title: string | null
-  mode: string
-  productIds: string[]
-  limit: number
-}) {
-  const select = FLAG_SELECT
-
-  const products = mode === 'manual' && productIds.length > 0
-    ? await prisma.product.findMany({
-        where: { id: { in: productIds }, isActive: true },
-        select,
-        take: limit,
-      })
-    : await prisma.product.findMany({
-        where: { isFeatured: true, isActive: true, publishedAt: { lte: new Date() } },
-        orderBy: { name: 'asc' },
-        select,
-        take: limit,
-      })
-
-  if (!products.length) return null
-
-  const cards = products.map(serializeProduct)
-
-  return (
-    <HorizontalShelf title={title}>
-      {cards.map((p) => (
         <ProductCard key={p.id} product={p} />
       ))}
     </HorizontalShelf>
@@ -371,15 +300,15 @@ export default async function HomePage() {
 
   return (
     <>
-      <CategoryTiles />
-      <AkceSection />
-      <NovinkySekce />
-
       {sections.map((section) => {
         const cfg = (section.config ?? {}) as Record<string, unknown>
 
         if (section.type === 'CAROUSEL') {
           return <CarouselSection key={section.id} title={section.title} />
+        }
+
+        if (section.type === 'PROMO_TILES') {
+          return <PromoTilesSection key={section.id} />
         }
 
         if (section.type === 'FEATURED_CATEGORIES') {
@@ -388,24 +317,25 @@ export default async function HomePage() {
           return <FeaturedCategoriesSection key={section.id} title={section.title} categoryIds={ids} />
         }
 
-        if (section.type === 'FEATURED_PRODUCTS') {
-          const mode = (cfg.mode as string) ?? 'featured'
-          const ids = (cfg.productIds as string[]) ?? []
-          const limit = Number(cfg.limit ?? 8)
-          return <FeaturedProductsSection key={section.id} title={section.title} mode={mode} productIds={ids} limit={limit} />
+        if (section.type === 'SHELF_SALE') {
+          return <ShelfSection key={section.id} kind="SHELF_SALE" title={section.title} />
+        }
+
+        if (section.type === 'SHELF_NEW') {
+          return <ShelfSection key={section.id} kind="SHELF_NEW" title={section.title} />
+        }
+
+        if (section.type === 'MID_BANNER') {
+          return <MidBannerSection key={section.id} />
+        }
+
+        if (section.type === 'SHELF_FEATURED') {
+          return <ShelfSection key={section.id} kind="SHELF_FEATURED" title={section.title} />
         }
 
         if (section.type === 'ABOUT_TEXT') {
           const text = (cfg.text as string) ?? ''
           return <AboutTextSection key={section.id} title={section.title} text={text} />
-        }
-
-        if (section.type === 'PROMO_TILES') {
-          return <PromoTilesSection key={section.id} />
-        }
-
-        if (section.type === 'MID_BANNER') {
-          return <MidBannerSection key={section.id} />
         }
 
         if (section.type === 'FOOTER_CARDS') {

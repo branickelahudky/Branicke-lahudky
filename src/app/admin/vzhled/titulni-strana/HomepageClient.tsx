@@ -42,12 +42,22 @@ interface Props {
 
 const TYPE_LABELS: Record<HomepageSectionType, string> = {
   CAROUSEL: 'Banner carousel',
-  FEATURED_CATEGORIES: 'Vybrané kategorie',
+  FEATURED_CATEGORIES: 'Dlaždice kategorií',
   FEATURED_PRODUCTS: 'Doporučené produkty',
-  ABOUT_TEXT: 'O nás',
+  ABOUT_TEXT: 'Textová sekce',
   PROMO_TILES: 'Promo dlaždice',
   MID_BANNER: 'Široký banner',
-  FOOTER_CARDS: 'Karty nad patičkou',
+  FOOTER_CARDS: 'Trojice karet',
+  SHELF_SALE: 'Regál Akce',
+  SHELF_NEW: 'Regál Novinky',
+  SHELF_FEATURED: 'Regál Doporučujeme',
+}
+
+// Regálové sekce — pevné chování (filtr + limit), v adminu jen nadpis
+const SHELF_SECTIONS: Partial<Record<HomepageSectionType, { note: string }>> = {
+  SHELF_SALE:     { note: 'produkty s příznakem „Akce" (max 60), řazeno od nejnovějších' },
+  SHELF_NEW:      { note: 'produkty s příznakem „Novinka" (max 6), řazeno od nejnovějších' },
+  SHELF_FEATURED: { note: 'produkty s příznakem „Doporučujeme" (max 18), řazeno od nejnovějších' },
 }
 
 // Sekce řízené bannery → odpovídající BannerPlacement + popis pro admin
@@ -110,6 +120,38 @@ function BannerSectionConfig({ section, count }: { section: SerializedSection; c
         <label className="mb-1 block text-xs font-medium text-stone-600">Nadpis sekce (volitelný)</label>
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
           placeholder="např. Tipy pro vás" className={inputCls} />
+      </div>
+      <button
+        disabled={isPending}
+        onClick={() => startTransition(async () => {
+          try { await saveSectionTitle(section.id, title || null); toast.success('Uloženo') }
+          catch (err) { toast.error(err instanceof Error ? err.message : 'Chyba') }
+        })}
+        className="rounded bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40"
+      >
+        {isPending ? 'Ukládám…' : 'Uložit'}
+      </button>
+    </div>
+  )
+}
+
+// ── Konfigurace regálových sekcí (SHELF_SALE / NEW / FEATURED) ─────
+
+function ShelfConfig({ section }: { section: SerializedSection }) {
+  const [title, setTitle] = useState(section.title ?? '')
+  const [isPending, startTransition] = useTransition()
+  const meta = SHELF_SECTIONS[section.type]
+  const defaultTitle = TYPE_LABELS[section.type].replace('Regál ', '')
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md bg-stone-50 border border-stone-200 px-3 py-2 text-xs text-stone-500">
+        Automatický regál: {meta?.note}. Produkty se označují příznakem v detailu produktu.
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-stone-600">Nadpis regálu (volitelný)</label>
+        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+          placeholder={`výchozí: ${defaultTitle}`} className={inputCls} />
       </div>
       <button
         disabled={isPending}
@@ -431,6 +473,9 @@ function SortableSectionCard({
           {section.type === 'ABOUT_TEXT' && <AboutTextConfig section={section} />}
           {(section.type === 'PROMO_TILES' || section.type === 'MID_BANNER' || section.type === 'FOOTER_CARDS') && (
             <BannerSectionConfig section={section} count={bannerCount} />
+          )}
+          {(section.type === 'SHELF_SALE' || section.type === 'SHELF_NEW' || section.type === 'SHELF_FEATURED') && (
+            <ShelfConfig section={section} />
           )}
         </div>
       )}

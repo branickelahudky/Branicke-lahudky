@@ -429,23 +429,30 @@ async function main() {
     })
   }
 
-  // ─── HOMEPAGE SEKCE (pevná sada, idempotentní) ────────────────────────
-  const homepageDefs: Array<{ type: 'CAROUSEL' | 'FEATURED_CATEGORIES' | 'FEATURED_PRODUCTS' | 'ABOUT_TEXT' | 'PROMO_TILES' | 'MID_BANNER' | 'FOOTER_CARDS'; sortOrder: number; isVisible: boolean; config?: object }> = [
-    { type: 'CAROUSEL',            sortOrder: 0, isVisible: true },
-    { type: 'PROMO_TILES',         sortOrder: 1, isVisible: true },
+  // ─── HOMEPAGE SEKCE (pevná sada, doporučené pořadí F9) ────────────────
+  // Pořadí (sortOrder) se vynucuje i při update — záměr sprintu F9 je
+  // srovnat homepage na doporučené rozložení. Viditelnost se nastaví jen
+  // při vytvoření (re-seed nepřepíše ruční zapnutí/vypnutí v adminu).
+  const homepageDefs: Array<{ type: 'CAROUSEL' | 'FEATURED_CATEGORIES' | 'ABOUT_TEXT' | 'PROMO_TILES' | 'MID_BANNER' | 'FOOTER_CARDS' | 'SHELF_SALE' | 'SHELF_NEW' | 'SHELF_FEATURED'; sortOrder: number; isVisible: boolean; config?: object }> = [
+    { type: 'CAROUSEL',            sortOrder: 0, isVisible: true  },
+    { type: 'PROMO_TILES',         sortOrder: 1, isVisible: true  },
     { type: 'FEATURED_CATEGORIES', sortOrder: 2, isVisible: true,  config: { categoryIds: [] } },
-    { type: 'FEATURED_PRODUCTS',   sortOrder: 3, isVisible: true,  config: { mode: 'featured', limit: 8 } },
-    { type: 'MID_BANNER',          sortOrder: 4, isVisible: true },
-    { type: 'ABOUT_TEXT',          sortOrder: 5, isVisible: false, config: { text: '' } },
-    { type: 'FOOTER_CARDS',        sortOrder: 6, isVisible: true },
+    { type: 'SHELF_SALE',          sortOrder: 3, isVisible: true  },
+    { type: 'SHELF_NEW',           sortOrder: 4, isVisible: true  },
+    { type: 'MID_BANNER',          sortOrder: 5, isVisible: true  },
+    { type: 'SHELF_FEATURED',      sortOrder: 6, isVisible: true  },
+    { type: 'ABOUT_TEXT',          sortOrder: 7, isVisible: false, config: { text: '' } },
+    { type: 'FOOTER_CARDS',        sortOrder: 8, isVisible: true  },
   ]
   for (const def of homepageDefs) {
     await prisma.homepageSection.upsert({
       where: { type: def.type },
       create: { type: def.type, sortOrder: def.sortOrder, isVisible: def.isVisible, ...(def.config ? { config: def.config } : {}) },
-      update: {},
+      update: { sortOrder: def.sortOrder },
     })
   }
+  // FEATURED_PRODUCTS nahrazen dedikovaným SHELF_FEATURED — odstraníme
+  await prisma.homepageSection.deleteMany({ where: { type: 'FEATURED_PRODUCTS' } })
   console.log(`  ✔ Homepage sekce (${homepageDefs.length})`)
 
   // ─── COOKIES NASTAVENÍ (singleton) ────────────────────────────────────

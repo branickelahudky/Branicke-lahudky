@@ -1228,11 +1228,14 @@ model Banner {
 enum HomepageSectionType {
   CAROUSEL             // carousel bannerů (data z modelu Banner)
   FEATURED_CATEGORIES  // výběr kategorií
-  FEATURED_PRODUCTS    // doporučené nebo ručně vybrané produkty
+  FEATURED_PRODUCTS    // doporučené nebo ručně vybrané produkty (nahrazeno SHELF_FEATURED, ponecháno kvůli kompatibilitě)
   ABOUT_TEXT           // krátký text o provozovně
   PROMO_TILES          // mřížka promo dlaždic (Banner placement=PROMO_TILE)
   MID_BANNER           // široký banner mezi regály (Banner placement=MID_WIDE)
   FOOTER_CARDS         // trojice karet nad patičkou (Banner placement=FOOTER_CARD)
+  SHELF_SALE           // regál Akce (produkty isOnSale)
+  SHELF_NEW            // regál Novinky (produkty isNew)
+  SHELF_FEATURED       // regál Doporučujeme (produkty isFeatured)
 }
 
 model HomepageSection {
