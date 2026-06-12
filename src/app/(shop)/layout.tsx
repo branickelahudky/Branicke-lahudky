@@ -4,6 +4,7 @@ import type { MegaCategory } from './_components/CategoryMegaMenu'
 import { Footer, type FooterNavItem } from './_components/Footer'
 import { CartProvider } from './_context/CartContext'
 import { CartDrawer } from './_components/CartDrawer'
+import { CartSidebar } from './_components/CartSidebar'
 
 export default async function ShopLayout({
   children,
@@ -76,7 +77,13 @@ export default async function ShopLayout({
         navItems={headerNavItems}
         categories={categories}
       />
-      <main>{children}</main>
+      {/* Hlavní obsah + trvalý košík (sticky pravý sloupec na desktopu).
+          Pod lg je CartSidebar skrytý a obsah jede přes celou šířku — košík
+          zůstává dostupný přes ikonu v hlavičce + CartDrawer. */}
+      <div className="lg:flex lg:items-start">
+        <main className="min-w-0 flex-1">{children}</main>
+        <CartSidebar />
+      </div>
       {modal}
       <Footer
         logoUrl={identity?.logoUrl ?? null}

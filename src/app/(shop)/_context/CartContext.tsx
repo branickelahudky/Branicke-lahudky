@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 
 export type CartItem = {
   productId: string
@@ -21,6 +21,9 @@ type CartContextType = {
   isOpen: boolean
   totalQty: number
   subtotalWithVat: number
+  /** Poslední přidaná položka — pro vizuální odezvu (flash) ve sticky košíku.
+   *  nonce roste i při opakovaném přidání téhož produktu, aby se efekt spustil znovu. */
+  lastAdded: { productId: string; nonce: number } | null
   addItem: (item: Omit<CartItem, 'qty'>, qty: number) => void
   removeItem: (productId: string) => void
   updateQty: (productId: string, qty: number) => void
@@ -35,6 +38,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [hydrated, setHydrated] = useState(false)
+  const [lastAdded, setLastAdded] = useState<{ productId: string; nonce: number } | null>(null)
+  const nonceRef = useRef(0)
 
   // Load from localStorage after hydration (SSR safe)
   useEffect(() => {
@@ -64,6 +69,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { ...item, qty }]
     })
+    nonceRef.current += 1
+    setLastAdded({ productId: item.productId, nonce: nonceRef.current })
   }, [])
 
   const removeItem = useCallback((productId: string) => {
@@ -84,7 +91,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider value={{
-      items, isOpen, totalQty, subtotalWithVat,
+      items, isOpen, totalQty, subtotalWithVat, lastAdded,
       addItem, removeItem, updateQty, clear, openCart, closeCart,
     }}>
       {children}

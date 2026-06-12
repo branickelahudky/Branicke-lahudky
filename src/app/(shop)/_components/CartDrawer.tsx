@@ -1,16 +1,12 @@
 'use client'
 
-import Image from 'next/image'
 import { useCart } from '../_context/CartContext'
-
-function fmtKc(n: number) {
-  return new Intl.NumberFormat('cs-CZ', {
-    style: 'currency', currency: 'CZK', minimumFractionDigits: 0, maximumFractionDigits: 0,
-  }).format(n)
-}
+import { CartItemRow } from './cart/CartItemRow'
+import { CartEmptyState } from './cart/CartEmptyState'
+import { fmtKc } from './cart/fmtKc'
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, removeItem, updateQty, subtotalWithVat, totalQty } = useCart()
+  const { items, isOpen, closeCart, subtotalWithVat, totalQty } = useCart()
 
   return (
     <>
@@ -38,52 +34,11 @@ export function CartDrawer() {
         {/* Items */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full py-16 text-center">
-              <p className="text-4xl mb-4">🛒</p>
-              <p className="font-semibold text-stone-300">Košík je prázdný</p>
-              <p className="mt-1 text-sm text-shop-muted">Přidejte produkty z nabídky</p>
-            </div>
+            <CartEmptyState />
           ) : (
             <div className="space-y-3">
-              {items.map(item => (
-                <div key={item.productId} className="flex gap-3 rounded-xl bg-shop-card p-3">
-                  {/* Foto */}
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-stone-100">
-                    {item.thumbnailUrl && (
-                      <Image src={item.thumbnailUrl} alt={item.name} fill
-                        className="object-contain p-1" sizes="64px" unoptimized />
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-sm font-medium text-shop-fg leading-snug">{item.name}</p>
-                    <p className="mt-0.5 text-xs text-shop-muted">
-                      {fmtKc(item.unitPriceWithVat)}{item.isWeightBased ? ` / ${item.unit.toLowerCase()}` : ' / ks'}
-                    </p>
-
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      {/* Qty */}
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => updateQty(item.productId, item.qty - 1)}
-                          className="flex h-6 w-6 items-center justify-center rounded bg-shop-border text-sm text-shop-fg hover:bg-shop-muted/50 transition">−</button>
-                        <span className="min-w-[1.5rem] text-center text-sm font-medium text-shop-fg">{item.qty}</span>
-                        <button onClick={() => updateQty(item.productId, item.qty + 1)}
-                          className="flex h-6 w-6 items-center justify-center rounded bg-shop-border text-sm text-shop-fg hover:bg-shop-muted/50 transition">+</button>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-sm font-bold text-gold">{fmtKc(item.qty * item.unitPriceWithVat)}</span>
-                        <button onClick={() => removeItem(item.productId)}
-                          className="p-1 text-shop-muted hover:text-red-400 transition" aria-label="Odebrat">
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {items.map((item) => (
+                <CartItemRow key={item.productId} item={item} />
               ))}
             </div>
           )}
