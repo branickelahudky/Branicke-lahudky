@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { toast } from 'sonner'
 import { useCart } from '../_context/CartContext'
+import { flyToCart } from '../_lib/flyToCart'
 import { ProductCard } from './ProductCard'
 import { HorizontalShelf } from './HorizontalShelf'
 import type { ProductDetail } from '../_lib/getProductDetail'
@@ -52,7 +52,7 @@ function StockBadge({ status, qty, track }: { status: string; qty: number; track
 }
 
 export function ProductDetailContent({ product }: { product: ProductDetail }) {
-  const { addItem } = useCart()
+  const { addItem, openCart } = useCart()
   const [qty, setQty] = useState(1)
   const [activeImg, setActiveImg] = useState(0)
   const [activeVariant, setActiveVariant] = useState<string | null>(
@@ -82,9 +82,11 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
   const mainImage = product.images[activeImg]
   const mainSrc   = mainImage?.url || null
 
-  function handleAdd() {
+  function handleAdd(e: React.MouseEvent) {
     if (!isAvailable || !hasPrice) return
+    const origin = e.currentTarget as HTMLElement
     const price = variantPrice ?? displayPrice
+    const thumb = mainImage?.thumbnailUrl ?? mainImage?.url ?? null
     addItem({
       productId:           product.id,
       slug:                product.slug,
@@ -92,14 +94,15 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
       name:                selectedVariant
         ? `${product.name} — ${selectedVariant.name}`
         : product.name,
-      thumbnailUrl:        mainImage?.thumbnailUrl ?? null,
+      thumbnailUrl:        thumb,
       unitPriceWithVat:    price,
       unitPriceWithoutVat: product.priceWithoutVat,
       vatRate:             product.vatRate,
       isWeightBased:       product.isWeightBased,
       unit:                product.unit,
     }, qty)
-    toast.success(`„${product.name}" přidáno do košíku`)
+    // Letící fotka z tlačítka „Do košíku" k ikoně v hlavičce (nad backdropem modalu)
+    flyToCart(origin, thumb, () => openCart('auto'))
   }
 
   const weightLabel = product.weightGrams
@@ -279,6 +282,7 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
               <button
                 onClick={handleAdd}
                 disabled={!isAvailable}
+                data-cart-add
                 className="flex-1 rounded-xl bg-gold px-4 py-2.5 text-sm font-bold text-shop-bg hover:bg-gold/90 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Do košíku

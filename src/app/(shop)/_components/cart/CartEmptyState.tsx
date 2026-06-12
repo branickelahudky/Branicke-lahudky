@@ -1,4 +1,4 @@
-// Prázdný stav košíku — sdíleno mezi CartDrawer (mobil) a CartSidebar (desktop).
+// Prázdný stav košíku — používá flyout (CartFlyout).
 export function CartEmptyState() {
   return (
     <div className="flex h-full flex-col items-center justify-center py-16 text-center">

@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { toast } from 'sonner'
 import { useCart } from '../_context/CartContext'
+import { flyToCart } from '../_lib/flyToCart'
 
 export type ProductCardData = {
   id: string
@@ -33,7 +33,7 @@ function fmtKc(n: number) {
 }
 
 export function ProductCard({ product }: { product: ProductCardData }) {
-  const { addItem } = useCart()
+  const { addItem, openCart } = useCart()
 
   const isAvailable = product.stockStatus !== 'OUT_OF_STOCK'
   const hasPrice    = product.priceWithVat > 0
@@ -60,6 +60,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     e.preventDefault()
     e.stopPropagation()
     if (!isAvailable || !hasPrice) return
+    const origin = e.currentTarget as HTMLElement
     addItem({
       productId: product.id,
       slug:      product.slug,
@@ -72,7 +73,8 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       isWeightBased:        product.isWeightBased,
       unit:                 product.unit,
     }, 1)
-    toast.success(`„${product.name}" přidáno do košíku`)
+    // Klik → fotka letí do košíku → po doletu se vysune flyout (bez toastu)
+    flyToCart(origin, product.thumbnailUrl, () => openCart('auto'))
   }
 
   return (
@@ -111,6 +113,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         <button
           onClick={handleAdd}
           disabled={!isAvailable || !hasPrice}
+          data-cart-add
           aria-label="Přidat do košíku"
           className="
             absolute bottom-2 right-2

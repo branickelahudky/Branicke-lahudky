@@ -16,19 +16,25 @@ export type CartItem = {
   unit: string
 }
 
+/** Režim otevření flyoutu:
+ *  - 'manual' = klik na košík v hlavičce → zůstává otevřený (žádné auto-zavření)
+ *  - 'auto'   = po přidání položky → po 2,5 s se sám zasune (pokud na něm není kurzor/focus) */
+export type CartOpenMode = 'manual' | 'auto'
+
 type CartContextType = {
   items: CartItem[]
   isOpen: boolean
+  openMode: CartOpenMode
   totalQty: number
   subtotalWithVat: number
-  /** Poslední přidaná položka — pro vizuální odezvu (flash) ve sticky košíku.
+  /** Poslední přidaná položka — pro vizuální odezvu (flash) ve flyoutu.
    *  nonce roste i při opakovaném přidání téhož produktu, aby se efekt spustil znovu. */
   lastAdded: { productId: string; nonce: number } | null
   addItem: (item: Omit<CartItem, 'qty'>, qty: number) => void
   removeItem: (productId: string) => void
   updateQty: (productId: string, qty: number) => void
   clear: () => void
-  openCart: () => void
+  openCart: (mode?: CartOpenMode) => void
   closeCart: () => void
 }
 
@@ -37,6 +43,7 @@ const CartContext = createContext<CartContextType | null>(null)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [openMode, setOpenMode] = useState<CartOpenMode>('manual')
   const [hydrated, setHydrated] = useState(false)
   const [lastAdded, setLastAdded] = useState<{ productId: string; nonce: number } | null>(null)
   const nonceRef = useRef(0)
@@ -86,12 +93,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const clear = useCallback(() => setItems([]), [])
-  const openCart = useCallback(() => setIsOpen(true), [])
+  // Otevření flyoutu. Přidání položky volá openCart('auto') až po doletu animace
+  // (viz flyToCart), ruční klik v hlavičce volá openCart() = 'manual'.
+  const openCart = useCallback((mode: CartOpenMode = 'manual') => {
+    setOpenMode(mode)
+    setIsOpen(true)
+  }, [])
   const closeCart = useCallback(() => setIsOpen(false), [])
 
   return (
     <CartContext.Provider value={{
-      items, isOpen, totalQty, subtotalWithVat, lastAdded,
+      items, isOpen, openMode, totalQty, subtotalWithVat, lastAdded,
       addItem, removeItem, updateQty, clear, openCart, closeCart,
     }}>
       {children}

@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useCart, type CartItem } from '../../_context/CartContext'
 import { fmtKc } from './fmtKc'
 
-// Mini řádek položky košíku — sdíleno CartDrawer (mobil) i CartSidebar (desktop).
+// Mini řádek položky košíku — používá flyout (CartFlyout).
 // `highlight` = krátká vizuální odezva po přidání z karty.
 export function CartItemRow({ item, highlight = false }: { item: CartItem; highlight?: boolean }) {
   const { updateQty, removeItem } = useCart()
