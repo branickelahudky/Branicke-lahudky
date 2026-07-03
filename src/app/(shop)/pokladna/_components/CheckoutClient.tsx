@@ -8,9 +8,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useCart } from '../../_context/CartContext'
+import { useCart, cartItemKey } from '../../_context/CartContext'
 import { fmtKc } from '../../_components/cart/fmtKc'
 import { calculateOrderTotals, formatCZK } from '@/lib/pricing'
+import { calculateCartWeightKg, formatWeightKg } from '@/lib/cart-weight'
 
 export type ShippingOption = {
   id: string
@@ -23,6 +24,7 @@ export type ShippingOption = {
   vatRate: number
   freeShippingThreshold: number | null
   maxOrderValue: number | null
+  maxWeightKg: number | null
   allowedPaymentIds: string[]
 }
 
@@ -182,6 +184,20 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
   // Stejný výpočet jako serverové API (nezaokrouhlený mezisoučet pro limity)
   const subtotal = items.reduce((s, i) => s + i.qty * i.unitPriceWithVat, 0)
 
+  // Odhad hmotnosti košíku — stejná sdílená funkce jako na serveru
+  const cartWeightKg = useMemo(
+    () =>
+      calculateCartWeightKg(
+        items.map((i) => ({
+          quantity: i.qty,
+          isWeightBased: i.isWeightBased,
+          unit: i.unit,
+          weightGrams: i.weightGrams,
+        })),
+      ),
+    [items],
+  )
+
   // Prázdný košík → homepage s hláškou (až po hydrataci z localStorage)
   useEffect(() => {
     if (hydrated && items.length === 0 && !submittedRef.current) {
@@ -189,10 +205,15 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
     }
   }, [hydrated, items.length, router])
 
-  // Dopravy vyhovující hodnotě objednávky (stejné pravidlo jako API)
+  // Dopravy vyhovující hodnotě A HMOTNOSTI objednávky (stejná pravidla jako API)
   const availableShipping = useMemo(
-    () => shippingOptions.filter((s) => !s.maxOrderValue || s.maxOrderValue >= subtotal),
-    [shippingOptions, subtotal],
+    () =>
+      shippingOptions.filter(
+        (s) =>
+          (!s.maxOrderValue || s.maxOrderValue >= subtotal) &&
+          (!s.maxWeightKg || s.maxWeightKg >= cartWeightKg),
+      ),
+    [shippingOptions, subtotal, cartWeightKg],
   )
 
   const selectedShipping = availableShipping.find((s) => s.id === shippingId) ?? null
@@ -288,7 +309,11 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
           companyName: values.isBusiness ? values.companyName.trim() : undefined,
           companyId: values.isBusiness ? values.companyId.trim() : undefined,
           vatId: values.isBusiness && values.vatId.trim() ? values.vatId.trim() : undefined,
-          items: items.map((i) => ({ productId: i.productId, quantity: i.qty })),
+          items: items.map((i) => ({
+            productId: i.productId,
+            variantId: i.variantId ?? undefined,
+            quantity: i.qty,
+          })),
           shippingAddress: {
             firstName: values.firstName.trim(),
             lastName: values.lastName.trim(),
@@ -521,7 +546,7 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
 
             <ul className="divide-y divide-stone-100">
               {items.map((i) => (
-                <li key={i.productId} className="flex items-center gap-3 py-2.5">
+                <li key={cartItemKey(i)} className="flex items-center gap-3 py-2.5">
                   <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-stone-100">
                     {i.thumbnailUrl && (
                       <Image src={i.thumbnailUrl} alt={i.name} fill className="object-contain p-0.5" sizes="40px" unoptimized />
@@ -529,6 +554,7 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-shop-fg">{i.name}</p>
+                    {i.variantName && <p className="text-xs text-gold">{i.variantName}</p>}
                     <p className="text-xs text-shop-muted">{i.qty} × {fmtKc(i.unitPriceWithVat)}</p>
                   </div>
                   <span className="shrink-0 text-sm font-medium text-shop-fg">{fmtKc(i.qty * i.unitPriceWithVat)}</span>
@@ -553,6 +579,10 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
                   <dd className="text-shop-fg">{formatCZK(totals.paymentFeeWithVat)}</dd>
                 </div>
               )}
+              <div className="flex justify-between text-xs">
+                <dt className="text-shop-muted">Hmotnost (odhad)</dt>
+                <dd className="text-shop-muted">{formatWeightKg(cartWeightKg)}</dd>
+              </div>
               {Object.entries(totals.vatBreakdown).map(([rate, v]) => (
                 <div key={rate} className="flex justify-between text-xs">
                   <dt className="text-shop-muted">z toho DPH {rate} %</dt>

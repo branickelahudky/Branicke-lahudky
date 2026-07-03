@@ -35,6 +35,7 @@ export default async function HledatPage({ searchParams }: Props) {
             isNew: true, isOnSale: true, isFeatured: true,
             stockQuantity: true, stockStatus: true, trackStock: true,
             images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true, fileSize: true }, take: 1 },
+            _count: { select: { variants: { where: { isActive: true } } } },
           },
         })
       : []
@@ -51,6 +52,7 @@ export default async function HledatPage({ searchParams }: Props) {
     stockQuantity: p.stockQuantity,
     stockStatus: p.stockStatus,
     trackStock: p.trackStock,
+    hasVariants: p._count.variants > 0,
     thumbnailUrl: (() => {
       const img = p.images[0]
       if (!img) return null

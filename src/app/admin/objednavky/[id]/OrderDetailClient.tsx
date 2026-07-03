@@ -11,6 +11,7 @@ import { EditItemModal } from './EditItemModal'
 import { CreateInvoiceModal } from './CreateInvoiceModal'
 import { STATUS_LABELS } from '@/lib/order-status'
 import { formatCZK } from '@/lib/pricing'
+import { calculateCartWeightKg, formatWeightKg } from '@/lib/cart-weight'
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -864,6 +865,17 @@ export function OrderDetailClient({
                   </div>
                   <div className="border-t border-stone-100 p-5">
                     <div className="ml-auto max-w-xs space-y-1.5 text-sm">
+                      <div className="flex justify-between text-stone-500">
+                        <span>Celková hmotnost (odhad)</span>
+                        <span>
+                          {formatWeightKg(calculateCartWeightKg(order.items.map((i) => ({
+                            quantity: i.quantity,
+                            isWeightBased: i.isWeightBased,
+                            unit: i.unit,
+                            weightGrams: i.expectedWeightKg != null ? i.expectedWeightKg * 1000 : null,
+                          }))))}
+                        </span>
+                      </div>
                       <div className="flex justify-between text-stone-600">
                         <span>Mezisoučet zboží</span>
                         <span>{formatCZK(order.subtotalWithVat)}</span>

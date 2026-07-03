@@ -55,6 +55,7 @@ export type ProductDetail = {
     name: string
     priceWithVat: number
     priceWithoutVat: number
+    weightGrams: number | null
     stockQuantity: number
     sortOrder: number
   }>
@@ -101,6 +102,7 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
         select: {
           id: true, name: true,
           priceWithVat: true, priceWithoutVat: true,
+          weightKg: true,
           stockQuantity: true, sortOrder: true,
         },
       },
@@ -120,6 +122,7 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
                 select: { thumbnailUrl: true, url: true, fileSize: true },
                 take: 1,
               },
+              _count: { select: { variants: { where: { isActive: true } } } },
             },
           },
         },
@@ -143,6 +146,7 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
     weightGrams: r.weightGrams,
     isOnSale: r.isOnSale, isNew: r.isNew, isFeatured: r.isFeatured,
     stockStatus: r.stockStatus, stockQuantity: r.stockQuantity, trackStock: r.trackStock,
+    hasVariants: r._count.variants > 0,
     thumbnailUrl: (() => {
       const img = r.images[0]
       if (!img) return null
@@ -182,6 +186,7 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
       id: v.id, name: v.name,
       priceWithVat: Number(v.priceWithVat),
       priceWithoutVat: Number(v.priceWithoutVat),
+      weightGrams: v.weightKg != null ? Math.round(Number(v.weightKg) * 1000) : null,
       stockQuantity: v.stockQuantity,
       sortOrder: v.sortOrder,
     })),

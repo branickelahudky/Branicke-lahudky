@@ -89,14 +89,17 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
     const thumb = mainImage?.thumbnailUrl ?? mainImage?.url ?? null
     addItem({
       productId:           product.id,
+      // Cena i váha musí odpovídat konkrétní variantě — server si je při
+      // objednávce stejně ověří z DB podle variantId
+      variantId:           selectedVariant?.id ?? null,
+      variantName:         selectedVariant?.name ?? null,
+      weightGrams:         selectedVariant?.weightGrams ?? product.weightGrams ?? null,
       slug:                product.slug,
       sku:                 product.sku,
-      name:                selectedVariant
-        ? `${product.name} — ${selectedVariant.name}`
-        : product.name,
+      name:                product.name,
       thumbnailUrl:        thumb,
       unitPriceWithVat:    price,
-      unitPriceWithoutVat: product.priceWithoutVat,
+      unitPriceWithoutVat: selectedVariant?.priceWithoutVat ?? product.priceWithoutVat,
       vatRate:             product.vatRate,
       isWeightBased:       product.isWeightBased,
       unit:                product.unit,

@@ -166,6 +166,7 @@ function VariantModal({
               <label className="mb-1 block text-sm font-medium text-stone-700">Hmotnost (g)</label>
               <input type="number" min="0" step="1" value={weightG}
                 onChange={(e) => setWeightG(e.target.value)} placeholder="volitelné" className={inputCls} />
+              <p className="mt-1 text-xs text-stone-400">Nevyplněno = použije se hmotnost produktu.</p>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-stone-700">Sklad (ks)</label>

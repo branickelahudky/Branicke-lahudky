@@ -83,6 +83,7 @@ export default async function PokladnaPage() {
       vatRate: Number(s.vatRate),
       freeShippingThreshold: s.freeShippingThreshold ? Number(s.freeShippingThreshold) : null,
       maxOrderValue: s.maxOrderValue ? Number(s.maxOrderValue) : null,
+      maxWeightKg: s.maxWeightKg ? Number(s.maxWeightKg) : null,
       // prázdné = doprava nemá nastavené vazby → povolíme všechny ruční platby
       allowedPaymentIds: allowed,
     }

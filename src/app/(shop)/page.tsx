@@ -36,6 +36,7 @@ function serializeProduct(p: {
   isNew: boolean; isOnSale: boolean; isFeatured: boolean
   stockQuantity: number; stockStatus: string; trackStock: boolean
   images: Array<{ thumbnailUrl: string; url: string; fileSize: number }>
+  _count: { variants: number }
 }): ProductCardData {
   return {
     id: p.id, slug: p.slug, sku: p.sku, name: p.name,
@@ -49,6 +50,7 @@ function serializeProduct(p: {
     stockQuantity: p.stockQuantity,
     stockStatus:   p.stockStatus,
     trackStock:    p.trackStock,
+    hasVariants:   p._count.variants > 0,
     thumbnailUrl: (() => {
       const img = p.images[0]
       if (!img) return null
@@ -104,6 +106,7 @@ const FLAG_SELECT = {
   isNew: true, isOnSale: true, isFeatured: true,
   stockQuantity: true, stockStatus: true, trackStock: true,
   images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true, fileSize: true }, take: 1 },
+  _count: { select: { variants: { where: { isActive: true } } } },
 } as const
 
 type ShelfKind = 'SHELF_SALE' | 'SHELF_NEW' | 'SHELF_FEATURED'

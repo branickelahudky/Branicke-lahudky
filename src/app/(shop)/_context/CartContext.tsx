@@ -4,6 +4,11 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback, ty
 
 export type CartItem = {
   productId: string
+  /** Zvolená varianta produktu (200 g / 500 g…) — null = produkt bez variant */
+  variantId: string | null
+  variantName: string | null
+  /** Hmotnost jedné jednotky v gramech (varianta → produkt), pro odhad dopravy */
+  weightGrams: number | null
   slug: string
   sku: string
   name: string
@@ -14,6 +19,11 @@ export type CartItem = {
   qty: number
   isWeightBased: boolean
   unit: string
+}
+
+/** Identita položky v košíku — stejný produkt v různých variantách = různé řádky. */
+export function cartItemKey(item: { productId: string; variantId: string | null }): string {
+  return item.variantId ? `${item.productId}:${item.variantId}` : item.productId
 }
 
 /** Režim otevření flyoutu:
@@ -31,10 +41,10 @@ type CartContextType = {
   subtotalWithVat: number
   /** Poslední přidaná položka — pro vizuální odezvu (flash) ve flyoutu.
    *  nonce roste i při opakovaném přidání téhož produktu, aby se efekt spustil znovu. */
-  lastAdded: { productId: string; nonce: number } | null
+  lastAdded: { itemKey: string; nonce: number } | null
   addItem: (item: Omit<CartItem, 'qty'>, qty: number) => void
-  removeItem: (productId: string) => void
-  updateQty: (productId: string, qty: number) => void
+  removeItem: (itemKey: string) => void
+  updateQty: (itemKey: string, qty: number) => void
   clear: () => void
   openCart: (mode?: CartOpenMode) => void
   closeCart: () => void
@@ -47,14 +57,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [openMode, setOpenMode] = useState<CartOpenMode>('manual')
   const [hydrated, setHydrated] = useState(false)
-  const [lastAdded, setLastAdded] = useState<{ productId: string; nonce: number } | null>(null)
+  const [lastAdded, setLastAdded] = useState<{ itemKey: string; nonce: number } | null>(null)
   const nonceRef = useRef(0)
 
   // Load from localStorage after hydration (SSR safe)
   useEffect(() => {
     try {
       const saved = localStorage.getItem('cart')
-      if (saved) setItems(JSON.parse(saved))
+      if (saved) {
+        // starší košíky (před variantami) nemají nová pole — doplnit
+        const parsed = (JSON.parse(saved) as Partial<CartItem>[]).map((i) => ({
+          variantId: null,
+          variantName: null,
+          weightGrams: null,
+          ...i,
+        })) as CartItem[]
+        setItems(parsed)
+      }
     } catch {}
     setHydrated(true)
   }, [])
@@ -69,8 +88,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const subtotalWithVat = items.reduce((s, i) => s + i.qty * i.unitPriceWithVat, 0)
 
   const addItem = useCallback((item: Omit<CartItem, 'qty'>, qty: number) => {
+    const key = cartItemKey(item)
     setItems(prev => {
-      const idx = prev.findIndex(i => i.productId === item.productId)
+      const idx = prev.findIndex(i => cartItemKey(i) === key)
       if (idx >= 0) {
         const next = [...prev]
         next[idx] = { ...next[idx], qty: next[idx].qty + qty }
@@ -79,18 +99,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [...prev, { ...item, qty }]
     })
     nonceRef.current += 1
-    setLastAdded({ productId: item.productId, nonce: nonceRef.current })
+    setLastAdded({ itemKey: key, nonce: nonceRef.current })
   }, [])
 
-  const removeItem = useCallback((productId: string) => {
-    setItems(prev => prev.filter(i => i.productId !== productId))
+  const removeItem = useCallback((itemKey: string) => {
+    setItems(prev => prev.filter(i => cartItemKey(i) !== itemKey))
   }, [])
 
-  const updateQty = useCallback((productId: string, qty: number) => {
+  const updateQty = useCallback((itemKey: string, qty: number) => {
     if (qty <= 0) {
-      setItems(prev => prev.filter(i => i.productId !== productId))
+      setItems(prev => prev.filter(i => cartItemKey(i) !== itemKey))
     } else {
-      setItems(prev => prev.map(i => i.productId === productId ? { ...i, qty } : i))
+      setItems(prev => prev.map(i => cartItemKey(i) === itemKey ? { ...i, qty } : i))
     }
   }, [])
 

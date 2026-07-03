@@ -10,6 +10,7 @@ import {
   type OrderLineInput,
 } from '@/lib/pricing'
 import { generateNextNumber } from '@/lib/number-series'
+import { calculateCartWeightKg, type CartWeightItem } from '@/lib/cart-weight'
 import { sendOrderConfirmationEmail } from '@/lib/order-confirmation-email'
 import { getSession } from '@/lib/auth'
 import { getCustomerSession } from '@/lib/customer-auth'
@@ -132,6 +133,7 @@ export async function POST(req: NextRequest) {
 
   // Sestavíme řádky pro výpočet
   const orderLines: OrderLineInput[] = []
+  const weightItems: CartWeightItem[] = []
   const itemSnapshots: Array<{
     productId: string
     variantId?: string
@@ -159,18 +161,22 @@ export async function POST(req: NextRequest) {
     let unitPriceWithoutVat = Number(product.priceWithoutVat)
     let unitPriceWithVat = Number(product.priceWithVat)
     let variantName: string | undefined
+    // Priorita hmotnosti jednotky: varianta → přibližná váha → logistická váha produktu
     let expectedWeightKg: number | undefined = product.approximateWeightKg
       ? Number(product.approximateWeightKg)
-      : undefined
+      : product.weightGrams
+        ? product.weightGrams / 1000
+        : undefined
 
     if (item.variantId) {
       const variant = variants.find((v) => v.id === item.variantId)
-      if (!variant) {
+      if (!variant || variant.productId !== product.id) {
         return NextResponse.json(
           { error: `Varianta ${item.variantId} nebyla nalezena.` },
           { status: 400 }
         )
       }
+      // Cena i váha VŽDY z DB varianty — hodnoty z klienta se nepoužívají
       unitPriceWithoutVat = Number(variant.priceWithoutVat)
       unitPriceWithVat = Number(variant.priceWithVat)
       variantName = variant.name
@@ -181,6 +187,13 @@ export async function POST(req: NextRequest) {
       quantity: item.quantity,
       unitPriceWithVat,
       vatRate: Number(product.vatRate),
+    })
+
+    weightItems.push({
+      quantity: item.quantity,
+      isWeightBased: product.isWeightBased,
+      unit: product.unit,
+      weightGrams: expectedWeightKg != null ? expectedWeightKg * 1000 : null,
     })
 
     itemSnapshots.push({
@@ -197,6 +210,17 @@ export async function POST(req: NextRequest) {
       unit: product.unit,
       expectedWeightKg,
     })
+  }
+
+  // Hmotnostní limit dopravy (pásma = metody s maxWeightKg) — zdroj pravdy
+  const cartWeightKg = calculateCartWeightKg(weightItems)
+  if (shippingMethod.maxWeightKg && cartWeightKg > Number(shippingMethod.maxWeightKg)) {
+    return NextResponse.json(
+      {
+        error: `Objednávka váží cca ${cartWeightKg.toLocaleString('cs-CZ')} kg — zvolená doprava zvládne max. ${Number(shippingMethod.maxWeightKg).toLocaleString('cs-CZ')} kg. Vyberte prosím jinou dopravu.`,
+      },
+      { status: 400 }
+    )
   }
 
   // Doprava zdarma od limitu

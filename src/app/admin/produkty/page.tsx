@@ -18,7 +18,21 @@ interface Props {
     strana?: string
     sort?: string
     order?: string
+    hmotnost?: string
   }>
+}
+
+// Produkt „bez hmotnosti" = doprava se u něj počítá jen z výchozího odhadu:
+// není váhový, nemá vyplněnou váhu produktu a (nemá varianty NEBO aspoň
+// jedné aktivní variantě váha chybí — produktová váha by ji jinak pokryla).
+const MISSING_WEIGHT_WHERE: Prisma.ProductWhereInput = {
+  isWeightBased: false,
+  weightGrams: null,
+  approximateWeightKg: null,
+  OR: [
+    { variants: { none: { isActive: true } } },
+    { variants: { some: { isActive: true, weightKg: null } } },
+  ],
 }
 
 export default async function ProduktyPage({ searchParams }: Props) {
@@ -30,10 +44,15 @@ export default async function ProduktyPage({ searchParams }: Props) {
   const dir: 'asc' | 'desc' = params.order === 'asc' ? 'asc' : 'desc'
   const currentCategoryId = params.kategorie ?? null
   const currentSearch = params.hledat ?? ''
+  const missingWeightOnly = params.hmotnost === 'chybi'
 
   // ── Where clause ───────────────────────────────────────────────
 
   const where: Prisma.ProductWhereInput = {}
+
+  if (missingWeightOnly) {
+    where.AND = [MISSING_WEIGHT_WHERE]
+  }
 
   if (currentSearch) {
     where.OR = [
@@ -68,7 +87,7 @@ export default async function ProduktyPage({ searchParams }: Props) {
 
   // ── Paralelní dotazy ───────────────────────────────────────────
 
-  const [products, total, categories] = await Promise.all([
+  const [products, total, categories, missingWeightTotal] = await Promise.all([
     prisma.product.findMany({
       where,
       orderBy,
@@ -110,6 +129,7 @@ export default async function ProduktyPage({ searchParams }: Props) {
         },
       },
     }),
+    prisma.product.count({ where: { isActive: true, ...MISSING_WEIGHT_WHERE } }),
   ])
 
   // ── Serialize (Decimal → number, Date → ISO string) ───────────
@@ -153,6 +173,8 @@ export default async function ProduktyPage({ searchParams }: Props) {
           dir={dir}
           currentSearch={currentSearch}
           currentCategoryId={currentCategoryId}
+          missingWeightOnly={missingWeightOnly}
+          missingWeightTotal={missingWeightTotal}
         />
       </div>
     </div>

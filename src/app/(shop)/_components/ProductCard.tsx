@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { useCart } from '../_context/CartContext'
 import { flyToCart } from '../_lib/flyToCart'
 
@@ -24,6 +25,9 @@ export type ProductCardData = {
   stockQuantity: number
   trackStock: boolean
   thumbnailUrl: string | null
+  /** Produkt má aktivní varianty — „+" pak otevírá detail (nutí výběr varianty,
+   *  aby cena i váha vždy odpovídaly konkrétní variantě) */
+  hasVariants?: boolean
 }
 
 function fmtKc(n: number) {
@@ -34,6 +38,7 @@ function fmtKc(n: number) {
 
 export function ProductCard({ product }: { product: ProductCardData }) {
   const { addItem, openCart } = useCart()
+  const router = useRouter()
 
   const isAvailable = product.stockStatus !== 'OUT_OF_STOCK'
   const hasPrice    = product.priceWithVat > 0
@@ -59,10 +64,21 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
+
+    // Produkt s variantami nelze přidat naslepo — otevřeme detail,
+    // kde si zákazník variantu vybere (cena a váha pak vždy sedí)
+    if (product.hasVariants) {
+      router.push(`/produkt/${product.slug}`)
+      return
+    }
+
     if (!isAvailable || !hasPrice) return
     const origin = e.currentTarget as HTMLElement
     addItem({
       productId: product.id,
+      variantId: null,
+      variantName: null,
+      weightGrams: product.weightGrams,
       slug:      product.slug,
       sku:       product.sku,
       name:      product.name,

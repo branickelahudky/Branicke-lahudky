@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { useCart } from '../_context/CartContext'
+import { useCart, cartItemKey } from '../_context/CartContext'
 import { CartItemRow } from './cart/CartItemRow'
 import { CartEmptyState } from './cart/CartEmptyState'
 import { fmtKc } from './cart/fmtKc'
@@ -25,7 +25,7 @@ export function CartFlyout() {
   const [flashId, setFlashId] = useState<string | null>(null)
   useEffect(() => {
     if (!lastAdded) return
-    setFlashId(lastAdded.productId)
+    setFlashId(lastAdded.itemKey)
     const t = window.setTimeout(() => setFlashId(null), FLASH_MS)
     return () => window.clearTimeout(t)
   }, [lastAdded])
@@ -93,7 +93,7 @@ export function CartFlyout() {
         ) : (
           <div className="space-y-3">
             {items.map((item) => (
-              <CartItemRow key={item.productId} item={item} highlight={flashId === item.productId} />
+              <CartItemRow key={cartItemKey(item)} item={item} highlight={flashId === cartItemKey(item)} />
             ))}
           </div>
         )}

@@ -44,6 +44,8 @@ interface Props {
   dir: 'asc' | 'desc'
   currentSearch: string
   currentCategoryId: string | null
+  missingWeightOnly: boolean
+  missingWeightTotal: number
 }
 
 // ── Konstanty ─────────────────────────────────────────────────────
@@ -77,6 +79,8 @@ export function ProductsClient({
   dir,
   currentSearch,
   currentCategoryId,
+  missingWeightOnly,
+  missingWeightTotal,
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -271,6 +275,19 @@ export function ProductsClient({
               </div>
             )}
           </div>
+
+          {/* Filtr: produkty bez hmotnosti (doprava se u nich jen odhaduje) */}
+          <Link
+            href={buildUrl({ hmotnost: missingWeightOnly ? null : 'chybi', strana: null })}
+            title="Produkty bez vyplněné hmotnosti (u variant se počítá váha varianty, jinak produktu) — doprava se u nich jen odhaduje"
+            className={`rounded border px-3 py-1.5 text-sm transition ${
+              missingWeightOnly
+                ? 'border-amber-400 bg-amber-50 font-medium text-amber-800'
+                : 'border-stone-300 text-stone-600 hover:bg-stone-50'
+            }`}
+          >
+            ⚖ Bez hmotnosti{missingWeightTotal > 0 ? ` (${missingWeightTotal})` : ''}
+          </Link>
 
           {/* Vyhledávání */}
           <input
