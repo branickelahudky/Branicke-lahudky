@@ -40,4 +40,9 @@ export const AUDIT_LABELS: Record<string, string> = {
   USER_REACTIVATED: 'Správce aktivován',
   SESSION_REVOKED: 'Relace ukončena',
   ALL_SESSIONS_REVOKED: 'Všechny ostatní relace ukončeny',
+  CUSTOMER_RESET_LINK_SENT: 'Zákazníkovi poslán odkaz na obnovu hesla',
+  CUSTOMER_ACCOUNT_INVITED: 'Zákazníkovi poslána pozvánka k účtu',
+  CUSTOMER_SESSIONS_REVOKED: 'Zákazník odhlášen ze všech zařízení',
+  CUSTOMER_ACCOUNT_DISABLED: 'Zákaznický účet deaktivován',
+  CUSTOMER_ACCOUNT_ENABLED: 'Zákaznický účet aktivován',
 }

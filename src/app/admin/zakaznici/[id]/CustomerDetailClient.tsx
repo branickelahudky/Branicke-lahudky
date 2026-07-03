@@ -14,6 +14,7 @@ import {
   deleteCustomerAddress,
   type UpdateCustomerData,
 } from './actions'
+import { AccountTab, type SerializedAccount } from './AccountTab'
 
 // ── Exportované typy (používá page.tsx) ───────────────────────────
 
@@ -56,6 +57,7 @@ export type SerializedCustomerDetail = {
   shippingAddress: SerializedAddress | null
   orderStats: SerializedOrderStats
   orderStatuses: string[]
+  account: SerializedAccount
 }
 
 // ── FormState ─────────────────────────────────────────────────────
@@ -458,10 +460,10 @@ export function CustomerDetailClient({ customer, userRole }: Props) {
             </div>
             <button
               type="button"
-              onClick={() => toast.info('Reset hesla bude k dispozici brzy')}
+              onClick={() => setActiveTab('ucty')}
               className="rounded border border-stone-300 px-3 py-1 text-xs text-stone-600 hover:bg-stone-100"
             >
-              Resetovat heslo
+              Spravovat účet →
             </button>
           </div>
         </div>
@@ -837,7 +839,17 @@ export function CustomerDetailClient({ customer, userRole }: Props) {
           {/* Tab obsah */}
           <div className="rounded-lg border border-stone-200 bg-white p-6">
             {activeTab === 'hlavni' && tabHlavni()}
-            {activeTab === 'ucty' && <PlaceholderTab label="Sprint 4-1d" />}
+            {activeTab === 'ucty' && (
+              <AccountTab
+                customerId={customer.id}
+                customerEmail={customer.email}
+                customerCreatedAt={customer.createdAt}
+                isImported={customer.shoptetId !== null}
+                hasPassword={customer.hasPassword}
+                account={customer.account}
+                userRole={userRole}
+              />
+            )}
             {activeTab === 'slevy' && <PlaceholderTab label="Brzy" />}
             {activeTab === 'objednavky' && <PlaceholderTab label="Sprint 4-1d" />}
             {activeTab === 'historie' && <PlaceholderTab label="Sprint 4-1d" />}

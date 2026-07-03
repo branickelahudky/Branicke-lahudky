@@ -23,6 +23,10 @@ export type SerializedCustomer = {
   orderCount: number
   totalSpent: number
   addressCity: string | null
+  hasAccount: boolean
+  emailVerified: boolean
+  accountDisabled: boolean
+  lastSessionAt: string | null
 }
 
 interface Props {
@@ -33,6 +37,7 @@ interface Props {
   sort: string
   dir: 'asc' | 'desc'
   currentSearch: string
+  accountFilter: string
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -60,6 +65,7 @@ export function CustomersClient({
   sort,
   dir,
   currentSearch,
+  accountFilter,
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -113,11 +119,33 @@ export function CustomersClient({
       <div className="rounded-lg border border-stone-200 bg-white">
 
         {/* Lišta */}
-        <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3">
-          <p className="text-sm text-stone-500">
-            <span className="font-medium text-stone-700">{total}</span>{' '}
-            {total === 1 ? 'zákazník' : total < 5 ? 'zákazníci' : 'zákazníků'}
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 px-4 py-3">
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-stone-500">
+              <span className="font-medium text-stone-700">{total}</span>{' '}
+              {total === 1 ? 'zákazník' : total < 5 ? 'zákazníci' : 'zákazníků'}
+            </p>
+            {/* Filtr podle účtu */}
+            <div className="flex rounded-lg border border-stone-200 p-0.5 text-sm">
+              {[
+                { key: 'vsichni', label: 'Všichni', href: buildUrl({ ucet: null, strana: null }) },
+                { key: 's-uctem', label: 'S účtem', href: buildUrl({ ucet: 's-uctem', strana: null }) },
+                { key: 'bez-uctu', label: 'Bez účtu', href: buildUrl({ ucet: 'bez-uctu', strana: null }) },
+              ].map((t) => (
+                <Link
+                  key={t.key}
+                  href={t.href}
+                  className={`rounded-md px-3 py-1 transition ${
+                    accountFilter === t.key
+                      ? 'bg-stone-800 font-medium text-white'
+                      : 'text-stone-500 hover:text-stone-800'
+                  }`}
+                >
+                  {t.label}
+                </Link>
+              ))}
+            </div>
+          </div>
           <input
             type="text"
             value={search}
@@ -143,6 +171,7 @@ export function CustomersClient({
                   </Link>
                 </th>
                 <th className="p-3">Telefon</th>
+                <th className="p-3">Účet</th>
                 <th className="p-3">Město</th>
                 <th className="p-3 text-right">
                   <Link href={sortHref('orderCount')} className="flex items-center justify-end hover:text-stone-700">
@@ -165,7 +194,7 @@ export function CustomersClient({
             <tbody>
               {customers.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="p-10 text-center text-stone-400">
+                  <td colSpan={9} className="p-10 text-center text-stone-400">
                     Žádní zákazníci nenalezeni.
                   </td>
                 </tr>
@@ -217,6 +246,35 @@ export function CustomersClient({
                     {/* Telefon */}
                     <td className="p-3 text-stone-500">
                       {c.phone ?? <span className="text-stone-300">—</span>}
+                    </td>
+
+                    {/* Účet */}
+                    <td className="p-3">
+                      {c.hasAccount ? (
+                        <div>
+                          <span
+                            className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${
+                              c.accountDisabled
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {c.accountDisabled ? 'Deaktivován' : 'Má účet'}
+                          </span>
+                          <p className="mt-0.5 text-xs text-stone-400">
+                            <span title={c.emailVerified ? 'E-mail ověřen' : 'E-mail neověřen'}>
+                              {c.emailVerified ? '✓ ověřen' : '— neověřen'}
+                            </span>
+                            {c.lastSessionAt && (
+                              <span title="Poslední přihlášení"> · {fmtDate(c.lastSessionAt)}</span>
+                            )}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="inline-block rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-500">
+                          Bez účtu
+                        </span>
+                      )}
                     </td>
 
                     {/* Město */}

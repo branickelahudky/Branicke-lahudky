@@ -281,6 +281,8 @@ model Customer {
   // Účet
   emailVerified DateTime?
   lastLoginAt   DateTime?
+  // Deaktivace účtu správcem (≠ smazání — objednávky a data zůstávají)
+  isAccountDisabled Boolean @default(false)
 
   addresses Address[]
   orders    Order[]

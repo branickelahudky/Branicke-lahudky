@@ -13,6 +13,7 @@ interface Props {
     strana?: string
     sort?: string
     order?: string
+    ucet?: string
   }>
 }
 
@@ -24,6 +25,8 @@ export default async function ZakazniciPage({ searchParams }: Props) {
   const sort = params.sort ?? 'lastName'
   const dir: 'asc' | 'desc' = params.order === 'asc' ? 'asc' : 'desc'
   const currentSearch = params.hledat ?? ''
+  const accountFilter =
+    params.ucet === 's-uctem' || params.ucet === 'bez-uctu' ? params.ucet : 'vsichni'
 
   // ── Where clause ─────────────────────────────────────────────────
 
@@ -38,10 +41,14 @@ export default async function ZakazniciPage({ searchParams }: Props) {
     ]
   }
 
+  // „Má účet" = passwordHash není null
+  if (accountFilter === 's-uctem') where.passwordHash = { not: null }
+  if (accountFilter === 'bez-uctu') where.passwordHash = null
+
   // ── Fetch all matching customers with order stats ──────────────────
 
   const allCustomers = await prisma.customer.findMany({
-    where: currentSearch ? where : undefined,
+    where: Object.keys(where).length ? where : undefined,
     include: {
       orders: {
         select: {
@@ -54,6 +61,12 @@ export default async function ZakazniciPage({ searchParams }: Props) {
         select: {
           city: true,
         },
+      },
+      // Poslední aktivita účtu = poslední vytvořená session
+      sessions: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { createdAt: true },
       },
     },
   })
@@ -76,6 +89,10 @@ export default async function ZakazniciPage({ searchParams }: Props) {
     totalSpent: c.orders.reduce((sum, o) => sum + Number(o.totalWithVat), 0),
     orderStatuses: c.orders.map((o) => o.status as string),
     addressCity: c.addresses[0]?.city ?? null,
+    hasAccount: c.passwordHash !== null,
+    emailVerified: c.emailVerified !== null,
+    accountDisabled: c.isAccountDisabled,
+    lastSessionAt: c.sessions[0]?.createdAt ?? null,
   }))
 
   // ── Sort ──────────────────────────────────────────────────────────
@@ -125,6 +142,10 @@ export default async function ZakazniciPage({ searchParams }: Props) {
     orderCount: c.orderCount,
     totalSpent: c.totalSpent,
     addressCity: c.addressCity,
+    hasAccount: c.hasAccount,
+    emailVerified: c.emailVerified,
+    accountDisabled: c.accountDisabled,
+    lastSessionAt: c.lastSessionAt ? c.lastSessionAt.toISOString() : null,
   }))
 
   return (
@@ -140,6 +161,7 @@ export default async function ZakazniciPage({ searchParams }: Props) {
           sort={sort}
           dir={dir}
           currentSearch={currentSearch}
+          accountFilter={accountFilter}
         />
       </div>
     </div>

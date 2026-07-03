@@ -122,7 +122,7 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
 
   const customer = await prisma.customer.findUnique({
     where: { email },
-    select: { id: true, passwordHash: true },
+    select: { id: true, passwordHash: true, isAccountDisabled: true },
   })
 
   let valid = false
@@ -135,6 +135,12 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
 
   if (!customer || !valid) {
     return { error: 'Nesprávný e-mail nebo heslo.' }
+  }
+
+  // Hlásíme až PO ověření hesla — existenci deaktivovaného účtu
+  // se nesmí dozvědět nikdo, kdo heslo nezná
+  if (customer.isAccountDisabled) {
+    return { error: 'Účet je deaktivován, kontaktujte nás prosím.' }
   }
 
   const { ip, userAgent } = await requestMeta()

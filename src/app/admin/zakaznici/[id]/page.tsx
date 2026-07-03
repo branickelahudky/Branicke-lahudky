@@ -17,7 +17,8 @@ export default async function CustomerDetailPage({ params }: Props) {
   const { user } = await requireAuth()
   const { id } = await params
 
-  const [customer, orderGroups, lastOrder] = await Promise.all([
+  const now = new Date()
+  const [customer, orderGroups, lastOrder, activeSessionCount, lastSession] = await Promise.all([
     prisma.customer.findUnique({
       where: { id },
       include: {
@@ -36,6 +37,14 @@ export default async function CustomerDetailPage({ params }: Props) {
       where: { customerId: id },
       orderBy: { createdAt: 'desc' },
       select: { createdAt: true },
+    }),
+    prisma.customerSession.count({
+      where: { customerId: id, expiresAt: { gt: now } },
+    }),
+    prisma.customerSession.findFirst({
+      where: { customerId: id },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true, ipAddress: true, userAgent: true },
     }),
   ])
 
@@ -115,6 +124,19 @@ export default async function CustomerDetailPage({ params }: Props) {
       lastOrderAt: lastOrder?.createdAt.toISOString() ?? null,
     },
     orderStatuses: allStatuses,
+    account: {
+      emailVerifiedAt: customer.emailVerified?.toISOString() ?? null,
+      isDisabled: customer.isAccountDisabled,
+      lastLoginAt: customer.lastLoginAt?.toISOString() ?? null,
+      activeSessionCount,
+      lastSession: lastSession
+        ? {
+            createdAt: lastSession.createdAt.toISOString(),
+            ipAddress: lastSession.ipAddress,
+            userAgent: lastSession.userAgent,
+          }
+        : null,
+    },
   }
 
   const fullName = `${customer.firstName} ${customer.lastName}`.trim() || customer.email

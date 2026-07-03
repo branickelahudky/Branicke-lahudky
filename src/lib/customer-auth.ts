@@ -58,6 +58,7 @@ export type CustomerSessionData = {
     vatId: string | null
     acceptsMarketing: boolean
     passwordHash: string | null
+    isAccountDisabled: boolean
   }
 }
 
@@ -74,6 +75,7 @@ export async function getCustomerSession(): Promise<CustomerSessionData | null> 
           id: true, email: true, firstName: true, lastName: true, phone: true,
           emailVerified: true, isBusinessCustomer: true, companyName: true,
           companyId: true, vatId: true, acceptsMarketing: true, passwordHash: true,
+          isAccountDisabled: true,
         },
       },
     },
@@ -82,6 +84,13 @@ export async function getCustomerSession(): Promise<CustomerSessionData | null> 
   if (!session) return null
 
   if (session.expiresAt < new Date()) {
+    await prisma.customerSession.delete({ where: { token } }).catch(() => {})
+    return null
+  }
+
+  // Pojistka — deaktivace sice sessions maže, ale kdyby nějaká přežila,
+  // deaktivovaný účet nesmí zůstat přihlášený
+  if (session.customer.isAccountDisabled) {
     await prisma.customerSession.delete({ where: { token } }).catch(() => {})
     return null
   }
