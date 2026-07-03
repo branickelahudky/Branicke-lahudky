@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { getCustomerSession } from '@/lib/customer-auth'
 import { Header, type NavItem } from './_components/Header'
 import type { MegaCategory } from './_components/CategoryMegaMenu'
 import { Footer, type FooterNavItem } from './_components/Footer'
@@ -12,7 +13,7 @@ export default async function ShopLayout({
   children: React.ReactNode
   modal: React.ReactNode
 }) {
-  const [identity, headerMenuItems, footerMenuItems, branch, categoryTree] = await Promise.all([
+  const [identity, headerMenuItems, footerMenuItems, branch, categoryTree, customerSession] = await Promise.all([
     prisma.siteIdentity.findFirst(),
     prisma.menuItem.findMany({
       where: { location: 'HEADER', isVisible: true },
@@ -37,6 +38,7 @@ export default async function ShopLayout({
         _count: { select: { products: { where: { isActive: true } } } },
       },
     }),
+    getCustomerSession(),
   ])
 
   const categories: MegaCategory[] = categoryTree.map((c) => ({
@@ -75,6 +77,7 @@ export default async function ShopLayout({
         logoAlt={identity?.logoAlt ?? null}
         navItems={headerNavItems}
         categories={categories}
+        customerName={customerSession?.customer.firstName ?? null}
       />
       <main>{children}</main>
       {modal}

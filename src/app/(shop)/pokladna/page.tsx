@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
-import { CheckoutClient, type ShippingOption, type PaymentOption } from './_components/CheckoutClient'
+import { getCustomerSession } from '@/lib/customer-auth'
+import { CheckoutClient, type ShippingOption, type PaymentOption, type CheckoutPrefill } from './_components/CheckoutClient'
 
 export const metadata: Metadata = {
   title: 'Pokladna',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function PokladnaPage() {
-  const [shippingMethods, allPaymentMethods, termsPage] = await Promise.all([
+  const [shippingMethods, allPaymentMethods, termsPage, customerSession] = await Promise.all([
     prisma.shippingMethod.findMany({
       where: { isActive: true, availableCountries: { has: 'CZ' } },
       orderBy: { sortOrder: 'asc' },
@@ -28,7 +29,32 @@ export default async function PokladnaPage() {
       where: { slug: 'obchodni-podminky' },
       select: { slug: true, title: true },
     }),
+    getCustomerSession(),
   ])
+
+  // Přihlášenému předvyplníme kontakt + výchozí adresu z profilu.
+  // customerId se do objednávky NEPOSÍLÁ z klienta — API si ho bere ze session.
+  let prefill: CheckoutPrefill | null = null
+  if (customerSession) {
+    const c = customerSession.customer
+    const defaultAddress = await prisma.address.findFirst({
+      where: { customerId: c.id, isDefault: true },
+      select: { street: true, city: true, postalCode: true },
+    })
+    prefill = {
+      firstName: c.firstName,
+      lastName: c.lastName,
+      email: c.email,
+      phone: c.phone ?? '',
+      street: defaultAddress?.street ?? '',
+      city: defaultAddress?.city ?? '',
+      postalCode: defaultAddress?.postalCode ?? '',
+      isBusiness: c.isBusinessCustomer,
+      companyName: c.companyName ?? '',
+      companyId: c.companyId ?? '',
+      vatId: c.vatId ?? '',
+    }
+  }
 
   const paymentOptions: PaymentOption[] = allPaymentMethods.map((p) => ({
     id: p.id,
@@ -67,6 +93,8 @@ export default async function PokladnaPage() {
       shippingOptions={shippingOptions}
       paymentOptions={paymentOptions}
       termsSlug={termsPage?.slug ?? 'obchodni-podminky'}
+      prefill={prefill}
+      isLoggedIn={!!customerSession}
     />
   )
 }

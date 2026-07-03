@@ -36,10 +36,27 @@ export type PaymentOption = {
   vatRate: number
 }
 
+/** Předvyplnění z profilu přihlášeného zákazníka */
+export type CheckoutPrefill = {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  street: string
+  city: string
+  postalCode: string
+  isBusiness: boolean
+  companyName: string
+  companyId: string
+  vatId: string
+}
+
 type Props = {
   shippingOptions: ShippingOption[]
   paymentOptions: PaymentOption[]
   termsSlug: string
+  prefill: CheckoutPrefill | null
+  isLoggedIn: boolean
 }
 
 // ─── Validace ──────────────────────────────────────────────────────
@@ -146,11 +163,13 @@ function SectionCard({ step, title, children }: { step: number; title: string; c
 
 // ─── Hlavní komponenta ─────────────────────────────────────────────
 
-export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug }: Props) {
+export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, prefill, isLoggedIn }: Props) {
   const router = useRouter()
   const { items, hydrated, clear, openCart } = useCart()
 
-  const [values, setValues] = useState<FormValues>(EMPTY_FORM)
+  const [values, setValues] = useState<FormValues>(() =>
+    prefill ? { ...EMPTY_FORM, ...prefill } : EMPTY_FORM,
+  )
   const [errors, setErrors] = useState<Record<string, string | null>>({})
   const [shippingId, setShippingId] = useState<string | null>(null)
   const [paymentId, setPaymentId] = useState<string | null>(null)
@@ -323,6 +342,16 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug }: P
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold text-shop-fg">Pokladna</h1>
+
+      {!isLoggedIn && (
+        <div className="mb-5 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-shop-muted">
+          Máte účet?{' '}
+          <Link href={`/ucet/prihlaseni?from=${encodeURIComponent('/pokladna')}`} className="font-medium text-gold hover:underline">
+            Přihlaste se
+          </Link>{' '}
+          — údaje se předvyplní a objednávku uvidíte v historii. Nakoupit ale můžete i bez účtu.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} noValidate className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
         {/* ── Levý sloupec: formulář ── */}

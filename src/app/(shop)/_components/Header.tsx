@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '../_context/CartContext'
 import { CategoryMegaMenu, type MegaCategory } from './CategoryMegaMenu'
 import { MobileCategoryMenu } from './MobileCategoryMenu'
 import { SearchBox } from './SearchBox'
+import { logoutAction } from '../ucet/actions'
 
 export type NavItem = { id: string; label: string; href: string; openNewTab: boolean }
 
@@ -15,9 +16,74 @@ interface Props {
   logoAlt: string | null
   navItems: NavItem[]
   categories: MegaCategory[]
+  /** Křestní jméno přihlášeného zákazníka, null = nepřihlášen */
+  customerName: string | null
 }
 
-export function Header({ logoUrl, logoAlt, navItems, categories }: Props) {
+// Ikona osoby: nepřihlášený → odkaz na přihlášení, přihlášený → menu účtu
+function AccountMenu({ customerName }: { customerName: string | null }) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  const icon = (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  )
+
+  if (!customerName) {
+    return (
+      <Link href="/ucet/prihlaseni" aria-label="Přihlášení"
+        className="p-1 text-shop-muted transition hover:text-gold">
+        {icon}
+      </Link>
+    )
+  }
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Můj účet"
+        aria-expanded={open}
+        className="flex items-center gap-1.5 rounded-full p-1 text-gold transition hover:text-gold/80"
+      >
+        {icon}
+        <span className="hidden max-w-[7rem] truncate text-sm font-medium lg:inline">{customerName}</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-lg">
+          <Link href="/ucet" onClick={() => setOpen(false)}
+            className="block px-4 py-2 text-sm text-shop-fg transition hover:bg-gold/10">
+            Můj účet
+          </Link>
+          <Link href="/ucet/objednavky" onClick={() => setOpen(false)}
+            className="block px-4 py-2 text-sm text-shop-fg transition hover:bg-gold/10">
+            Objednávky
+          </Link>
+          <form action={logoutAction}>
+            <button type="submit"
+              className="block w-full px-4 py-2 text-left text-sm text-shop-muted transition hover:bg-red-50 hover:text-red-600">
+              Odhlásit se
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function Header({ logoUrl, logoAlt, navItems, categories, customerName }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const { totalQty, openCart } = useCart()
@@ -61,6 +127,9 @@ export function Header({ logoUrl, logoAlt, navItems, categories }: Props) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </button>
+
+            {/* Účet */}
+            <AccountMenu customerName={customerName} />
 
             {/* Košík — #cart-icon je cíl animace „letící produkt" (viz flyToCart) */}
             <button

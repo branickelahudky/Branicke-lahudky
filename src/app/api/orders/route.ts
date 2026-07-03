@@ -12,6 +12,7 @@ import {
 import { generateNextNumber } from '@/lib/number-series'
 import { sendOrderConfirmationEmail } from '@/lib/order-confirmation-email'
 import { getSession } from '@/lib/auth'
+import { getCustomerSession } from '@/lib/customer-auth'
 
 const createOrderSchema = z.object({
   // Kontakt
@@ -75,9 +76,6 @@ const createOrderSchema = z.object({
 
   // Poznámka
   customerNote: z.string().optional(),
-
-  // Volitelně - přihlášený zákazník
-  customerId: z.string().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -94,6 +92,11 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: 'Neplatný požadavek.' }, { status: 400 })
   }
+
+  // Přihlášenému zákazníkovi objednávku přiřadíme — z jeho session cookie,
+  // nikdy z těla požadavku (to by šlo podvrhnout). Host = null.
+  const customerSession = await getCustomerSession()
+  const customerId = customerSession?.customer.id
 
   // Načteme produkty a varianty, abychom měli aktuální ceny (snapshot pro objednávku)
   const productIds = data.items.map((i) => i.productId)
@@ -226,7 +229,7 @@ export async function POST(req: NextRequest) {
       data: {
         orderNumber,
         publicToken,
-        customerId: data.customerId,
+        customerId,
         contactEmail: data.contactEmail,
         contactPhone: data.contactPhone,
         contactFirstName: data.contactFirstName,

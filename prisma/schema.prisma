@@ -288,11 +288,41 @@ model Customer {
   carts     Cart[]
   documents Document[]
 
+  sessions            CustomerSession[]
+  passwordResetTokens CustomerPasswordResetToken[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([email])
   @@index([shoptetId])
+}
+
+// Zákaznická session — ODDĚLENÁ od AdminSession (jiná cookie, jiná tabulka)
+model CustomerSession {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
+}
+
+// Reset hesla zákazníka — slouží i k „převzetí" účtu importovaného ze Shoptetu
+model CustomerPasswordResetToken {
+  id         String    @id @default(cuid())
+  token      String    @unique
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([customerId])
 }
 
 model Address {
