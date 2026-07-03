@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '../_context/CartContext'
-import { CategoryMegaMenu, type MegaCategory } from './CategoryMegaMenu'
+import { CategoryNavBar, type MegaCategory } from './CategoryNavBar'
 import { MobileCategoryMenu } from './MobileCategoryMenu'
 import { SearchBox } from './SearchBox'
 import { logoutAction } from '../ucet/actions'
@@ -170,25 +170,10 @@ export function Header({ logoUrl, logoAlt, navItems, categories, customerName }:
           </div>
         )}
 
-        {/* Druhá řada — desktop: Kategorie + nav */}
-        <div className="hidden md:flex h-12 items-center gap-2">
-          <CategoryMegaMenu categories={categories} />
-          {navItems.length > 0 && (
-            <nav className="flex items-center gap-1 overflow-x-auto">
-              {navItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  target={item.openNewTab ? '_blank' : undefined}
-                  className="whitespace-nowrap rounded px-3 py-1 text-sm text-stone-300 hover:text-shop-fg hover:bg-shop-surface transition"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          )}
-        </div>
       </div>
+
+      {/* Tmavá lišta s kategoriemi — desktop (jako starý web) */}
+      <CategoryNavBar categories={categories} navItems={navItems} />
 
       {/* Mobile drawer */}
       {menuOpen && (

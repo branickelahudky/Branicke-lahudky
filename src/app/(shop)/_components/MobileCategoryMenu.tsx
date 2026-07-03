@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import type { MegaCategory } from './CategoryMegaMenu'
+import type { MegaCategory } from './CategoryNavBar'
 
 export function MobileCategoryMenu({
   categories,

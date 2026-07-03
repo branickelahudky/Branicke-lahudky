@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { ProductCard, type ProductCardData } from '../../_components/ProductCard'
-import { CategorySidebar } from './_components/CategorySidebar'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -33,7 +33,7 @@ export default async function KategoriePage({ params, searchParams }: Props) {
     where: { slug },
     include: {
       parent: { select: { id: true, name: true, slug: true } },
-      children: { orderBy: { sortOrder: 'asc' }, select: { id: true, name: true, slug: true, _count: { select: { products: true } } } },
+      children: { orderBy: { sortOrder: 'asc' }, select: { id: true, name: true, slug: true, imageUrl: true, _count: { select: { products: true } } } },
     },
   })
   if (!category) notFound()
@@ -119,75 +119,72 @@ export default async function KategoriePage({ params, searchParams }: Props) {
         <span className="text-sm text-shop-muted">{cards.length} produktů</span>
       </div>
 
-      {/* Mobile filtr — details/summary (CSS only, bez JS) */}
+      {/* Dlaždice podkategorií (jako starý web) — nahrazují boční strom */}
       {subcatsWithProducts.length > 0 && (
-        <details className="mb-5 md:hidden">
-          <summary className="flex cursor-pointer items-center justify-between rounded-xl border border-shop-border bg-shop-surface px-4 py-3 text-sm font-medium text-stone-200 list-none">
-            <span>Filtrovat dle podkategorie</span>
-            <span className="text-shop-muted">▼</span>
-          </summary>
-          <div className="mt-2 rounded-xl border border-shop-border bg-shop-surface p-3">
-            <nav className="flex flex-col gap-1">
-              <Link href={`/kategorie/${slug}`}
-                className={`rounded-lg px-3 py-2 text-sm transition ${!activeSub ? 'bg-gold/10 font-semibold text-gold' : 'text-stone-300 hover:text-gold'}`}>
-                Vše z {category.name}
+        <div className="mb-7 grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <Link
+            href={`/kategorie/${slug}`}
+            className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 text-sm font-medium transition ${
+              !activeSub
+                ? 'border-gold bg-gold/5 text-gold ring-1 ring-gold'
+                : 'border-stone-200 bg-white text-shop-fg hover:border-gold hover:text-gold'
+            }`}
+          >
+            <span className="truncate">Vše z {category.name}</span>
+          </Link>
+          {subcatsWithProducts.map((c) => {
+            const isActive = activeSub?.slug === c.slug
+            return (
+              <Link
+                key={c.id}
+                href={`/kategorie/${slug}?sub=${c.slug}`}
+                className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 text-sm font-medium transition ${
+                  isActive
+                    ? 'border-gold bg-gold/5 text-gold ring-1 ring-gold'
+                    : 'border-stone-200 bg-white text-shop-fg hover:border-gold hover:text-gold'
+                }`}
+              >
+                {c.imageUrl && (
+                  <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-stone-100">
+                    <Image src={c.imageUrl} alt="" fill className="object-cover" sizes="32px" unoptimized />
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate">{c.name}</span>
+                  {c._count.products > 0 && (
+                    <span className="block text-xs font-normal text-shop-muted">
+                      {c._count.products} produktů
+                    </span>
+                  )}
+                </span>
               </Link>
-              {subcatsWithProducts.map((c) => (
-                <Link key={c.id} href={`/kategorie/${slug}?sub=${c.slug}`}
-                  className={`rounded-lg px-3 py-2 text-sm transition ${activeSub?.slug === c.slug ? 'bg-gold/10 font-semibold text-gold' : 'text-stone-300 hover:text-gold'}`}>
-                  {c.name}
-                  {c._count.products > 0 && <span className="ml-1.5 text-xs text-shop-muted">({c._count.products})</span>}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </details>
+            )
+          })}
+        </div>
       )}
 
-      {/* Dvousloupcový layout */}
-      <div className="flex gap-8">
-        {/* Sidebar — desktop */}
-        {subcatsWithProducts.length > 0 && (
-          <aside className="hidden md:block w-52 shrink-0">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-shop-muted">
-              Podkategorie
-            </p>
-            <CategorySidebar
-              categorySlug={slug}
-              subcategories={subcatsWithProducts.map((c) => ({
-                id: c.id, name: c.name, slug: c.slug, count: c._count.products,
-              }))}
-              activeSub={activeSub?.slug ?? null}
-              totalLabel={`Vše z ${category.name}`}
-            />
-          </aside>
-        )}
-
-        {/* Mřížka produktů */}
-        <div className="min-w-0 flex-1">
-          {cards.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-shop-border py-20 text-center">
-              <p className="text-lg font-semibold text-stone-400">Zatím žádné produkty</p>
-              <p className="mt-2 text-sm text-shop-muted">
-                V této kategorii momentálně nic není.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {cards.map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
-              </div>
-              {products.length === 48 && (
-                <p className="mt-6 text-center text-sm text-shop-muted">
-                  Zobrazeno prvních 48 produktů — stránkování připravujeme.
-                </p>
-              )}
-            </>
-          )}
+      {/* Mřížka produktů */}
+      {cards.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-shop-border py-20 text-center">
+          <p className="text-lg font-semibold text-stone-400">Zatím žádné produkty</p>
+          <p className="mt-2 text-sm text-shop-muted">
+            V této kategorii momentálně nic není.
+          </p>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {cards.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+          {products.length === 48 && (
+            <p className="mt-6 text-center text-sm text-shop-muted">
+              Zobrazeno prvních 48 produktů — stránkování připravujeme.
+            </p>
+          )}
+        </>
+      )}
     </div>
   )
 }

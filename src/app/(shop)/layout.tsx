@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { getCustomerSession } from '@/lib/customer-auth'
 import { Header, type NavItem } from './_components/Header'
-import type { MegaCategory } from './_components/CategoryMegaMenu'
+import type { MegaCategory } from './_components/CategoryNavBar'
 import { Footer, type FooterNavItem } from './_components/Footer'
 import { CartProvider } from './_context/CartContext'
 import { CartFlyout } from './_components/CartFlyout'
