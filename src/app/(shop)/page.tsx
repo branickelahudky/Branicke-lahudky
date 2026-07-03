@@ -292,7 +292,12 @@ async function FooterCardsSection() {
 
 // ── Homepage ──────────────────────────────────────────────────────
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kosik?: string }>
+}) {
+  const { kosik } = await searchParams
   const sections = await prisma.homepageSection.findMany({
     where: { isVisible: true },
     orderBy: { sortOrder: 'asc' },
@@ -300,6 +305,13 @@ export default async function HomePage() {
 
   return (
     <>
+      {kosik === 'prazdny' && (
+        <div className="mx-auto max-w-7xl px-4 pt-4">
+          <div className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-shop-fg">
+            Váš košík je prázdný — do pokladny můžete pokračovat, jakmile si vyberete zboží.
+          </div>
+        </div>
+      )}
       {sections.map((section) => {
         const cfg = (section.config ?? {}) as Record<string, unknown>
 

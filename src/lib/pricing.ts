@@ -6,7 +6,9 @@
 //  - Pro CZ: potraviny 12 %, doprava/platba 21 %
 //  - Pro váhové produkty: cena = váha × cena_za_jednotku
 
-import { Unit } from '@prisma/client'
+// Type-only import — soubor se používá i v klientských komponentách (pokladna),
+// runtime závislost na @prisma/client by rozbila bundle.
+import type { Unit } from '@prisma/client'
 
 export const VAT_RATES = {
   FOOD: 12.0, // potraviny od 2024
@@ -68,15 +70,15 @@ export function calculateWeightBasedPrice(
   weightKg: number
 ): number {
   switch (unit) {
-    case Unit.KG:
+    case 'KG':
       return roundMoney(unitPrice * weightKg)
-    case Unit.G_100:
+    case 'G_100':
       return roundMoney(unitPrice * weightKg * 10) // 1 kg = 10 × 100 g
-    case Unit.L:
+    case 'L':
       return roundMoney(unitPrice * weightKg) // pro tekutiny použijeme kg ~ l
-    case Unit.ML_100:
+    case 'ML_100':
       return roundMoney(unitPrice * weightKg * 10)
-    case Unit.KS:
+    case 'KS':
       return roundMoney(unitPrice) // u kusů váha nehraje roli
     default:
       return roundMoney(unitPrice)

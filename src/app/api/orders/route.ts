@@ -1,6 +1,7 @@
 // POST /api/orders - vytvoření objednávky
 // GET /api/orders - seznam objednávek (admin)
 
+import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
@@ -9,6 +10,8 @@ import {
   type OrderLineInput,
 } from '@/lib/pricing'
 import { generateNextNumber } from '@/lib/number-series'
+import { sendOrderConfirmationEmail } from '@/lib/order-confirmation-email'
+import { getSession } from '@/lib/auth'
 
 const createOrderSchema = z.object({
   // Kontakt
@@ -78,8 +81,19 @@ const createOrderSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const data = createOrderSchema.parse(body)
+  let data: z.infer<typeof createOrderSchema>
+  try {
+    const body = await req.json()
+    data = createOrderSchema.parse(body)
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Formulář obsahuje neplatné údaje, zkontrolujte prosím vyplněná pole.', issues: err.issues },
+        { status: 400 }
+      )
+    }
+    return NextResponse.json({ error: 'Neplatný požadavek.' }, { status: 400 })
+  }
 
   // Načteme produkty a varianty, abychom měli aktuální ceny (snapshot pro objednávku)
   const productIds = data.items.map((i) => i.productId)
@@ -203,11 +217,15 @@ export async function POST(req: NextRequest) {
 
   const orderNumber = await generateNextNumber('ORDER')
 
+  // Bezpečný token pro stránku „děkujeme" — nezaměnitelný s ID, neuhodnutelný
+  const publicToken = crypto.randomBytes(24).toString('base64url')
+
   // Vytvoříme objednávku v transakci
   const order = await prisma.$transaction(async (tx) => {
     const created = await tx.order.create({
       data: {
         orderNumber,
+        publicToken,
         customerId: data.customerId,
         contactEmail: data.contactEmail,
         contactPhone: data.contactPhone,
@@ -283,14 +301,23 @@ export async function POST(req: NextRequest) {
     return created
   })
 
-  // TODO: poslat potvrzovací email
+  // Potvrzovací e-mail — selhání nesmí shodit vytvoření objednávky
+  // (výsledek se zapisuje do EmailLog + poznámky objednávky uvnitř)
+  await sendOrderConfirmationEmail(order.id).catch((err) => {
+    console.error('[orders] potvrzovací email selhal:', err)
+  })
+
   // TODO: pokud platba kartou, vytvořit platbu na bráně a vrátit redirect URL
 
   return NextResponse.json(order, { status: 201 })
 }
 
 export async function GET(req: NextRequest) {
-  // TODO: ověřit admin session
+  // Seznam objednávek smí číst jen přihlášený správce
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: 'Nepřihlášen.' }, { status: 401 })
+  }
   const params = req.nextUrl.searchParams
   const page = Math.max(1, parseInt(params.get('page') ?? '1'))
   const pageSize = Math.min(100, parseInt(params.get('pageSize') ?? '20'))

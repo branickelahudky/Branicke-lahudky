@@ -465,6 +465,9 @@ model Order {
   id          String @id @default(cuid())
   orderNumber String @unique // "26000123" (rok + pořadové)
 
+  // Bezpečný token pro veřejné zobrazení objednávky (stránka děkujeme)
+  publicToken String? @unique
+
   // Zákazník (nullable kvůli host objednávkám)
   customerId String?
   customer   Customer? @relation(fields: [customerId], references: [id])

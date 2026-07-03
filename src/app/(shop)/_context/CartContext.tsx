@@ -23,6 +23,8 @@ export type CartOpenMode = 'manual' | 'auto'
 
 type CartContextType = {
   items: CartItem[]
+  /** true až po načtení košíku z localStorage — do té doby jsou items prázdné i u plného košíku */
+  hydrated: boolean
   isOpen: boolean
   openMode: CartOpenMode
   totalQty: number
@@ -103,7 +105,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider value={{
-      items, isOpen, openMode, totalQty, subtotalWithVat, lastAdded,
+      items, hydrated, isOpen, openMode, totalQty, subtotalWithVat, lastAdded,
       addItem, removeItem, updateQty, clear, openCart, closeCart,
     }}>
       {children}
