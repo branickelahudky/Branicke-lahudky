@@ -14,10 +14,12 @@ export const dynamic = 'force-dynamic'
 export default async function PokladnaPage() {
   const [shippingMethods, allPaymentMethods, termsPage, customerSession] = await Promise.all([
     prisma.shippingMethod.findMany({
-      where: { isActive: true, availableCountries: { has: 'CZ' } },
+      // ČR i Slovensko — pokladna filtruje podle zvolené země doručení
+      where: { isActive: true, availableCountries: { hasSome: ['CZ', 'SK'] } },
       orderBy: { sortOrder: 'asc' },
       include: {
         allowedPaymentMethods: { select: { paymentMethodId: true } },
+        weightTiers: { orderBy: { maxWeightKg: 'asc' } },
       },
     }),
     // Platební brána zatím není — nabízíme jen ruční platby (dobírka/hotovost/převod)
@@ -84,6 +86,14 @@ export default async function PokladnaPage() {
       freeShippingThreshold: s.freeShippingThreshold ? Number(s.freeShippingThreshold) : null,
       maxOrderValue: s.maxOrderValue ? Number(s.maxOrderValue) : null,
       maxWeightKg: s.maxWeightKg ? Number(s.maxWeightKg) : null,
+      countries: s.availableCountries,
+      usesWeightTiers: s.usesWeightTiers,
+      fuelSurchargePercent: Number(s.fuelSurchargePercent),
+      defaultItemWeightGrams: s.defaultItemWeightGrams,
+      weightTiers: s.weightTiers.map((t) => ({
+        maxWeightKg: Number(t.maxWeightKg),
+        priceWithVat: Number(t.priceWithVat),
+      })),
       // prázdné = doprava nemá nastavené vazby → povolíme všechny ruční platby
       allowedPaymentIds: allowed,
     }

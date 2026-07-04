@@ -55,15 +55,26 @@ export function LogisticsTab({ product }: Props) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-stone-700">Hmotnost (g)</label>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={weightGrams}
-              onChange={(e) => setWeightGrams(e.target.value)}
-              placeholder="např. 250"
-              className={inputCls}
-            />
+            {product.isWeightBased ? (
+              <p className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-400">
+                Neuplatní se — u váhového produktu je váha = objednané množství.
+              </p>
+            ) : (
+              <>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={weightGrams}
+                  onChange={(e) => setWeightGrams(e.target.value)}
+                  placeholder="např. 250"
+                  className={inputCls}
+                />
+                <p className="mt-1 text-xs text-stone-400">
+                  Hmotnost jednoho kusu vč. obalu — pro výpočet dopravy.
+                </p>
+              </>
+            )}
           </div>
           <div className="sm:col-span-1">
             <label className="mb-1 block text-sm font-medium text-stone-700">Rozměry (mm)</label>

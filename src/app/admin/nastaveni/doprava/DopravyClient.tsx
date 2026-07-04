@@ -10,6 +10,7 @@ import {
   toggleShippingMethod,
   deleteShippingMethod,
   type ShippingMethodData,
+  type WeightTierData,
 } from './actions'
 
 export type SerializedShippingMethod = {
@@ -23,6 +24,12 @@ export type SerializedShippingMethod = {
   freeShippingThreshold: number | null
   sortOrder: number
   isActive: boolean
+  usesWeightTiers: boolean
+  fuelSurchargePercent: number
+  defaultItemWeightGrams: number
+  maxWeightKg: number | null
+  countries: string[]
+  weightTiers: WeightTierData[]
   orderCount: number
 }
 
@@ -38,7 +45,18 @@ const EMPTY: ShippingMethodData = {
   freeShippingThreshold: null,
   sortOrder: 0,
   isActive: true,
+  usesWeightTiers: false,
+  weightTiers: [],
+  fuelSurchargePercent: 0,
+  defaultItemWeightGrams: 1000,
+  maxWeightKg: null,
+  countries: ['CZ'],
 }
+
+const COUNTRY_CHOICES = [
+  { code: 'CZ', label: 'Česko' },
+  { code: 'SK', label: 'Slovensko' },
+]
 
 function inp(cls?: string) {
   return `w-full rounded-lg border border-stone-300 px-3 py-1.5 text-sm focus:border-amber-400 focus:outline-none ${cls ?? ''}`
@@ -92,6 +110,33 @@ function ShippingModal({
             <label className="mb-1 block text-xs text-stone-500">Pořadí</label>
             <input type="number" value={form.sortOrder} onChange={(e) => set('sortOrder', parseInt(e.target.value) || 0)} className={inp()} />
           </div>
+          <div>
+            <label className="mb-1 block text-xs text-stone-500">Max. hmotnost (kg)</label>
+            <input type="number" min={0} step={0.1} value={form.maxWeightKg ?? ''} onChange={(e) => set('maxWeightKg', e.target.value ? parseFloat(e.target.value) : null)} placeholder="bez limitu" className={inp()} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-stone-500">Země doručení</label>
+            <div className="flex gap-4 pt-1.5">
+              {COUNTRY_CHOICES.map((c) => (
+                <label key={c.code} className="flex items-center gap-1.5 text-sm text-stone-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.countries.includes(c.code)}
+                    onChange={(e) =>
+                      set(
+                        'countries',
+                        e.target.checked
+                          ? [...form.countries, c.code]
+                          : form.countries.filter((x) => x !== c.code),
+                      )
+                    }
+                    className="size-4 accent-amber-500"
+                  />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+          </div>
           <div className="col-span-2 flex gap-6">
             <label className="flex items-center gap-2 text-sm text-stone-700 cursor-pointer">
               <input type="checkbox" checked={form.isPickup} onChange={(e) => set('isPickup', e.target.checked)} className="size-4 accent-amber-500" />
@@ -101,6 +146,77 @@ function ShippingModal({
               <input type="checkbox" checked={form.isActive} onChange={(e) => set('isActive', e.target.checked)} className="size-4 accent-amber-500" />
               Aktivní
             </label>
+          </div>
+
+          {/* Ceník podle váhy (Cool Balík) */}
+          <div className="col-span-2 rounded-lg border border-stone-200 bg-stone-50 p-4">
+            <label className="flex items-center gap-2 text-sm font-medium text-stone-800 cursor-pointer">
+              <input type="checkbox" checked={form.usesWeightTiers}
+                onChange={(e) => set('usesWeightTiers', e.target.checked)} className="size-4 accent-amber-500" />
+              Cena podle váhy (ceník dopravce)
+            </label>
+
+            {form.usesWeightTiers && (
+              <div className="mt-3 space-y-3">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-stone-500">
+                      <th className="pb-1 font-medium">Do (kg)</th>
+                      <th className="pb-1 font-medium">Cena s DPH (Kč)</th>
+                      <th className="w-8" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {form.weightTiers.map((t, i) => (
+                      <tr key={i}>
+                        <td className="pr-2 pb-1.5">
+                          <input type="number" min={0} step={0.1} value={t.maxWeightKg || ''}
+                            onChange={(e) => {
+                              const next = [...form.weightTiers]
+                              next[i] = { ...next[i], maxWeightKg: parseFloat(e.target.value) || 0 }
+                              set('weightTiers', next)
+                            }}
+                            className={inp()} />
+                        </td>
+                        <td className="pr-2 pb-1.5">
+                          <input type="number" min={0} step={1} value={t.priceWithVat || ''}
+                            onChange={(e) => {
+                              const next = [...form.weightTiers]
+                              next[i] = { ...next[i], priceWithVat: parseFloat(e.target.value) || 0 }
+                              set('weightTiers', next)
+                            }}
+                            className={inp()} />
+                        </td>
+                        <td className="pb-1.5">
+                          <button type="button"
+                            onClick={() => set('weightTiers', form.weightTiers.filter((_, j) => j !== i))}
+                            className="text-red-400 hover:text-red-600" title="Odebrat pásmo">✕</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <button type="button"
+                  onClick={() => set('weightTiers', [...form.weightTiers, { maxWeightKg: 0, priceWithVat: 0 }])}
+                  className="rounded border border-stone-300 px-2.5 py-1 text-xs text-stone-600 hover:bg-white">
+                  + Přidat pásmo
+                </button>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-xs text-stone-500">Palivový příplatek (%)</label>
+                    <input type="number" min={0} step={0.1} value={form.fuelSurchargePercent}
+                      onChange={(e) => set('fuelSurchargePercent', parseFloat(e.target.value) || 0)} className={inp()} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-stone-500">Výchozí hmotnost položky (g)</label>
+                    <input type="number" min={1} step={50} value={form.defaultItemWeightGrams}
+                      onChange={(e) => set('defaultItemWeightGrams', parseInt(e.target.value) || 1000)} className={inp()} />
+                    <p className="mt-1 text-[11px] text-stone-400">Použije se u položek bez vyplněné hmotnosti.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex justify-end gap-2 border-t border-stone-100 px-6 py-4">
@@ -213,18 +329,27 @@ export function DopravyClient({ methods }: Props) {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-stone-800">
-                    {m.priceWithVat === 0 ? (
+                    {m.usesWeightTiers && m.weightTiers.length > 0 ? (
+                      <span title={m.weightTiers.map((t) => `do ${t.maxWeightKg} kg: ${formatCZK(t.priceWithVat)}`).join('\n')}>
+                        dle váhy od {formatCZK(Math.min(...m.weightTiers.map((t) => t.priceWithVat)))}
+                      </span>
+                    ) : m.priceWithVat === 0 ? (
                       <span className="text-green-600">Zdarma</span>
                     ) : (
                       formatCZK(m.priceWithVat)
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {m.isPickup ? (
-                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">Odběr</span>
-                    ) : (
-                      <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">Doručení</span>
-                    )}
+                    <span className="inline-flex flex-wrap justify-center gap-1">
+                      {m.isPickup ? (
+                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">Odběr</span>
+                      ) : (
+                        <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">Doručení</span>
+                      )}
+                      {m.countries.map((c) => (
+                        <span key={c} className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">{c}</span>
+                      ))}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button
@@ -276,6 +401,12 @@ export function DopravyClient({ methods }: Props) {
                   freeShippingThreshold: modal.item.freeShippingThreshold,
                   sortOrder: modal.item.sortOrder,
                   isActive: modal.item.isActive,
+                  usesWeightTiers: modal.item.usesWeightTiers,
+                  weightTiers: modal.item.weightTiers,
+                  fuelSurchargePercent: modal.item.fuelSurchargePercent,
+                  defaultItemWeightGrams: modal.item.defaultItemWeightGrams,
+                  maxWeightKg: modal.item.maxWeightKg,
+                  countries: modal.item.countries,
                 }
               : { ...EMPTY, sortOrder: methods.length + 1 }
           }

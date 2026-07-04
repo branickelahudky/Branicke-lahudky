@@ -51,7 +51,14 @@ function StockBadge({ status, qty, track }: { status: string; qty: number; track
   return <span className="inline-flex items-center gap-1 text-sm text-shop-muted">● Dočasně nedostupné</span>
 }
 
-export function ProductDetailContent({ product }: { product: ProductDetail }) {
+export function ProductDetailContent({
+  product,
+  branchPhone = null,
+}: {
+  product: ProductDetail
+  /** Telefon z Provozovny — pro „Cena na dotaz — kontaktujte nás" */
+  branchPhone?: string | null
+}) {
   const { addItem, openCart } = useCart()
   const [qty, setQty] = useState(1)
   const [activeImg, setActiveImg] = useState(0)
@@ -60,7 +67,6 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
   )
 
   const isAvailable  = product.stockStatus !== 'OUT_OF_STOCK'
-  const hasPrice     = product.priceWithVat > 0
   const prefix       = product.isWeightBased ? 'od ' : ''
 
   const activeSalePrice =
@@ -74,6 +80,10 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
     : null
   const variantPrice = selectedVariant ? selectedVariant.priceWithVat : null
 
+  // „Cena na dotaz" (cena 0) nejde koupit online — server ji stejně odmítne
+  const effectivePrice = variantPrice ?? displayPrice
+  const canBuy = effectivePrice > 0
+
   const badge = product.isOnSale ? { label: 'Akce',    cls: 'bg-red-500 text-white' }
     : product.isNew              ? { label: 'Novinka', cls: 'bg-gold text-shop-bg'  }
     : product.isFeatured         ? { label: 'Tip',     cls: 'bg-blue-600 text-white' }
@@ -83,7 +93,7 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
   const mainSrc   = mainImage?.url || null
 
   function handleAdd(e: React.MouseEvent) {
-    if (!isAvailable || !hasPrice) return
+    if (!isAvailable || !canBuy) return
     const origin = e.currentTarget as HTMLElement
     const price = variantPrice ?? displayPrice
     const thumb = mainImage?.thumbnailUrl ?? mainImage?.url ?? null
@@ -210,8 +220,24 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
 
           {/* Cena */}
           <div>
-            {!hasPrice ? (
-              <p className="text-lg font-semibold text-shop-muted">Cena na dotaz</p>
+            {!canBuy ? (
+              <div className="rounded-xl border border-gold/40 bg-gold/5 px-4 py-3">
+                <p className="text-lg font-semibold text-shop-fg">Cena na dotaz — kontaktujte nás</p>
+                <p className="mt-1 text-sm text-shop-muted">
+                  Tento produkt nelze objednat online.
+                  {branchPhone ? (
+                    <>
+                      {' '}Zavolejte nám na{' '}
+                      <a href={`tel:${branchPhone.replace(/\s+/g, '')}`} className="font-medium text-gold hover:underline">
+                        {branchPhone}
+                      </a>{' '}
+                      — rádi vám cenu spočítáme.
+                    </>
+                  ) : (
+                    ' Ozvěte se nám — rádi vám cenu spočítáme.'
+                  )}
+                </p>
+              </div>
             ) : variantPrice ? (
               <div>
                 <p className="text-2xl font-bold text-shop-fg">{fmtKc(variantPrice)}</p>
@@ -269,7 +295,7 @@ export function ProductDetailContent({ product }: { product: ProductDetail }) {
           )}
 
           {/* Počítadlo + Do košíku */}
-          {hasPrice && (
+          {canBuy && (
             <div className="flex items-center gap-3 pt-1">
               <div className="flex items-center gap-0.5 rounded-xl border border-shop-border overflow-hidden">
                 <button

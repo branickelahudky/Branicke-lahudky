@@ -375,6 +375,14 @@ model ShippingMethod {
   // Doprava zdarma od částky
   freeShippingThreshold Decimal? @db.Decimal(10, 2)
 
+  // Ceník podle váhy (Cool Balík): cena se bere z pásem místo priceWithVat
+  usesWeightTiers        Boolean               @default(false)
+  weightTiers            ShippingWeightTier[]
+  // Palivový příplatek dopravce v % (přičítá se k ceně pásma)
+  fuelSurchargePercent   Decimal               @default(0) @db.Decimal(5, 2)
+  // Výchozí hmotnost položky bez vyplněné váhy (konzervativní odhad)
+  defaultItemWeightGrams Int                   @default(1000)
+
   // Způsob vyzvednutí
   isPickup Boolean @default(false)
 
@@ -399,6 +407,19 @@ model ShippingMethod {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Cenové pásmo dopravy podle váhy: „do maxWeightKg = priceWithVat Kč"
+model ShippingWeightTier {
+  id               String         @id @default(cuid())
+  shippingMethodId String
+  shippingMethod   ShippingMethod @relation(fields: [shippingMethodId], references: [id], onDelete: Cascade)
+
+  maxWeightKg  Decimal @db.Decimal(10, 3)
+  priceWithVat Decimal @db.Decimal(10, 2)
+  sortOrder    Int     @default(0)
+
+  @@index([shippingMethodId])
 }
 
 // ───────────────────────────────────────────────────────────────

@@ -10,7 +10,7 @@ import {
   type OrderLineInput,
 } from '@/lib/pricing'
 import { generateNextNumber } from '@/lib/number-series'
-import { calculateCartWeightKg, type CartWeightItem } from '@/lib/cart-weight'
+import { calculateCartWeightKg, resolveShippingPrice, type CartWeightItem } from '@/lib/cart-weight'
 import { sendOrderConfirmationEmail } from '@/lib/order-confirmation-email'
 import { getSession } from '@/lib/auth'
 import { getCustomerSession } from '@/lib/customer-auth'
@@ -111,7 +111,10 @@ export async function POST(req: NextRequest) {
     variantIds.length
       ? prisma.productVariant.findMany({ where: { id: { in: variantIds } } })
       : Promise.resolve([]),
-    prisma.shippingMethod.findUnique({ where: { id: data.shippingMethodId } }),
+    prisma.shippingMethod.findUnique({
+      where: { id: data.shippingMethodId },
+      include: { weightTiers: { orderBy: { maxWeightKg: 'asc' } } },
+    }),
     prisma.paymentMethod.findUnique({ where: { id: data.paymentMethodId } }),
     data.discountCode
       ? prisma.discountCode.findUnique({ where: { code: data.discountCode } })
@@ -121,6 +124,13 @@ export async function POST(req: NextRequest) {
   if (!shippingMethod || !shippingMethod.isActive) {
     return NextResponse.json(
       { error: 'Zvolený způsob dopravy není dostupný.' },
+      { status: 400 }
+    )
+  }
+  // Doprava musí umět doručit do země adresy (ČR × Slovensko mají jiné metody)
+  if (!shippingMethod.availableCountries.includes(data.shippingAddress.country)) {
+    return NextResponse.json(
+      { error: 'Zvolená doprava nedoručuje do vybrané země. Vyberte prosím jinou dopravu.' },
       { status: 400 }
     )
   }
@@ -183,6 +193,14 @@ export async function POST(req: NextRequest) {
       expectedWeightKg = variant.weightKg ? Number(variant.weightKg) : expectedWeightKg
     }
 
+    // „Cena na dotaz" (cena 0) nejde objednat online
+    if (unitPriceWithVat <= 0) {
+      return NextResponse.json(
+        { error: `Produkt „${product.name}" má cenu na dotaz — objednejte ho prosím telefonicky nebo na prodejně.` },
+        { status: 400 }
+      )
+    }
+
     orderLines.push({
       quantity: item.quantity,
       unitPriceWithVat,
@@ -212,8 +230,11 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // Hmotnostní limit dopravy (pásma = metody s maxWeightKg) — zdroj pravdy
-  const cartWeightKg = calculateCartWeightKg(weightItems)
+  // Hmotnost košíku — výchozí váha položky z nastavení metody
+  const cartWeightKg = calculateCartWeightKg(
+    weightItems,
+    shippingMethod.defaultItemWeightGrams,
+  )
   if (shippingMethod.maxWeightKg && cartWeightKg > Number(shippingMethod.maxWeightKg)) {
     return NextResponse.json(
       {
@@ -223,19 +244,39 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Doprava zdarma od limitu
+  // Cena dopravy: pásmo dle váhy → palivový příplatek → doprava zdarma
+  // (sdílená funkce, stejná jako v pokladně — server je zdroj pravdy)
   const subtotalForFreeShipping = orderLines.reduce(
     (sum, l) => sum + l.unitPriceWithVat * l.quantity,
     0
   )
-  const isFreeShipping =
-    shippingMethod.freeShippingThreshold &&
-    subtotalForFreeShipping >= Number(shippingMethod.freeShippingThreshold)
+  const shippingPrice = resolveShippingPrice(
+    {
+      usesWeightTiers: shippingMethod.usesWeightTiers,
+      priceWithVat: Number(shippingMethod.priceWithVat),
+      weightTiers: shippingMethod.weightTiers.map((t) => ({
+        maxWeightKg: Number(t.maxWeightKg),
+        priceWithVat: Number(t.priceWithVat),
+      })),
+      fuelSurchargePercent: Number(shippingMethod.fuelSurchargePercent),
+      freeShippingThreshold: shippingMethod.freeShippingThreshold
+        ? Number(shippingMethod.freeShippingThreshold)
+        : null,
+    },
+    cartWeightKg,
+    subtotalForFreeShipping,
+  )
+  if (shippingPrice.priceWithVat === null) {
+    return NextResponse.json(
+      { error: 'Objednávka je nad váhový limit zvolené dopravy. Vyberte prosím jinou dopravu.' },
+      { status: 400 }
+    )
+  }
 
   // Souhrn
   const totals = calculateOrderTotals({
     lines: orderLines,
-    shippingPriceWithVat: isFreeShipping ? 0 : Number(shippingMethod.priceWithVat),
+    shippingPriceWithVat: shippingPrice.priceWithVat,
     shippingVatRate: Number(shippingMethod.vatRate),
     paymentFeeWithVat: Number(paymentMethod.feeWithVat),
     paymentFeeVatRate: Number(paymentMethod.vatRate),

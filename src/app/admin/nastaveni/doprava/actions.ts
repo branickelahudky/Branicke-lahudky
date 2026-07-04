@@ -7,6 +7,11 @@ import { roundMoney, priceWithoutVat } from '@/lib/pricing'
 
 const PATH = '/admin/nastaveni/doprava'
 
+export type WeightTierData = {
+  maxWeightKg: number
+  priceWithVat: number
+}
+
 export type ShippingMethodData = {
   name: string
   description: string | null
@@ -17,6 +22,25 @@ export type ShippingMethodData = {
   freeShippingThreshold: number | null
   sortOrder: number
   isActive: boolean
+  // Ceník podle váhy (Cool Balík)
+  usesWeightTiers: boolean
+  weightTiers: WeightTierData[]
+  fuelSurchargePercent: number
+  defaultItemWeightGrams: number
+  maxWeightKg: number | null
+  /** Země doručení: 'CZ' / 'SK' */
+  countries: string[]
+}
+
+function validateTiers(data: ShippingMethodData): WeightTierData[] {
+  if (!data.usesWeightTiers) return []
+  const tiers = data.weightTiers
+    .filter((t) => t.maxWeightKg > 0 && t.priceWithVat >= 0)
+    .sort((a, b) => a.maxWeightKg - b.maxWeightKg)
+  if (tiers.length === 0) {
+    throw new Error('Ceník podle váhy potřebuje alespoň jedno pásmo (do kg / cena).')
+  }
+  return tiers
 }
 
 async function assertAdminOrOwner() {
@@ -25,27 +49,44 @@ async function assertAdminOrOwner() {
   return user
 }
 
+function methodData(data: ShippingMethodData) {
+  const priceVat = roundMoney(data.priceWithVat)
+  return {
+    name: data.name.trim(),
+    description: data.description?.trim() || null,
+    priceWithVat: priceVat,
+    priceWithoutVat: roundMoney(priceWithoutVat(priceVat, data.vatRate)),
+    vatRate: data.vatRate,
+    isPickup: data.isPickup,
+    estimatedDays: data.estimatedDays?.trim() || null,
+    freeShippingThreshold: data.freeShippingThreshold ?? null,
+    sortOrder: data.sortOrder,
+    isActive: data.isActive,
+    usesWeightTiers: data.usesWeightTiers,
+    fuelSurchargePercent: roundMoney(Math.max(0, data.fuelSurchargePercent)),
+    defaultItemWeightGrams: Math.max(1, Math.round(data.defaultItemWeightGrams) || 1000),
+    maxWeightKg: data.maxWeightKg ?? null,
+    availableCountries: data.countries.length ? data.countries : ['CZ'],
+  }
+}
+
 export async function createShippingMethod(data: ShippingMethodData) {
   await assertAdminOrOwner()
   if (!data.name.trim()) throw new Error('Název je povinný.')
-
-  const priceVat = roundMoney(data.priceWithVat)
-  const priceNoVat = roundMoney(priceWithoutVat(priceVat, data.vatRate))
+  const tiers = validateTiers(data)
   const code = `SM_${Date.now()}`
 
   await prisma.shippingMethod.create({
     data: {
       code,
-      name: data.name.trim(),
-      description: data.description?.trim() || null,
-      priceWithVat: priceVat,
-      priceWithoutVat: priceNoVat,
-      vatRate: data.vatRate,
-      isPickup: data.isPickup,
-      estimatedDays: data.estimatedDays?.trim() || null,
-      freeShippingThreshold: data.freeShippingThreshold ?? null,
-      sortOrder: data.sortOrder,
-      isActive: data.isActive,
+      ...methodData(data),
+      weightTiers: {
+        create: tiers.map((t, i) => ({
+          maxWeightKg: t.maxWeightKg,
+          priceWithVat: roundMoney(t.priceWithVat),
+          sortOrder: i,
+        })),
+      },
     },
   })
   revalidatePath(PATH)
@@ -54,25 +95,24 @@ export async function createShippingMethod(data: ShippingMethodData) {
 export async function updateShippingMethod(id: string, data: ShippingMethodData) {
   await assertAdminOrOwner()
   if (!data.name.trim()) throw new Error('Název je povinný.')
+  const tiers = validateTiers(data)
 
-  const priceVat = roundMoney(data.priceWithVat)
-  const priceNoVat = roundMoney(priceWithoutVat(priceVat, data.vatRate))
-
-  await prisma.shippingMethod.update({
-    where: { id },
-    data: {
-      name: data.name.trim(),
-      description: data.description?.trim() || null,
-      priceWithVat: priceVat,
-      priceWithoutVat: priceNoVat,
-      vatRate: data.vatRate,
-      isPickup: data.isPickup,
-      estimatedDays: data.estimatedDays?.trim() || null,
-      freeShippingThreshold: data.freeShippingThreshold ?? null,
-      sortOrder: data.sortOrder,
-      isActive: data.isActive,
-    },
-  })
+  await prisma.$transaction([
+    prisma.shippingMethod.update({ where: { id }, data: methodData(data) }),
+    prisma.shippingWeightTier.deleteMany({ where: { shippingMethodId: id } }),
+    ...(tiers.length
+      ? [
+          prisma.shippingWeightTier.createMany({
+            data: tiers.map((t, i) => ({
+              shippingMethodId: id,
+              maxWeightKg: t.maxWeightKg,
+              priceWithVat: roundMoney(t.priceWithVat),
+              sortOrder: i,
+            })),
+          }),
+        ]
+      : []),
+  ])
   revalidatePath(PATH)
 }
 

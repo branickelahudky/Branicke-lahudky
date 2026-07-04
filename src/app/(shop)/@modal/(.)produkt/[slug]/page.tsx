@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
 import { getProductDetail } from '@/app/(shop)/_lib/getProductDetail'
 import { ProductModal } from '@/app/(shop)/_components/ProductModal'
 import { ProductDetailContent } from '@/app/(shop)/_components/ProductDetailContent'
@@ -9,12 +10,15 @@ interface Props {
 
 export default async function ProductModalPage({ params }: Props) {
   const { slug } = await params
-  const product = await getProductDetail(slug)
+  const [product, branch] = await Promise.all([
+    getProductDetail(slug),
+    prisma.branchSettings.findFirst({ select: { phone1: true } }),
+  ])
   if (!product) notFound()
 
   return (
     <ProductModal>
-      <ProductDetailContent product={product} />
+      <ProductDetailContent product={product} branchPhone={branch?.phone1 ?? null} />
     </ProductModal>
   )
 }

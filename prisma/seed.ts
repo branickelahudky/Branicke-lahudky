@@ -298,38 +298,69 @@ async function main() {
   // ─── DOPRAVA ────────────────────────────────────────────────────
   console.log('🚚 Doprava...')
 
-  const dopravaPraha = await prisma.shippingMethod.upsert({
-    where: { code: 'PRAHA_NEXT_DAY' },
-    create: {
-      code: 'PRAHA_NEXT_DAY', name: 'Doručení po Praze - do druhého dne',
-      description: 'Doručíme na jakékoliv místo v Praze. Chladící obal v ceně.',
-      priceWithoutVat: 123.97, priceWithVat: 150.0, vatRate: 21.0,
-      freeShippingThreshold: 1500.0, estimatedDaysMin: 1, estimatedDaysMax: 1, sortOrder: 1,
-    },
-    update: {},
-  })
-
   const osobniOdber = await prisma.shippingMethod.upsert({
     where: { code: 'PICKUP_BRANIK' },
     create: {
       code: 'PICKUP_BRANIK', name: 'Osobní odběr - Branická 75',
       description: 'Vyzvedněte si objednávku přímo v našem obchodě v Braníku.',
       priceWithoutVat: 0, priceWithVat: 0, vatRate: 21.0,
-      estimatedDaysMin: 0, estimatedDaysMax: 1, sortOrder: 2,
+      estimatedDaysMin: 0, estimatedDaysMax: 1, sortOrder: 1,
+      availableCountries: ['CZ', 'SK'],
     },
     update: {},
   })
 
-  const ppl = await prisma.shippingMethod.upsert({
-    where: { code: 'PPL_CHLAZENA' },
-    create: {
-      code: 'PPL_CHLAZENA', name: 'PPL - chlazená přeprava',
-      description: 'Pro objednávky mimo Prahu. Doručení druhý pracovní den.',
-      priceWithoutVat: 206.61, priceWithVat: 250.0, vatRate: 21.0,
-      freeShippingThreshold: 3000.0, estimatedDaysMin: 1, estimatedDaysMax: 2, maxWeightKg: 30.0, sortOrder: 3,
-    },
-    update: {},
-  })
+  // Cool Balík — ceník podle váhy. Zóna 1 (Praha) a 2 (ČR) mají stejné ceny
+  // → jeden ceník ČR; zóna 3 (Slovensko) má vlastní dražší ceny (v Kč).
+  const COOL_TIERS_CZ = [
+    { maxWeightKg: 5,  priceWithVat: 190 },
+    { maxWeightKg: 10, priceWithVat: 190 },
+    { maxWeightKg: 15, priceWithVat: 230 },
+    { maxWeightKg: 20, priceWithVat: 270 },
+    { maxWeightKg: 30, priceWithVat: 350 },
+    { maxWeightKg: 40, priceWithVat: 430 },
+    { maxWeightKg: 50, priceWithVat: 510 },
+  ]
+  const COOL_TIERS_SK = [
+    { maxWeightKg: 5,  priceWithVat: 220 },
+    { maxWeightKg: 10, priceWithVat: 220 },
+    { maxWeightKg: 15, priceWithVat: 260 },
+    { maxWeightKg: 20, priceWithVat: 300 },
+    { maxWeightKg: 30, priceWithVat: 380 },
+    { maxWeightKg: 40, priceWithVat: 460 },
+    { maxWeightKg: 50, priceWithVat: 540 },
+  ]
+
+  async function upsertCoolBalik(
+    code: string, name: string, country: string,
+    tiers: { maxWeightKg: number; priceWithVat: number }[], sortOrder: number,
+  ) {
+    const method = await prisma.shippingMethod.upsert({
+      where: { code },
+      create: {
+        code, name,
+        description: 'Chlazená přeprava až domů. Doručení druhý pracovní den.',
+        priceWithoutVat: 157.02, priceWithVat: 190.0, vatRate: 21.0,
+        freeShippingThreshold: 3000.0,
+        usesWeightTiers: true, maxWeightKg: 50.0, defaultItemWeightGrams: 1000,
+        estimatedDaysMin: 1, estimatedDaysMax: 2, sortOrder,
+        availableCountries: [country],
+      },
+      update: {},
+    })
+    await prisma.shippingWeightTier.deleteMany({ where: { shippingMethodId: method.id } })
+    await prisma.shippingWeightTier.createMany({
+      data: tiers.map((t, i) => ({ ...t, shippingMethodId: method.id, sortOrder: i })),
+    })
+    return method
+  }
+
+  const coolBalikCz = await upsertCoolBalik(
+    'COOL_BALIK_CZ', 'Cool Balík — chlazená přeprava (ČR)', 'CZ', COOL_TIERS_CZ, 2,
+  )
+  const coolBalikSk = await upsertCoolBalik(
+    'COOL_BALIK_SK', 'Cool Balík — chlazená přeprava (Slovensko)', 'SK', COOL_TIERS_SK, 3,
+  )
 
   // ─── PLATBY ─────────────────────────────────────────────────────
   console.log('💳 Platby...')
@@ -377,15 +408,15 @@ async function main() {
 
   // Kombinace doprava × platba
   for (const pair of [
-    { shippingMethodId: dopravaPraha.id, paymentMethodId: platbaKartou.id },
-    { shippingMethodId: dopravaPraha.id, paymentMethodId: prevod.id },
-    { shippingMethodId: dopravaPraha.id, paymentMethodId: dobirka.id },
     { shippingMethodId: osobniOdber.id,  paymentMethodId: platbaKartou.id },
     { shippingMethodId: osobniOdber.id,  paymentMethodId: prevod.id },
     { shippingMethodId: osobniOdber.id,  paymentMethodId: hotove.id },
-    { shippingMethodId: ppl.id,          paymentMethodId: platbaKartou.id },
-    { shippingMethodId: ppl.id,          paymentMethodId: prevod.id },
-    { shippingMethodId: ppl.id,          paymentMethodId: dobirka.id },
+    { shippingMethodId: coolBalikCz.id,  paymentMethodId: platbaKartou.id },
+    { shippingMethodId: coolBalikCz.id,  paymentMethodId: prevod.id },
+    { shippingMethodId: coolBalikCz.id,  paymentMethodId: dobirka.id },
+    { shippingMethodId: coolBalikSk.id,  paymentMethodId: platbaKartou.id },
+    { shippingMethodId: coolBalikSk.id,  paymentMethodId: prevod.id },
+    { shippingMethodId: coolBalikSk.id,  paymentMethodId: dobirka.id },
   ]) {
     await prisma.paymentMethodOnShipping.upsert({
       where: { shippingMethodId_paymentMethodId: pair },

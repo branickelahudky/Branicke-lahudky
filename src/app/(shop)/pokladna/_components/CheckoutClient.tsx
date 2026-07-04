@@ -11,7 +11,13 @@ import { useRouter } from 'next/navigation'
 import { useCart, cartItemKey } from '../../_context/CartContext'
 import { fmtKc } from '../../_components/cart/fmtKc'
 import { calculateOrderTotals, formatCZK } from '@/lib/pricing'
-import { calculateCartWeightKg, formatWeightKg } from '@/lib/cart-weight'
+import {
+  calculateCartWeightKg,
+  resolveShippingPrice,
+  formatWeightKg,
+  type ShippingPriceResult,
+  type WeightTier,
+} from '@/lib/cart-weight'
 
 export type ShippingOption = {
   id: string
@@ -25,8 +31,19 @@ export type ShippingOption = {
   freeShippingThreshold: number | null
   maxOrderValue: number | null
   maxWeightKg: number | null
+  /** Země, do kterých metoda doručuje ('CZ' / 'SK') */
+  countries: string[]
+  usesWeightTiers: boolean
+  fuelSurchargePercent: number
+  defaultItemWeightGrams: number
+  weightTiers: WeightTier[]
   allowedPaymentIds: string[]
 }
+
+const COUNTRY_OPTIONS = [
+  { code: 'CZ', label: 'Česko' },
+  { code: 'SK', label: 'Slovensko' },
+] as const
 
 export type PaymentOption = {
   id: string
@@ -76,6 +93,7 @@ type FormValues = {
   street: string
   city: string
   postalCode: string
+  country: string
   isBusiness: boolean
   companyName: string
   companyId: string
@@ -87,7 +105,7 @@ type FormValues = {
 
 const EMPTY_FORM: FormValues = {
   firstName: '', lastName: '', email: '', phone: '',
-  street: '', city: '', postalCode: '',
+  street: '', city: '', postalCode: '', country: 'CZ',
   isBusiness: false, companyName: '', companyId: '', vatId: '',
   note: '', deliveryDate: '', deliveryTimeSlot: '',
 }
@@ -151,6 +169,68 @@ function inputCls(hasError: boolean) {
   }`
 }
 
+/** ⓘ u Cool Balíku — vysvětluje výpočet ceny z váhy a pásma. */
+function ShippingInfoPopover({
+  weightKg,
+  price,
+  fuelSurchargePercent,
+  freeShippingThreshold,
+}: {
+  weightKg: number
+  price: ShippingPriceResult
+  fuelSurchargePercent: number
+  freeShippingThreshold: number | null
+}) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  return (
+    <span ref={wrapRef} className="relative inline-flex">
+      <button
+        type="button"
+        aria-label="Jak se počítá cena dopravy"
+        aria-expanded={open}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen((o) => !o) }}
+        className="flex h-4.5 w-4.5 items-center justify-center rounded-full border border-stone-300 text-[10px] font-bold text-shop-muted transition hover:border-gold hover:text-gold"
+        style={{ height: 18, width: 18 }}
+      >
+        i
+      </button>
+      {open && (
+        <span className="absolute left-0 top-full z-40 mt-1.5 block w-72 rounded-xl border border-stone-200 bg-white p-3.5 text-xs font-normal shadow-xl">
+          <span className="block text-shop-fg">
+            Váha objednávky: <strong>{formatWeightKg(weightKg)}</strong>
+            {price.tier && (
+              <> → pásmo do {price.tier.maxWeightKg} kg: <strong>{fmtKc(price.tier.priceWithVat)}</strong></>
+            )}
+          </span>
+          {price.surchargeWithVat > 0 && (
+            <span className="mt-1 block text-shop-muted">
+              + palivový příplatek {fuelSurchargePercent.toLocaleString('cs-CZ')} %: {fmtKc(price.surchargeWithVat)}
+            </span>
+          )}
+          {freeShippingThreshold && (
+            <span className="mt-1 block text-gold">
+              {price.isFree
+                ? `Máte dopravu zdarma (nákup nad ${fmtKc(freeShippingThreshold)}).`
+                : `Doprava zdarma při nákupu nad ${fmtKc(freeShippingThreshold)} — chybí vám ještě ${fmtKc(price.amountToFreeShipping)}.`}
+            </span>
+          )}
+        </span>
+      )}
+    </span>
+  )
+}
+
 function SectionCard({ step, title, children }: { step: number; title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
@@ -205,18 +285,46 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
     }
   }, [hydrated, items.length, router])
 
-  // Dopravy vyhovující hodnotě A HMOTNOSTI objednávky (stejná pravidla jako API)
+  // Cena a váha PER METODA (metody mohou mít různou výchozí hmotnost položky)
+  // — stejná sdílená funkce resolveShippingPrice jako na serveru
+  const shippingComputed = useMemo(() => {
+    const map = new Map<string, { weightKg: number; price: ShippingPriceResult }>()
+    for (const s of shippingOptions) {
+      const weightKg = calculateCartWeightKg(
+        items.map((i) => ({
+          quantity: i.qty,
+          isWeightBased: i.isWeightBased,
+          unit: i.unit,
+          weightGrams: i.weightGrams,
+        })),
+        s.defaultItemWeightGrams,
+      )
+      map.set(s.id, { weightKg, price: resolveShippingPrice(s, weightKg, subtotal) })
+    }
+    return map
+  }, [shippingOptions, items, subtotal])
+
+  // Dopravy pro zvolenou ZEMI, vyhovující hodnotě i hmotnosti objednávky
   const availableShipping = useMemo(
     () =>
       shippingOptions.filter(
         (s) =>
+          s.countries.includes(values.country) &&
           (!s.maxOrderValue || s.maxOrderValue >= subtotal) &&
-          (!s.maxWeightKg || s.maxWeightKg >= cartWeightKg),
+          (!s.maxWeightKg || s.maxWeightKg >= (shippingComputed.get(s.id)?.weightKg ?? 0)) &&
+          shippingComputed.get(s.id)?.price.priceWithVat !== null,
       ),
-    [shippingOptions, subtotal, cartWeightKg],
+    [shippingOptions, subtotal, values.country, shippingComputed],
   )
 
   const selectedShipping = availableShipping.find((s) => s.id === shippingId) ?? null
+
+  // Změna země/košíku může zneplatnit zvolenou dopravu
+  useEffect(() => {
+    if (shippingId && !availableShipping.some((s) => s.id === shippingId)) {
+      setShippingId(null)
+    }
+  }, [availableShipping, shippingId])
 
   // Platby povolené pro zvolenou dopravu (bez vazeb = všechny ruční platby)
   const availablePayments = useMemo(() => {
@@ -234,11 +342,9 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
     }
   }, [availablePayments, paymentId])
 
-  // Doprava zdarma od limitu — stejné pravidlo jako serverové API
-  const isFreeShipping = !!(
-    selectedShipping?.freeShippingThreshold && subtotal >= selectedShipping.freeShippingThreshold
-  )
-  const shippingPrice = selectedShipping ? (isFreeShipping ? 0 : selectedShipping.priceWithVat) : 0
+  // Cena zvolené dopravy (pásmo → příplatek → zdarma) — z per-metoda výpočtu
+  const selectedComputed = selectedShipping ? shippingComputed.get(selectedShipping.id) : null
+  const shippingPrice = selectedComputed?.price.priceWithVat ?? 0
 
   const totals = useMemo(
     () =>
@@ -320,7 +426,7 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
             street: values.street.trim(),
             city: values.city.trim(),
             postalCode: values.postalCode.trim(),
-            country: 'CZ',
+            country: values.country,
             phone: values.phone.replace(/[\s-]/g, ''),
           },
           billingAddressSameAsShipping: true,
@@ -418,6 +524,14 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
                 <input id="f-postalCode" autoComplete="postal-code" placeholder="140 00" inputMode="numeric" className={inputCls(!!errors.postalCode)}
                   value={values.postalCode} onChange={set('postalCode')} onBlur={onBlur('postalCode')} />
               </Field>
+              <Field id="f-country" label="Země doručení" required>
+                <select id="f-country" autoComplete="country" className={inputCls(false)}
+                  value={values.country} onChange={set('country')}>
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
+                </select>
+              </Field>
             </div>
 
             <label className="mt-4 flex cursor-pointer items-center gap-2.5 text-sm text-shop-fg">
@@ -452,8 +566,9 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
             ) : (
               <div className="space-y-2.5">
                 {availableShipping.map((s) => {
-                  const free = !!(s.freeShippingThreshold && subtotal >= s.freeShippingThreshold)
-                  const missing = s.freeShippingThreshold && !free ? s.freeShippingThreshold - subtotal : 0
+                  const computed = shippingComputed.get(s.id)!
+                  const price = computed.price
+                  const displayPrice = price.priceWithVat ?? 0
                   const active = shippingId === s.id
                   return (
                     <label key={s.id}
@@ -461,15 +576,27 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
                       <input type="radio" name="shipping" checked={active} onChange={() => setShippingId(s.id)}
                         className="h-4 w-4 accent-[#C9A961]" />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-medium text-shop-fg">{s.name}</span>
+                        <span className="flex items-center gap-1.5 text-sm font-medium text-shop-fg">
+                          {s.name}
+                          {s.usesWeightTiers && (
+                            <ShippingInfoPopover
+                              weightKg={computed.weightKg}
+                              price={price}
+                              fuelSurchargePercent={s.fuelSurchargePercent}
+                              freeShippingThreshold={s.freeShippingThreshold}
+                            />
+                          )}
+                        </span>
                         {s.description && <span className="block text-xs text-shop-muted">{s.description}</span>}
                         {s.estimatedDays && <span className="block text-xs text-shop-muted">Doručení: {s.estimatedDays}</span>}
-                        {missing > 0 && (
-                          <span className="block text-xs text-gold">Doprava zdarma při nákupu ještě za {fmtKc(missing)}</span>
+                        {price.amountToFreeShipping > 0 && s.freeShippingThreshold && (
+                          <span className="block text-xs text-gold">
+                            Doprava zdarma při nákupu nad {fmtKc(s.freeShippingThreshold)} — chybí vám ještě {fmtKc(price.amountToFreeShipping)}
+                          </span>
                         )}
                       </span>
                       <span className="shrink-0 text-sm font-bold text-shop-fg">
-                        {free || s.priceWithVat === 0 ? <span className="text-green-700">Zdarma</span> : fmtKc(s.priceWithVat)}
+                        {displayPrice === 0 ? <span className="text-green-700">Zdarma</span> : fmtKc(displayPrice)}
                       </span>
                     </label>
                   )
@@ -581,7 +708,7 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
               )}
               <div className="flex justify-between text-xs">
                 <dt className="text-shop-muted">Hmotnost (odhad)</dt>
-                <dd className="text-shop-muted">{formatWeightKg(cartWeightKg)}</dd>
+                <dd className="text-shop-muted">{formatWeightKg(selectedComputed?.weightKg ?? cartWeightKg)}</dd>
               </div>
               {Object.entries(totals.vatBreakdown).map(([rate, v]) => (
                 <div key={rate} className="flex justify-between text-xs">
