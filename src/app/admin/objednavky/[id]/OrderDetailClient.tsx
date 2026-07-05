@@ -125,6 +125,8 @@ export type SerializedOrder = {
   deliveredAt: string | null
   cancelledAt: string | null
   paidAt: string | null
+  paypalOrderId: string | null
+  paymentTransactionId: string | null
   customerId: string | null
   customerRating: 'good' | 'neutral' | 'bad' | null
   items: SerializedItem[]
@@ -1187,6 +1189,17 @@ export function OrderDetailClient({
                   <div className="flex justify-between px-4 py-2.5">
                     <dt className="text-stone-500">Zaplaceno</dt>
                     <dd className="text-stone-800">{fmtDate(order.paidAt)}</dd>
+                  </div>
+                )}
+                {order.paypalOrderId && (
+                  <div className="flex justify-between gap-2 px-4 py-2.5">
+                    <dt className="shrink-0 text-stone-500">PayPal</dt>
+                    <dd className="break-all text-right font-mono text-xs text-stone-600">
+                      {order.paypalOrderId}
+                      {order.paymentTransactionId && (
+                        <span className="block text-stone-400">transakce {order.paymentTransactionId}</span>
+                      )}
+                    </dd>
                   </div>
                 )}
               </dl>

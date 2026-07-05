@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import { getCustomerSession } from '@/lib/customer-auth'
+import { paypalConfigured } from '@/lib/paypal'
 import { CheckoutClient, type ShippingOption, type PaymentOption, type CheckoutPrefill } from './_components/CheckoutClient'
 
 export const metadata: Metadata = {
@@ -11,7 +12,19 @@ export const metadata: Metadata = {
 // Dopravy a platby se spravují v adminu — nesmí se zapéct do statického buildu
 export const dynamic = 'force-dynamic'
 
-export default async function PokladnaPage() {
+// Hlášky po návratu z platební brány (?platba=…)
+const PAYMENT_NOTICES: Record<string, string> = {
+  zrusena: 'Platba nebyla dokončena. Zkuste to prosím znovu, nebo zvolte jinou platbu — objednávka i košík zůstávají.',
+  neuspesna: 'Platba se nezdařila. Zkuste to prosím znovu, nebo zvolte jinou platbu — objednávka i košík zůstávají.',
+  chyba: 'Při zpracování platby nastala chyba. Kontaktujte nás prosím, nebo zkuste objednávku odeslat znovu.',
+}
+
+export default async function PokladnaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ platba?: string }>
+}) {
+  const { platba } = await searchParams
   const [shippingMethods, allPaymentMethods, termsPage, customerSession] = await Promise.all([
     prisma.shippingMethod.findMany({
       // ČR i Slovensko — pokladna filtruje podle zvolené země doručení
@@ -22,9 +35,13 @@ export default async function PokladnaPage() {
         weightTiers: { orderBy: { maxWeightKg: 'asc' } },
       },
     }),
-    // Platební brána zatím není — nabízíme jen ruční platby (dobírka/hotovost/převod)
+    // Ruční platby + PayPal (jen když jsou nastavené env klíče —
+    // bez nich se metoda skryje a web běží dál)
     prisma.paymentMethod.findMany({
-      where: { isActive: true, provider: 'MANUAL' },
+      where: {
+        isActive: true,
+        provider: { in: paypalConfigured() ? ['MANUAL', 'PAYPAL'] : ['MANUAL'] },
+      },
       orderBy: { sortOrder: 'asc' },
     }),
     prisma.page.findUnique({
@@ -64,6 +81,7 @@ export default async function PokladnaPage() {
     name: p.name,
     description: p.description,
     type: p.type,
+    provider: p.provider,
     feeWithVat: Number(p.feeWithVat),
     vatRate: Number(p.vatRate),
   }))
@@ -106,6 +124,7 @@ export default async function PokladnaPage() {
       termsSlug={termsPage?.slug ?? 'obchodni-podminky'}
       prefill={prefill}
       isLoggedIn={!!customerSession}
+      paymentNotice={platba ? PAYMENT_NOTICES[platba] ?? null : null}
     />
   )
 }

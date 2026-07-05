@@ -53,7 +53,20 @@
       "Bash(/usr/bin/curl -s -o /dev/null http://localhost:3201/)",
       "Bash(break)",
       "Bash(git check-ignore *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(git ls-remote *)",
+      "Bash(python3 -c \"import json,sys; [print\\(m['id'], m['code'], m['provider'], m['name'], m['feeWithVat']\\) for m in json.load\\(sys.stdin\\)]\")",
+      "Bash(python3 -c \"import json,sys; o=json.load\\(sys.stdin\\); print\\('orderNumber:', o.get\\('orderNumber'\\)\\); print\\('publicToken:', o.get\\('publicToken'\\)\\); print\\('total:', o.get\\('totalWithVat'\\)\\); print\\('shipping:', o.get\\('shippingPriceWithVat'\\), o.get\\('shippingMethodName'\\)\\); print\\('items:', [\\(i['productName'], i['quantity'], i['lineTotalWithVat']\\) for i in o.get\\('items',[]\\)]\\)\")",
+      "Skill(claude-in-chrome)",
+      "Bash(pkill -f \"next dev -p 3457\")",
+      "Bash(echo \"ignore-check-exit: $?\")",
+      "Bash(git -C /Users/dnbtv/branicke-lahudkarstvi log --oneline -8)",
+      "Bash(git -C /Users/dnbtv/branicke-lahudkarstvi fetch origin)",
+      "Bash(git -C /Users/dnbtv/branicke-lahudkarstvi log --oneline origin/main -5)",
+      "Bash(git -C /Users/dnbtv/branicke-lahudkarstvi status -sb)",
+      "Bash(python3 *)",
+      "Bash(git push *)",
+      "Bash(echo \"tracked-env-exit:$?\")"
     ]
   }
 }

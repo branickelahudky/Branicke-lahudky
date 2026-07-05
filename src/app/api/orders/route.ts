@@ -12,6 +12,7 @@ import {
 import { generateNextNumber } from '@/lib/number-series'
 import { calculateCartWeightKg, resolveShippingPrice, type CartWeightItem } from '@/lib/cart-weight'
 import { sendOrderConfirmationEmail } from '@/lib/order-confirmation-email'
+import { createPayPalOrder, paypalConfigured } from '@/lib/paypal'
 import { getSession } from '@/lib/auth'
 import { getCustomerSession } from '@/lib/customer-auth'
 
@@ -304,7 +305,8 @@ export async function POST(req: NextRequest) {
         companyId: data.companyId,
         vatId: data.vatId,
         status: 'PENDING',
-        paymentStatus: 'UNPAID',
+        // online platba čeká na bránu, ruční platby jsou „nezaplaceno"
+        paymentStatus: paymentMethod.provider === 'PAYPAL' ? 'PENDING' : 'UNPAID',
         fulfillmentStatus: 'UNFULFILLED',
         shippingAddressSnapshot: data.shippingAddress,
         billingAddressSnapshot: data.billingAddressSameAsShipping
@@ -369,13 +371,61 @@ export async function POST(req: NextRequest) {
     return created
   })
 
+  // ─── PayPal: vytvořit platbu na bráně a vrátit approval URL ──────
+  // Potvrzovací e-mail se u PayPalu posílá až PO zaplacení (v return
+  // handleru) — zákazník, který nezaplatí, nedostane potvrzení.
+  if (paymentMethod.provider === 'PAYPAL') {
+    if (!paypalConfigured()) {
+      return NextResponse.json(
+        { error: 'Platba přes PayPal momentálně není dostupná. Zvolte prosím jinou platbu.' },
+        { status: 400 }
+      )
+    }
+    try {
+      const origin = req.nextUrl.origin
+      const paypal = await createPayPalOrder({
+        amount: totals.totalWithVat,
+        referenceId: orderNumber,
+        returnUrl: `${origin}/api/paypal/return`,
+        cancelUrl: `${origin}/api/paypal/cancel`,
+      })
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { paypalOrderId: paypal.paypalOrderId },
+      })
+      await prisma.orderNote.create({
+        data: {
+          orderId: order.id,
+          content: `Vytvořena PayPal platba ${paypal.paypalOrderId}, zákazník přesměrován k zaplacení.`,
+        },
+      }).catch(() => {})
+
+      return NextResponse.json(
+        { ...order, approvalUrl: paypal.approvalUrl },
+        { status: 201 }
+      )
+    } catch (err) {
+      // Objednávka zůstává PENDING — zákazník může zkusit jinou platbu,
+      // obsluha ji vidí v adminu
+      console.error('[orders] PayPal order selhal:', err)
+      await prisma.orderNote.create({
+        data: {
+          orderId: order.id,
+          content: `PayPal platbu se nepodařilo založit: ${err instanceof Error ? err.message : String(err)}`,
+        },
+      }).catch(() => {})
+      return NextResponse.json(
+        { error: 'Platbu přes PayPal se nepodařilo založit. Zkuste to prosím znovu, nebo zvolte jinou platbu — objednávka zůstává uložená.' },
+        { status: 502 }
+      )
+    }
+  }
+
   // Potvrzovací e-mail — selhání nesmí shodit vytvoření objednávky
   // (výsledek se zapisuje do EmailLog + poznámky objednávky uvnitř)
   await sendOrderConfirmationEmail(order.id).catch((err) => {
     console.error('[orders] potvrzovací email selhal:', err)
   })
-
-  // TODO: pokud platba kartou, vytvořit platbu na bráně a vrátit redirect URL
 
   return NextResponse.json(order, { status: 201 })
 }

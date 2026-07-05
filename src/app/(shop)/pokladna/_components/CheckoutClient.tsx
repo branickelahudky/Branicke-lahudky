@@ -51,6 +51,8 @@ export type PaymentOption = {
   name: string
   description: string | null
   type: string | null
+  /** MANUAL | PAYPAL — online platby přesměrují na bránu */
+  provider: string
   feeWithVat: number
   vatRate: number
 }
@@ -76,6 +78,8 @@ type Props = {
   termsSlug: string
   prefill: CheckoutPrefill | null
   isLoggedIn: boolean
+  /** Hláška po návratu z platební brány (zrušená/neúspěšná platba) */
+  paymentNotice: string | null
 }
 
 // ─── Validace ──────────────────────────────────────────────────────
@@ -245,7 +249,7 @@ function SectionCard({ step, title, children }: { step: number; title: string; c
 
 // ─── Hlavní komponenta ─────────────────────────────────────────────
 
-export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, prefill, isLoggedIn }: Props) {
+export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, prefill, isLoggedIn, paymentNotice }: Props) {
   const router = useRouter()
   const { items, hydrated, clear, openCart } = useCart()
 
@@ -449,6 +453,15 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
       }
 
       const order = await res.json()
+
+      // Online platba (PayPal): košík se NEvyprazdňuje — vyprázdní se až
+      // po úspěšné platbě na děkovné stránce. Redirect na bránu.
+      if (order.approvalUrl) {
+        submittedRef.current = true
+        window.location.assign(order.approvalUrl)
+        return
+      }
+
       submittedRef.current = true
       clear()
       router.replace(`/pokladna/dekujeme?t=${order.publicToken}`)
@@ -473,6 +486,12 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold text-shop-fg">Pokladna</h1>
+
+      {paymentNotice && (
+        <div className="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {paymentNotice}
+        </div>
+      )}
 
       {!isLoggedIn && (
         <div className="mb-5 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-shop-muted">
@@ -620,6 +639,9 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-medium text-shop-fg">{p.name}</span>
                         {p.description && <span className="block text-xs text-shop-muted">{p.description}</span>}
+                        {p.provider === 'PAYPAL' && (
+                          <span className="block text-xs text-gold">Po odeslání objednávky vás přesměrujeme na PayPal.</span>
+                        )}
                       </span>
                       <span className="shrink-0 text-sm font-bold text-shop-fg">
                         {p.feeWithVat > 0 ? `+ ${fmtKc(p.feeWithVat)}` : 'Zdarma'}

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { paypalConfigured, paypalMode } from '@/lib/paypal'
 import { PlatbyClient, type SerializedPaymentMethod } from './PlatbyClient'
 
 async function seed() {
@@ -55,10 +56,16 @@ export default async function PlatbyPage() {
     feeWithVat: m.feeWithVat.toNumber(),
     vatRate: m.vatRate.toNumber(),
     type: m.type,
+    provider: m.provider,
     sortOrder: m.sortOrder,
     isActive: m.isActive,
     orderCount: m._count.orders,
   }))
 
-  return <PlatbyClient methods={methods} />
+  // Stav PayPal integrace (jen indikace — klíče se nastavují v env)
+  const paypalEnv = paypalConfigured()
+    ? { configured: true as const, mode: paypalMode() }
+    : { configured: false as const, mode: null }
+
+  return <PlatbyClient methods={methods} paypalEnv={paypalEnv} />
 }

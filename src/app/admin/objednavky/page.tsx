@@ -33,6 +33,7 @@ interface Props {
     strana?: string
     sort?: string
     order?: string
+    platba?: string
   }>
 }
 
@@ -46,7 +47,19 @@ export default async function ObjednavkyPage({ searchParams }: Props) {
   const dir = (params.order === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc'
 
   const statusFilter = TAB_FILTER[stav]
-  const whereClause = statusFilter ? { status: { in: statusFilter } } : {}
+
+  // Filtr stavu platby (?platba=zaplaceno|ceka|nezaplaceno)
+  const platba = params.platba ?? 'vse'
+  const PAYMENT_FILTER: Record<string, { in: ('PAID' | 'PENDING' | 'UNPAID' | 'FAILED')[] } | undefined> = {
+    zaplaceno: { in: ['PAID'] },
+    ceka: { in: ['PENDING'] },
+    nezaplaceno: { in: ['UNPAID', 'FAILED'] },
+  }
+  const paymentFilter = PAYMENT_FILTER[platba]
+  const whereClause = {
+    ...(statusFilter ? { status: { in: statusFilter } } : {}),
+    ...(paymentFilter ? { paymentStatus: paymentFilter } : {}),
+  }
 
   const orderBy =
     sort === 'totalWithVat'
@@ -104,14 +117,14 @@ export default async function ObjednavkyPage({ searchParams }: Props) {
 
   // Pomocníci pro URL generování (sort + tab + paginace zachovávají ostatní parametry)
   function tabHref(key: string) {
-    return `/admin/objednavky?stav=${key}`
+    return `/admin/objednavky?stav=${key}${platba !== 'vse' ? `&platba=${platba}` : ''}`
   }
   function sortHref(column: string) {
     const newDir = sort === column && dir === 'asc' ? 'desc' : 'asc'
     return `/admin/objednavky?stav=${stav}&sort=${column}&order=${newDir}`
   }
   function pageHref(n: number) {
-    return `/admin/objednavky?stav=${stav}&strana=${n}&sort=${sort}&order=${dir}`
+    return `/admin/objednavky?stav=${stav}${platba !== 'vse' ? `&platba=${platba}` : ''}&strana=${n}&sort=${sort}&order=${dir}`
   }
   function SortArrow({ column }: { column: string }) {
     if (sort !== column) return <span className="ml-0.5 text-stone-300">↕</span>
@@ -157,6 +170,28 @@ export default async function ObjednavkyPage({ searchParams }: Props) {
                   </Link>
                 )
               })}
+              {/* Filtr platby */}
+              <div className="ml-auto flex items-center gap-1 px-3 py-2 text-xs">
+                <span className="mr-1 text-stone-400">Platba:</span>
+                {[
+                  { key: 'vse', label: 'Vše' },
+                  { key: 'zaplaceno', label: 'Zaplaceno' },
+                  { key: 'ceka', label: 'Čeká na platbu' },
+                  { key: 'nezaplaceno', label: 'Nezaplaceno' },
+                ].map((t) => (
+                  <Link
+                    key={t.key}
+                    href={`/admin/objednavky?stav=${stav}${t.key !== 'vse' ? `&platba=${t.key}` : ''}`}
+                    className={`rounded-full px-2.5 py-1 transition ${
+                      platba === t.key
+                        ? 'bg-stone-800 font-medium text-white'
+                        : 'text-stone-500 hover:bg-stone-100'
+                    }`}
+                  >
+                    {t.label}
+                  </Link>
+                ))}
+              </div>
             </div>
 
             {/* Panel nástrojů */}
@@ -291,15 +326,18 @@ export default async function ObjednavkyPage({ searchParams }: Props) {
 
                         {/* Platba */}
                         <td className="p-3">
-                          <span className="flex items-center gap-1.5">
+                          <span className="flex flex-col gap-0.5">
                             <span className="text-stone-600">
                               {order.paymentMethod?.name ?? order.paymentMethodName}
                             </span>
-                            {order.paymentStatus === 'PAID' && (
-                              <span
-                                title="Zaplaceno"
-                                className="h-2 w-2 shrink-0 rounded-full bg-green-500"
-                              />
+                            {order.paymentStatus === 'PAID' ? (
+                              <span className="w-fit rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700">Zaplaceno</span>
+                            ) : order.paymentStatus === 'PENDING' ? (
+                              <span className="w-fit rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">Čeká na platbu</span>
+                            ) : order.paymentStatus === 'FAILED' ? (
+                              <span className="w-fit rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">Selhala</span>
+                            ) : (
+                              <span className="w-fit rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-500">Nezaplaceno</span>
                             )}
                           </span>
                         </td>

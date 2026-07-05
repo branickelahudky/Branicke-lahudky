@@ -169,6 +169,8 @@ export default async function OrderDetailPage({ params }: Props) {
     deliveredAt: order.deliveredAt?.toISOString() ?? null,
     cancelledAt: order.cancelledAt?.toISOString() ?? null,
     paidAt: order.paidAt?.toISOString() ?? null,
+    paypalOrderId: order.paypalOrderId,
+    paymentTransactionId: order.paymentTransactionId,
     customerId: order.customerId ?? null,
     customerRating,
     items: serializedItems,

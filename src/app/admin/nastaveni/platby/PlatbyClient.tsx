@@ -19,10 +19,16 @@ export type SerializedPaymentMethod = {
   feeWithVat: number
   vatRate: number
   type: string | null
+  /** MANUAL | PAYPAL | … — online brány mají vlastní indikaci */
+  provider: string
   sortOrder: number
   isActive: boolean
   orderCount: number
 }
+
+export type PayPalEnv =
+  | { configured: true; mode: 'sandbox' | 'live' }
+  | { configured: false; mode: null }
 
 // ─── Modal (module level) ─────────────────────────────────────────
 
@@ -117,9 +123,10 @@ function PaymentModal({
 
 interface Props {
   methods: SerializedPaymentMethod[]
+  paypalEnv: PayPalEnv
 }
 
-export function PlatbyClient({ methods }: Props) {
+export function PlatbyClient({ methods, paypalEnv }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [modal, setModal] = useState<{ mode: 'add' } | { mode: 'edit'; item: SerializedPaymentMethod } | null>(null)
@@ -182,6 +189,31 @@ export function PlatbyClient({ methods }: Props) {
         </button>
       </div>
 
+      {sorted.some((m) => m.provider === 'PAYPAL') && (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            paypalEnv.configured
+              ? paypalEnv.mode === 'live'
+                ? 'border-green-200 bg-green-50 text-green-800'
+                : 'border-amber-200 bg-amber-50 text-amber-800'
+              : 'border-stone-200 bg-stone-50 text-stone-600'
+          }`}
+        >
+          {paypalEnv.configured ? (
+            <>
+              PayPal je propojen v režimu{' '}
+              <strong>{paypalEnv.mode === 'live' ? 'Live (ostré platby)' : 'Sandbox (testovací platby)'}</strong>.
+              Režim se přepíná proměnnou <code className="rounded bg-white/60 px-1">PAYPAL_MODE</code> v env.
+            </>
+          ) : (
+            <>
+              PayPal není propojen — v env chybí <code className="rounded bg-white px-1">PAYPAL_CLIENT_ID</code> a{' '}
+              <code className="rounded bg-white px-1">PAYPAL_CLIENT_SECRET</code>. Metoda se zákazníkům v pokladně nenabízí.
+            </>
+          )}
+        </div>
+      )}
+
       {sorted.length === 0 ? (
         <p className="py-8 text-center text-sm text-stone-400">Žádné způsoby platby.</p>
       ) : (
@@ -201,7 +233,27 @@ export function PlatbyClient({ methods }: Props) {
             <tbody className="divide-y divide-stone-100">
               {sorted.map((m) => (
                 <tr key={m.id} className="hover:bg-stone-50">
-                  <td className="px-4 py-3 font-medium text-stone-900">{m.name}</td>
+                  <td className="px-4 py-3 font-medium text-stone-900">
+                    {m.name}
+                    {m.provider === 'PAYPAL' && (
+                      <span
+                        className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          !paypalEnv.configured
+                            ? 'bg-stone-100 text-stone-500'
+                            : paypalEnv.mode === 'live'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-amber-100 text-amber-700'
+                        }`}
+                        title={
+                          !paypalEnv.configured
+                            ? 'PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET nejsou v env — metoda se v pokladně nenabízí'
+                            : `Režim dle PAYPAL_MODE v env (${paypalEnv.mode})`
+                        }
+                      >
+                        {!paypalEnv.configured ? 'Nenastaveno' : paypalEnv.mode === 'live' ? 'Live' : 'Sandbox'}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-stone-500 text-xs">{m.description ?? '–'}</td>
                   <td className="px-4 py-3 text-center">
                     {m.type ? (

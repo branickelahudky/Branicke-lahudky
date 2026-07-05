@@ -455,6 +455,7 @@ model PaymentMethod {
 
 enum PaymentProvider {
   MANUAL // hotově/převodem, ručně potvrdit
+  PAYPAL
   STRIPE
   COMGATE
   GOPAY
@@ -595,6 +596,8 @@ model Order {
 
   // Platba
   paymentTransactionId String?
+  // PayPal order id — pro párování návratu z brány a idempotentní capture
+  paypalOrderId        String?   @unique
   paidAt               DateTime?
 
   // Životní cyklus

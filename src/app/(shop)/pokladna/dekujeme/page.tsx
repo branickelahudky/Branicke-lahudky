@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { formatCZK } from '@/lib/pricing'
+import { ClearCartOnPaid } from './ClearCartOnPaid'
 
 export const metadata: Metadata = {
   title: 'Děkujeme za objednávku',
@@ -24,9 +25,9 @@ function isBankTransfer(pm: { code: string; type: string | null } | null): boole
 export default async function DekujemePage({
   searchParams,
 }: {
-  searchParams: Promise<{ t?: string }>
+  searchParams: Promise<{ t?: string; zaplaceno?: string }>
 }) {
-  const { t } = await searchParams
+  const { t, zaplaceno } = await searchParams
 
   const order = t
     ? await prisma.order.findUnique({
@@ -73,6 +74,9 @@ export default async function DekujemePage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      {/* Po online platbě vyprázdnit košík (jednorázově) */}
+      {zaplaceno === '1' && order.publicToken && <ClearCartOnPaid orderToken={order.publicToken} />}
+
       {/* Poděkování */}
       <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center">
         <p className="mb-4 text-5xl">✅</p>
@@ -80,6 +84,11 @@ export default async function DekujemePage({
         <p className="mt-2 text-sm text-shop-muted">
           Číslo objednávky: <span className="font-bold text-gold">{order.orderNumber}</span>
         </p>
+        {order.paymentStatus === 'PAID' && (
+          <p className="mx-auto mt-2 inline-block rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-green-700">
+            ✓ Platba přijata
+          </p>
+        )}
         <p className="mx-auto mt-3 max-w-md text-sm text-shop-muted">
           Potvrzení s rekapitulací jsme poslali na <span className="font-medium text-shop-fg">{order.contactEmail}</span>.
         </p>

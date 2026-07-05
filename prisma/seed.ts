@@ -406,6 +406,18 @@ async function main() {
     update: {},
   })
 
+  // PayPal — v pokladně se nabízí jen s nastavenými env klíči (PAYPAL_CLIENT_ID/SECRET).
+  // Poplatek 0 — případnou přirážku na pokrytí PayPal poplatků (~3,4 %) nastaví admin.
+  const paypal = await prisma.paymentMethod.upsert({
+    where: { code: 'PAYPAL' },
+    create: {
+      code: 'PAYPAL', name: 'PayPal',
+      description: 'Zaplatíte online přes PayPal účet nebo kartou.',
+      provider: PaymentProvider.PAYPAL, type: 'card', sortOrder: 5,
+    },
+    update: {},
+  })
+
   // Kombinace doprava × platba
   for (const pair of [
     { shippingMethodId: osobniOdber.id,  paymentMethodId: platbaKartou.id },
@@ -417,6 +429,9 @@ async function main() {
     { shippingMethodId: coolBalikSk.id,  paymentMethodId: platbaKartou.id },
     { shippingMethodId: coolBalikSk.id,  paymentMethodId: prevod.id },
     { shippingMethodId: coolBalikSk.id,  paymentMethodId: dobirka.id },
+    { shippingMethodId: osobniOdber.id,  paymentMethodId: paypal.id },
+    { shippingMethodId: coolBalikCz.id,  paymentMethodId: paypal.id },
+    { shippingMethodId: coolBalikSk.id,  paymentMethodId: paypal.id },
   ]) {
     await prisma.paymentMethodOnShipping.upsert({
       where: { shippingMethodId_paymentMethodId: pair },
