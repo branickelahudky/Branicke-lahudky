@@ -105,6 +105,7 @@ export default async function CustomerDetailPage({ params }: Props) {
     phone: customer.phone,
     shoptetId: customer.shoptetId,
     hasPassword: customer.passwordHash !== null,
+    hasGoogle: customer.googleId !== null,
     isBusinessCustomer: customer.isBusinessCustomer,
     companyName: customer.companyName,
     companyId: customer.companyId,

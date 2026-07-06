@@ -269,6 +269,9 @@ model Customer {
   shoptetId    String? @unique
   internalNote String? @db.Text
 
+  // Přihlášení přes Google (OIDC sub) — účet může mít zároveň i heslo
+  googleId String? @unique
+
   // B2B
   isBusinessCustomer Boolean @default(false)
   companyName        String?

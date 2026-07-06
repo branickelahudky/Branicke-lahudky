@@ -45,6 +45,7 @@ export type SerializedCustomerDetail = {
   phone: string | null
   shoptetId: string | null
   hasPassword: boolean
+  hasGoogle: boolean
   isBusinessCustomer: boolean
   companyName: string | null
   companyId: string | null
@@ -846,6 +847,7 @@ export function CustomerDetailClient({ customer, userRole }: Props) {
                 customerCreatedAt={customer.createdAt}
                 isImported={customer.shoptetId !== null}
                 hasPassword={customer.hasPassword}
+                hasGoogle={customer.hasGoogle}
                 account={customer.account}
                 userRole={userRole}
               />

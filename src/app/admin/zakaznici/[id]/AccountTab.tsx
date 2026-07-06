@@ -57,6 +57,7 @@ interface Props {
   customerCreatedAt: string
   isImported: boolean
   hasPassword: boolean
+  hasGoogle: boolean
   account: SerializedAccount
   userRole: string
 }
@@ -67,6 +68,7 @@ export function AccountTab({
   customerCreatedAt,
   isImported,
   hasPassword,
+  hasGoogle,
   account,
   userRole,
 }: Props) {
@@ -126,8 +128,9 @@ export function AccountTab({
     'rounded border px-3 py-1.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-40'
 
   // ── Zákazník bez účtu ────────────────────────────────────────────
+  // (účet přes Google existuje i bez hesla)
 
-  if (!hasPassword) {
+  if (!hasPassword && !hasGoogle) {
     return (
       <div className="space-y-5">
         <div className="rounded-lg border border-stone-200 bg-stone-50 p-5 text-center">
@@ -188,6 +191,16 @@ export function AccountTab({
             ) : (
               <span className="text-stone-400">neověřen</span>
             )}
+          </InfoRow>
+          <InfoRow label="Způsob přihlášení">
+            <span>
+              {hasPassword ? 'heslo' : <span className="text-stone-400">bez hesla</span>}
+              {hasGoogle && (
+                <span className="ml-1.5 rounded bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700">
+                  Propojeno s Google
+                </span>
+              )}
+            </span>
           </InfoRow>
           <InfoRow label="Zákazníkem od">
             {fmtDateTime(customerCreatedAt)}

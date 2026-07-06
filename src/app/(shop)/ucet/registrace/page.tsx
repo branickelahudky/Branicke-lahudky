@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getCustomerSession, safeInternalPath } from '@/lib/customer-auth'
 import { RegisterForm } from '../_components/AuthForms'
+import { GoogleSignIn } from '../_components/GoogleSignIn'
 
 export const metadata: Metadata = {
   title: 'Registrace',
@@ -26,6 +27,7 @@ export default async function RegistracePage({
         <p className="mb-5 text-center text-sm text-shop-muted">
           S účtem uvidíte historii objednávek a v pokladně budete mít předvyplněné údaje.
         </p>
+        <GoogleSignIn from={from} />
         <RegisterForm from={from} />
       </div>
     </div>

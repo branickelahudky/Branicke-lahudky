@@ -46,7 +46,14 @@ export default async function UcetPage() {
 
       <div className="space-y-6">
         <section className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="mb-4 text-lg font-bold text-shop-fg">Moje údaje</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-bold text-shop-fg">Moje údaje</h2>
+            {customer.googleId && (
+              <span className="rounded-full border border-stone-200 bg-stone-50 px-2.5 py-1 text-xs font-medium text-shop-muted">
+                Propojeno s Google
+              </span>
+            )}
+          </div>
           <ProfileForm profile={profile} />
         </section>
 

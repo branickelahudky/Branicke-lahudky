@@ -59,6 +59,7 @@ export type CustomerSessionData = {
     acceptsMarketing: boolean
     passwordHash: string | null
     isAccountDisabled: boolean
+    googleId: string | null
   }
 }
 
@@ -75,7 +76,7 @@ export async function getCustomerSession(): Promise<CustomerSessionData | null> 
           id: true, email: true, firstName: true, lastName: true, phone: true,
           emailVerified: true, isBusinessCustomer: true, companyName: true,
           companyId: true, vatId: true, acceptsMarketing: true, passwordHash: true,
-          isAccountDisabled: true,
+          isAccountDisabled: true, googleId: true,
         },
       },
     },
