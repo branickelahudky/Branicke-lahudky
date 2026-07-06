@@ -5,6 +5,7 @@ import type { MegaCategory } from './_components/CategoryNavBar'
 import { Footer, type FooterNavItem } from './_components/Footer'
 import { CartProvider } from './_context/CartContext'
 import { CartFlyout } from './_components/CartFlyout'
+import { CookieBanner } from './_components/CookieBanner'
 
 export default async function ShopLayout({
   children,
@@ -105,6 +106,7 @@ export default async function ShopLayout({
         }}
       />
       <CartFlyout />
+      <CookieBanner />
     </div>
     </CartProvider>
   )
