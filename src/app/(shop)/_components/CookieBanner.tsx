@@ -18,14 +18,13 @@ export async function CookieBanner() {
   })
   if (!settings?.enabled) return null
 
-  // CMS renderer stránek zatím neexistuje — odkaz vede na dohodnutou URL
   return (
     <CookieBannerClient
       title={settings.bannerTitle}
       text={settings.bannerText?.trim() || FALLBACK_TEXT}
       acceptLabel={settings.acceptAllLabel}
       rejectLabel={settings.rejectLabel}
-      policyHref={settings.policyPage?.isPublished ? '/zasady-cookies' : null}
+      policyHref={settings.policyPage?.isPublished ? `/${settings.policyPage.slug}` : null}
     />
   )
 }

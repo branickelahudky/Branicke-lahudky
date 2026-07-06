@@ -83,3 +83,36 @@
 .product-richtext th { border: 1px solid var(--shop-border); padding: 0.35rem 0.5rem; text-align: left; }
 .product-richtext img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0; }
 .product-richtext hr { border: 0; border-top: 1px solid var(--shop-border); margin: 1rem 0; }
+
+/* Typografie CMS stránek (Vzhled → Stránky) — větší škála než produktový
+   richtext, čitelné delší texty (podmínky, o nás…). */
+.page-richtext { line-height: 1.7; }
+.page-richtext > :first-child { margin-top: 0; }
+.page-richtext > :last-child { margin-bottom: 0; }
+.page-richtext p { margin: 0 0 1rem; }
+.page-richtext ul,
+.page-richtext ol { margin: 0 0 1rem 1.5rem; padding: 0; }
+.page-richtext ul { list-style: disc; }
+.page-richtext ol { list-style: decimal; }
+.page-richtext li { margin: 0.25rem 0; }
+.page-richtext h2,
+.page-richtext h3,
+.page-richtext h4,
+.page-richtext h5 { font-weight: 700; margin: 1.75rem 0 0.75rem; color: var(--shop-fg); }
+.page-richtext h2 { font-size: 1.35rem; }
+.page-richtext h3 { font-size: 1.15rem; }
+.page-richtext h4 { font-size: 1.05rem; }
+.page-richtext a { color: #C9A961; text-decoration: underline; }
+.page-richtext a:hover { text-decoration: none; }
+.page-richtext strong,
+.page-richtext b { font-weight: 600; color: var(--shop-fg); }
+.page-richtext blockquote {
+  border-left: 3px solid #C9A961;
+  padding-left: 1rem; margin: 0 0 1rem; font-style: italic; color: var(--shop-muted);
+}
+.page-richtext table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.page-richtext td,
+.page-richtext th { border: 1px solid var(--shop-border); padding: 0.5rem 0.75rem; text-align: left; }
+.page-richtext th { background: var(--shop-surface); font-weight: 600; }
+.page-richtext img { max-width: 100%; height: auto; border-radius: 0.75rem; margin: 1rem 0; }
+.page-richtext hr { border: 0; border-top: 1px solid var(--shop-border); margin: 1.5rem 0; }

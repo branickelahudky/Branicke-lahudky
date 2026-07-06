@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { getSession } from '@/lib/auth'
 
 const listQuerySchema = z.object({
   category: z.string().optional(),
@@ -86,7 +87,14 @@ const createProductSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  // TODO: ověřit admin session
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: 'Nepřihlášen.' }, { status: 401 })
+  }
+  if (session.user.role === 'STAFF') {
+    return NextResponse.json({ error: 'Nedostatečná oprávnění' }, { status: 403 })
+  }
+
   const body = await req.json()
   const data = createProductSchema.parse(body)
 
