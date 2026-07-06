@@ -24,9 +24,9 @@ export default async function BenefityPage() {
         <AdminHeader title="Benefity (USP)" user={user} />
         <div className="p-6 max-w-2xl">
           <p className="mb-4 text-sm text-stone-500">
-            Lišta důvěry na titulní straně (a zkráceně v pokladně) — doprava, chlazení,
-            tradice… Pořadí měňte přetažením; neaktivní položky se na webu nezobrazují.
-            Umístění lišty na titulní straně nastavíte v sekci Titulní strana.
+            Benefity obchodu — doprava, chlazení, tradice… Zobrazují se v tenkém proužku
+            úplně nahoře na celém webu (a zkráceně v pokladně nad souhrnem). Pořadí měňte
+            přetažením; neaktivní položky se na webu nezobrazují.
           </p>
           <BenefityClient items={serialized} readOnly={user.role === 'STAFF'} />
         </div>

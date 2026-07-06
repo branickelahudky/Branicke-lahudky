@@ -384,11 +384,20 @@ function SortableBannerCard({
         )}
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <span className="rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-500">
-              {LINK_LABELS[banner.linkType]}
-            </span>
-            {banner.linkType !== 'NONE' && (
-              <span className="ml-1.5 text-xs text-stone-400 truncate">{linkDesc}</span>
+            {banner.linkType === 'NONE' ? (
+              <span
+                className="rounded bg-amber-50 px-1.5 py-0.5 text-xs text-amber-700"
+                title="Banner nikam nevede — návštěvník na něj nemůže kliknout. Odkaz nastavíte v úpravě banneru."
+              >
+                ⚠ Bez odkazu
+              </span>
+            ) : (
+              <>
+                <span className="rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-500">
+                  {LINK_LABELS[banner.linkType]}
+                </span>
+                <span className="ml-1.5 text-xs text-stone-400 truncate">{linkDesc}</span>
+              </>
             )}
           </div>
           <div className="flex shrink-0 gap-1">

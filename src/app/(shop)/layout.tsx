@@ -6,6 +6,7 @@ import { Footer, type FooterNavItem } from './_components/Footer'
 import { CartProvider } from './_context/CartContext'
 import { CartFlyout } from './_components/CartFlyout'
 import { CookieBanner } from './_components/CookieBanner'
+import { UspTopBar } from './_components/UspTopBar'
 
 export default async function ShopLayout({
   children,
@@ -14,7 +15,7 @@ export default async function ShopLayout({
   children: React.ReactNode
   modal: React.ReactNode
 }) {
-  const [identity, headerMenuItems, footerMenuItems, branch, categoryTree, customerSession] = await Promise.all([
+  const [identity, headerMenuItems, footerMenuItems, branch, categoryTree, customerSession, uspItems] = await Promise.all([
     prisma.siteIdentity.findFirst(),
     prisma.menuItem.findMany({
       where: { location: 'HEADER', isVisible: true },
@@ -40,6 +41,12 @@ export default async function ShopLayout({
       },
     }),
     getCustomerSession(),
+    // USP proužek nahoře — položky z adminu (Vzhled → Benefity)
+    prisma.uspItem.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, icon: true, title: true, subtitle: true },
+    }),
   ])
 
   const categories: MegaCategory[] = categoryTree.map((c) => ({
@@ -73,6 +80,7 @@ export default async function ShopLayout({
   return (
     <CartProvider>
     <div id="shop-root" data-theme="light" className="min-h-screen bg-shop-bg text-shop-fg">
+      <UspTopBar items={uspItems} />
       <Header
         logoUrl={identity?.logoUrl ?? null}
         logoAlt={identity?.logoAlt ?? null}

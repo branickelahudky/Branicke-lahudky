@@ -2,7 +2,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { activeSaleWhere } from '@/lib/pricing'
-import { UspIcon } from '@/lib/usp-icons'
 import { CarouselClient, type CarouselSlide } from './_components/CarouselClient'
 import { ProductCard, type ProductCardData } from './_components/ProductCard'
 import { HorizontalShelf } from './_components/HorizontalShelf'
@@ -63,40 +62,6 @@ function serializeProduct(p: {
       return img.fileSize > 0 ? `${base}?v=${img.fileSize}` : base
     })(),
   }
-}
-
-// ── Lišta benefitů (USP) — důvěra hned pod carouselem ─────────────
-
-async function UspBarSection() {
-  const items = await prisma.uspItem.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: 'asc' },
-  })
-  if (!items.length) return null
-
-  return (
-    <section className="mx-auto max-w-7xl px-4 py-3">
-      <div className="grid grid-cols-2 gap-x-3 gap-y-4 rounded-2xl bg-shop-surface px-4 py-4 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-10 sm:gap-y-4 sm:px-6 sm:py-5">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-center gap-2.5 sm:gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold/10 text-gold sm:h-11 sm:w-11">
-              <UspIcon name={item.icon} className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-xs font-bold leading-tight text-shop-fg sm:text-sm">
-                {item.title}
-              </span>
-              {item.subtitle && (
-                <span className="mt-0.5 block text-[10px] leading-tight text-shop-muted sm:text-xs">
-                  {item.subtitle}
-                </span>
-              )}
-            </span>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
 }
 
 // ── Sekce kategorií — horizontální regál dlaždic ──────────────────
@@ -361,10 +326,6 @@ export default async function HomePage({
 
         if (section.type === 'CAROUSEL') {
           return <CarouselSection key={section.id} title={section.title} />
-        }
-
-        if (section.type === 'USP_BAR') {
-          return <UspBarSection key={section.id} />
         }
 
         if (section.type === 'PROMO_TILES') {
