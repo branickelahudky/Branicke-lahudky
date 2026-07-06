@@ -1,8 +1,11 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { Landmark, Banknote, PackageCheck, CreditCard, Phone, Mail } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 
 export type FooterNavItem = { id: string; label: string; href: string; openNewTab: boolean }
+export type FooterCategory = { id: string; name: string; slug: string }
+export type FooterPayment = { id: string; code: string; name: string; provider: string }
 
 interface Props {
   logoUrl: string | null
@@ -10,6 +13,8 @@ interface Props {
   footerText: string | null
   footerCopyright: string | null
   navItems: FooterNavItem[]
+  categories: FooterCategory[]
+  payments: FooterPayment[]
   branch: {
     name: string
     street: string
@@ -37,23 +42,108 @@ function SocialIcon({ href, label, children }: { href: string; label: string; ch
   )
 }
 
-export function Footer({ logoUrl, logoAlt, footerText, footerCopyright, navItems, branch, social }: Props) {
-  const hasSocial = social.facebook || social.instagram || social.youtube || social.tiktok
+function ColumnHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gold">{children}</h3>
+  )
+}
+
+function FooterLink({ href, children, openNewTab }: { href: string; children: React.ReactNode; openNewTab?: boolean }) {
+  return (
+    <Link href={href} target={openNewTab ? '_blank' : undefined}
+      className="text-sm text-shop-muted hover:text-gold transition">
+      {children}
+    </Link>
+  )
+}
+
+/** Badge platební metody ve spodním pruhu — jen skutečně nabízené metody,
+ *  žádná falešná loga. PayPal jako dvoubarevný wordmark, ostatní text + ikonka. */
+function PaymentBadge({ payment }: { payment: FooterPayment }) {
+  if (payment.provider === 'PAYPAL') {
+    return (
+      <span className="flex items-center rounded-md border border-shop-border bg-shop-bg px-2 py-1 text-xs font-bold italic" title={payment.name}>
+        <span className="text-[#003087]">Pay</span>
+        <span className="text-[#009cde]">Pal</span>
+      </span>
+    )
+  }
+
+  const Icon =
+    payment.code === 'BANK_TRANSFER' ? Landmark
+    : payment.code === 'COD' ? PackageCheck
+    : payment.code === 'CASH_ON_PICKUP' ? Banknote
+    : CreditCard
 
   return (
-    <footer className="border-t border-shop-border bg-shop-surface mt-12">
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
+    <span className="flex items-center gap-1.5 rounded-md border border-shop-border bg-shop-bg px-2 py-1 text-xs text-shop-muted">
+      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      {payment.name}
+    </span>
+  )
+}
 
-          {/* Brand */}
-          <div className="md:col-span-1">
+export function Footer({
+  logoUrl, logoAlt, footerText, footerCopyright,
+  navItems, categories, payments, branch, social,
+}: Props) {
+  const hasSocial = social.facebook || social.instagram || social.youtube || social.tiktok
+  const phoneHref = (phone: string) => `tel:${phone.replace(/\s+/g, '')}`
+
+  return (
+    <footer className="border-t border-shop-border bg-shop-bg mt-12">
+      <div className="mx-auto max-w-7xl px-4 py-12">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+
+          {/* Kontakt — na mobilu první (nejdůležitější), na desktopu poslední sloupec */}
+          {branch && (
+            <div className="sm:col-span-2 lg:order-last lg:col-span-1">
+              <ColumnHeading>Kontakt</ColumnHeading>
+              <p className="text-sm font-semibold text-shop-fg">{branch.name}</p>
+              <p className="mt-0.5 text-sm text-shop-muted">
+                {branch.street}, {branch.zip} {branch.city}
+              </p>
+              {branch.phone1 && (
+                <a href={phoneHref(branch.phone1)}
+                  className="mt-3 flex items-center gap-2 text-xl font-bold text-gold hover:text-gold/80 transition">
+                  <Phone className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  {branch.phone1}
+                </a>
+              )}
+              {branch.phone2 && (
+                <a href={phoneHref(branch.phone2)}
+                  className="mt-1 flex items-center gap-2 text-sm font-medium text-shop-fg hover:text-gold transition">
+                  <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {branch.phone2}
+                </a>
+              )}
+              {branch.email && (
+                <a href={`mailto:${branch.email}`}
+                  className="mt-2 flex items-center gap-2 text-sm text-shop-muted hover:text-gold transition">
+                  <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {branch.email}
+                </a>
+              )}
+              {branch.openingHours && (
+                <div className="mt-4">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-shop-muted">Otevírací doba</p>
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-shop-muted">
+                    {branch.openingHours}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Značka */}
+          <div className="sm:col-span-2 lg:col-span-1">
             {logoUrl ? (
               <div className="relative mb-3 h-14 w-14 overflow-hidden rounded-xl bg-[#0a0a0a]">
-                <Image src={logoUrl} alt={logoAlt ?? 'Markes lahůdkářství'}
+                <Image src={logoUrl} alt={logoAlt ?? 'Branické lahůdkářství'}
                   fill className="object-contain" sizes="56px" unoptimized />
               </div>
             ) : (
-              <p className="mb-3 text-lg font-bold text-gold">Markes lahůdkářství</p>
+              <p className="mb-3 text-lg font-bold text-gold">Branické lahůdkářství</p>
             )}
             {footerText && (
               <p className="text-sm leading-relaxed text-shop-muted">{footerText}</p>
@@ -92,45 +182,29 @@ export function Footer({ logoUrl, logoAlt, footerText, footerCopyright, navItems
             )}
           </div>
 
-          {/* Kontakt */}
-          {branch && (
-            <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gold">Kontakt</h3>
-              <div className="space-y-1 text-sm text-shop-muted">
-                <p className="text-shop-fg">{branch.name}</p>
-                <p>{branch.street}, {branch.zip} {branch.city}</p>
-                {branch.phone1 && <p>{branch.phone1}</p>}
-                {branch.phone2 && <p>{branch.phone2}</p>}
-                {branch.email && (
-                  <a href={`mailto:${branch.email}`} className="hover:text-gold transition">
-                    {branch.email}
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Nakupování */}
+          <div>
+            <ColumnHeading>Nakupování</ColumnHeading>
+            <nav className="flex flex-col gap-1.5">
+              <FooterLink href="/akce">Akce</FooterLink>
+              <FooterLink href="/novinky">Novinky</FooterLink>
+              <FooterLink href="/doporucujeme">Doporučujeme</FooterLink>
+              {categories.map((c) => (
+                <FooterLink key={c.id} href={`/kategorie/${c.slug}`}>{c.name}</FooterLink>
+              ))}
+              <FooterLink href="/ucet">Můj účet</FooterLink>
+            </nav>
+          </div>
 
-          {/* Otevírací doba */}
-          {branch?.openingHours && (
-            <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gold">Otevírací doba</h3>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-shop-muted">
-                {branch.openingHours}
-              </p>
-            </div>
-          )}
-
-          {/* Rychlé odkazy */}
+          {/* Informace — FOOTER menu z adminu */}
           {navItems.length > 0 && (
             <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gold">Informace</h3>
+              <ColumnHeading>Informace</ColumnHeading>
               <nav className="flex flex-col gap-1.5">
                 {navItems.map((item) => (
-                  <Link key={item.id} href={item.href}
-                    target={item.openNewTab ? '_blank' : undefined}
-                    className="text-sm text-shop-muted hover:text-gold transition">
+                  <FooterLink key={item.id} href={item.href} openNewTab={item.openNewTab}>
                     {item.label}
-                  </Link>
+                  </FooterLink>
                 ))}
               </nav>
             </div>
@@ -138,13 +212,23 @@ export function Footer({ logoUrl, logoAlt, footerText, footerCopyright, navItems
         </div>
       </div>
 
-      {/* Copyright bar */}
+      {/* Spodní pruh: copyright | platby | přepínač tématu */}
       <div className="border-t border-shop-border">
-        <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-4 sm:flex-row sm:justify-between">
           <p className="text-xs text-shop-muted">
             {footerCopyright ?? `© ${new Date().getFullYear()} Branické lahůdkářství`}
           </p>
-          <ThemeToggle />
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {payments.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                <span className="mr-1 text-xs text-shop-muted">Způsoby platby:</span>
+                {payments.map((pm) => (
+                  <PaymentBadge key={pm.id} payment={pm} />
+                ))}
+              </div>
+            )}
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </footer>

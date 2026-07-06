@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { getCustomerSession } from '@/lib/customer-auth'
+import { paypalConfigured } from '@/lib/paypal'
 import { Header, type NavItem } from './_components/Header'
 import type { MegaCategory } from './_components/CategoryNavBar'
 import { Footer, type FooterNavItem } from './_components/Footer'
@@ -15,7 +16,7 @@ export default async function ShopLayout({
   children: React.ReactNode
   modal: React.ReactNode
 }) {
-  const [identity, headerMenuItems, footerMenuItems, branch, categoryTree, customerSession, uspItems] = await Promise.all([
+  const [identity, headerMenuItems, footerMenuItems, branch, categoryTree, customerSession, uspItems, paymentMethods] = await Promise.all([
     prisma.siteIdentity.findFirst(),
     prisma.menuItem.findMany({
       where: { location: 'HEADER', isVisible: true },
@@ -46,6 +47,15 @@ export default async function ShopLayout({
       where: { isActive: true },
       orderBy: { sortOrder: 'asc' },
       select: { id: true, icon: true, title: true, subtitle: true },
+    }),
+    // Platby pro patičku — stejný filtr jako pokladna (jen skutečně nabízené)
+    prisma.paymentMethod.findMany({
+      where: {
+        isActive: true,
+        provider: { in: paypalConfigured() ? ['MANUAL', 'PAYPAL'] : ['MANUAL'] },
+      },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, code: true, name: true, provider: true },
     }),
   ])
 
@@ -96,6 +106,8 @@ export default async function ShopLayout({
         footerText={identity?.footerText ?? null}
         footerCopyright={identity?.footerCopyright ?? null}
         navItems={footerNavItems}
+        categories={categories.slice(0, 5).map((c) => ({ id: c.id, name: c.name, slug: c.slug }))}
+        payments={paymentMethods}
         branch={branch ? {
           name: branch.name,
           street: branch.street,
