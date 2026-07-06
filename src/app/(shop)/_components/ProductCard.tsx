@@ -47,7 +47,7 @@ export function PriceWithCents({ value, prefix }: { value: number; prefix?: stri
     <>
       {prefix}
       {whole.toLocaleString('cs-CZ')}
-      {cents > 0 && <sup className="text-[0.6em] font-bold">{String(cents).padStart(2, '0')}</sup>}
+      {cents > 0 && <sup className="text-[0.6em] font-extrabold">{String(cents).padStart(2, '0')}</sup>}
       {' Kč'}
     </>
   )
@@ -187,14 +187,14 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <p className="text-sm font-semibold text-shop-muted">Cena na dotaz</p>
         ) : salePrice ? (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="rounded-md bg-[#FFE14D] px-1.5 py-0.5 text-[15px] font-bold text-stone-900 leading-tight">
+            <span className="rounded-md bg-[#FFE14D] px-1.5 py-0.5 text-[15px] font-extrabold text-stone-900 leading-tight">
               <PriceWithCents value={salePrice} prefix={prefix} />
             </span>
             <span className="text-xs text-shop-muted line-through">{fmtKc(product.priceWithVat)}</span>
           </div>
         ) : (
           <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-[15px] font-bold text-shop-fg leading-tight">
+            <span className="text-[15px] font-extrabold text-shop-fg leading-tight">
               {prefix}{fmtKc(displayPrice)}
             </span>
           </div>

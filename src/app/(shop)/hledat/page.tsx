@@ -66,7 +66,7 @@ export default async function HledatPage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-6 flex items-baseline gap-3">
-        <h1 className="text-3xl font-bold text-shop-fg">
+        <h1 className="text-3xl font-extrabold text-shop-fg">
           {term ? <>Výsledky pro „{term}"</> : 'Vyhledávání'}
         </h1>
         {term.length >= 2 && (

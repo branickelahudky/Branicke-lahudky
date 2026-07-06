@@ -68,7 +68,7 @@ export function HorizontalShelf({ title, moreHref, children }: Props) {
         {/* Header row */}
         {(title || moreHref) && (
           <div className="mb-4 flex items-center justify-between gap-4">
-            {title && <h2 className="text-xl font-bold text-shop-fg">{title}</h2>}
+            {title && <h2 className="text-xl font-extrabold text-shop-fg">{title}</h2>}
             {moreHref && (
               <a href={moreHref}
                 className="shrink-0 text-sm text-shop-muted hover:text-gold transition">

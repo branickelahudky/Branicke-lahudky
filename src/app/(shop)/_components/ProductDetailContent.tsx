@@ -232,7 +232,7 @@ export function ProductDetailContent({
                 {badge.label}
               </span>
             )}
-            <h1 className="text-xl sm:text-2xl font-bold text-shop-fg leading-snug">{product.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-shop-fg leading-snug">{product.name}</h1>
             <p className="mt-0.5 text-xs text-shop-muted">SKU: {product.sku}</p>
           </div>
 
@@ -258,7 +258,7 @@ export function ProductDetailContent({
               </div>
             ) : variantPrice ? (
               <div>
-                <p className="text-2xl font-bold text-shop-fg">{fmtKc(variantPrice)}</p>
+                <p className="text-2xl font-extrabold text-shop-fg">{fmtKc(variantPrice)}</p>
                 <p className="text-xs text-shop-muted">
                   {fmtKc(selectedVariant!.priceWithoutVat)} bez DPH
                   {perKgLabel && <span> · {perKgLabel}</span>}
@@ -268,11 +268,11 @@ export function ProductDetailContent({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {salePrice ? (
-                    <span className="rounded-lg bg-[#FFE14D] px-2 py-0.5 text-2xl font-bold text-stone-900">
+                    <span className="rounded-lg bg-[#FFE14D] px-2 py-0.5 text-2xl font-extrabold text-stone-900">
                       <PriceWithCents value={salePrice} prefix={prefix} />
                     </span>
                   ) : (
-                    <span className="text-2xl font-bold text-shop-fg">
+                    <span className="text-2xl font-extrabold text-shop-fg">
                       {prefix}{fmtKc(displayPrice)}
                     </span>
                   )}
