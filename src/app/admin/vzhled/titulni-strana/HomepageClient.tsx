@@ -42,6 +42,7 @@ interface Props {
 
 const TYPE_LABELS: Record<HomepageSectionType, string> = {
   CAROUSEL: 'Banner carousel',
+  USP_BAR: 'Lišta benefitů (USP)',
   FEATURED_CATEGORIES: 'Dlaždice kategorií',
   FEATURED_PRODUCTS: 'Doporučené produkty',
   ABOUT_TEXT: 'Textová sekce',
@@ -468,6 +469,12 @@ function SortableSectionCard({
       {expanded && (
         <div className="px-4 py-4">
           {section.type === 'CAROUSEL' && <CarouselConfig section={section} />}
+          {section.type === 'USP_BAR' && (
+            <div className="rounded-md bg-stone-50 border border-stone-200 px-3 py-2 text-xs text-stone-500">
+              Položky lišty (ikony, texty, pořadí) spravujte v sekci{' '}
+              <a href="/admin/vzhled/benefity" className="underline text-blue-600">Vzhled webu → Benefity (USP)</a>.
+            </div>
+          )}
           {section.type === 'FEATURED_CATEGORIES' && <FeaturedCategoriesConfig section={section} categories={categories} />}
           {section.type === 'FEATURED_PRODUCTS' && <FeaturedProductsConfig section={section} />}
           {section.type === 'ABOUT_TEXT' && <AboutTextConfig section={section} />}

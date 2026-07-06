@@ -479,16 +479,17 @@ async function main() {
   // Pořadí (sortOrder) se vynucuje i při update — záměr sprintu F9 je
   // srovnat homepage na doporučené rozložení. Viditelnost se nastaví jen
   // při vytvoření (re-seed nepřepíše ruční zapnutí/vypnutí v adminu).
-  const homepageDefs: Array<{ type: 'CAROUSEL' | 'FEATURED_CATEGORIES' | 'ABOUT_TEXT' | 'PROMO_TILES' | 'MID_BANNER' | 'FOOTER_CARDS' | 'SHELF_SALE' | 'SHELF_NEW' | 'SHELF_FEATURED'; sortOrder: number; isVisible: boolean; config?: object }> = [
+  const homepageDefs: Array<{ type: 'CAROUSEL' | 'USP_BAR' | 'FEATURED_CATEGORIES' | 'ABOUT_TEXT' | 'PROMO_TILES' | 'MID_BANNER' | 'FOOTER_CARDS' | 'SHELF_SALE' | 'SHELF_NEW' | 'SHELF_FEATURED'; sortOrder: number; isVisible: boolean; config?: object }> = [
     { type: 'CAROUSEL',            sortOrder: 0, isVisible: true  },
-    { type: 'PROMO_TILES',         sortOrder: 1, isVisible: true  },
-    { type: 'FEATURED_CATEGORIES', sortOrder: 2, isVisible: true,  config: { categoryIds: [] } },
-    { type: 'SHELF_SALE',          sortOrder: 3, isVisible: true  },
-    { type: 'SHELF_NEW',           sortOrder: 4, isVisible: true  },
-    { type: 'MID_BANNER',          sortOrder: 5, isVisible: true  },
-    { type: 'SHELF_FEATURED',      sortOrder: 6, isVisible: true  },
-    { type: 'ABOUT_TEXT',          sortOrder: 7, isVisible: false, config: { text: '' } },
-    { type: 'FOOTER_CARDS',        sortOrder: 8, isVisible: true  },
+    { type: 'USP_BAR',             sortOrder: 1, isVisible: true  }, // lišta důvěry hned pod carouselem (F21)
+    { type: 'PROMO_TILES',         sortOrder: 2, isVisible: true  },
+    { type: 'FEATURED_CATEGORIES', sortOrder: 3, isVisible: true,  config: { categoryIds: [] } },
+    { type: 'SHELF_SALE',          sortOrder: 4, isVisible: true  },
+    { type: 'SHELF_NEW',           sortOrder: 5, isVisible: true  },
+    { type: 'MID_BANNER',          sortOrder: 6, isVisible: true  },
+    { type: 'SHELF_FEATURED',      sortOrder: 7, isVisible: true  },
+    { type: 'ABOUT_TEXT',          sortOrder: 8, isVisible: false, config: { text: '' } },
+    { type: 'FOOTER_CARDS',        sortOrder: 9, isVisible: true  },
   ]
   for (const def of homepageDefs) {
     await prisma.homepageSection.upsert({
@@ -500,6 +501,19 @@ async function main() {
   // FEATURED_PRODUCTS nahrazen dedikovaným SHELF_FEATURED — odstraníme
   await prisma.homepageSection.deleteMany({ where: { type: 'FEATURED_PRODUCTS' } })
   console.log(`  ✔ Homepage sekce (${homepageDefs.length})`)
+
+  // ─── BENEFITY (USP) — jen když tabulka zeje prázdnotou (F21) ─────────
+  const uspCount = await prisma.uspItem.count()
+  if (uspCount === 0) {
+    await prisma.uspItem.createMany({
+      data: [
+        { icon: 'snowflake', title: 'Chlazená přeprava',       subtitle: 'Čerstvé maso až k vám — ČR i Slovensko', sortOrder: 0 },
+        { icon: 'truck',     title: 'Doprava zdarma',          subtitle: 'Při nákupu nad 3 000 Kč',                sortOrder: 1 },
+        { icon: 'medal',     title: 'Rodinná tradice od 1992', subtitle: 'Vlastní výroba a poctivé lahůdky',       sortOrder: 2 },
+      ],
+    })
+    console.log('  ✔ Benefity USP (3)')
+  }
 
   // ─── COOKIES NASTAVENÍ (singleton) ────────────────────────────────────
   const cookiesExists = await prisma.cookieSettings.findFirst({ select: { id: true } })

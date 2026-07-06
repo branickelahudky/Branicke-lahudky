@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { useCart, cartItemKey } from '../../_context/CartContext'
 import { fmtKc } from '../../_components/cart/fmtKc'
 import { calculateOrderTotals, formatCZK } from '@/lib/pricing'
+import { UspIcon } from '@/lib/usp-icons'
 import {
   calculateCartWeightKg,
   resolveShippingPrice,
@@ -76,6 +77,8 @@ type Props = {
   shippingOptions: ShippingOption[]
   paymentOptions: PaymentOption[]
   termsSlug: string
+  /** Benefity (USP) — malá připomínka nad souhrnem objednávky */
+  uspItems: Array<{ icon: string; title: string }>
   prefill: CheckoutPrefill | null
   isLoggedIn: boolean
   /** Hláška po návratu z platební brány (zrušená/neúspěšná platba) */
@@ -249,7 +252,7 @@ function SectionCard({ step, title, children }: { step: number; title: string; c
 
 // ─── Hlavní komponenta ─────────────────────────────────────────────
 
-export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, prefill, isLoggedIn, paymentNotice }: Props) {
+export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, uspItems, prefill, isLoggedIn, paymentNotice }: Props) {
   const router = useRouter()
   const { items, hydrated, clear, openCart } = useCart()
 
@@ -684,6 +687,18 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, pre
 
         {/* ── Pravý sloupec: souhrn ── */}
         <aside className="space-y-4 lg:sticky lg:top-24">
+          {uspItems.length > 0 && (
+            <ul className="flex flex-wrap gap-x-4 gap-y-1.5 rounded-2xl bg-shop-surface px-4 py-3">
+              {uspItems.map((u) => (
+                <li key={u.title} className="flex items-center gap-1.5 text-xs font-medium text-shop-fg">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/10 text-gold">
+                    <UspIcon name={u.icon} className="h-3 w-3" />
+                  </span>
+                  {u.title}
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="rounded-2xl border border-stone-200 bg-white p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-bold text-shop-fg">Vaše objednávka</h2>

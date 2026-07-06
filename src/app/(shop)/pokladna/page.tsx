@@ -25,7 +25,7 @@ export default async function PokladnaPage({
   searchParams: Promise<{ platba?: string }>
 }) {
   const { platba } = await searchParams
-  const [shippingMethods, allPaymentMethods, termsPage, customerSession] = await Promise.all([
+  const [shippingMethods, allPaymentMethods, termsPage, customerSession, uspItems] = await Promise.all([
     prisma.shippingMethod.findMany({
       // ČR i Slovensko — pokladna filtruje podle zvolené země doručení
       where: { isActive: true, availableCountries: { hasSome: ['CZ', 'SK'] } },
@@ -49,6 +49,12 @@ export default async function PokladnaPage({
       select: { slug: true, title: true },
     }),
     getCustomerSession(),
+    // Benefity (USP) — malá připomínka nad souhrnem objednávky
+    prisma.uspItem.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { icon: true, title: true },
+    }),
   ])
 
   // Přihlášenému předvyplníme kontakt + výchozí adresu z profilu.
@@ -122,6 +128,7 @@ export default async function PokladnaPage({
       shippingOptions={shippingOptions}
       paymentOptions={paymentOptions}
       termsSlug={termsPage?.slug ?? 'obchodni-podminky'}
+      uspItems={uspItems}
       prefill={prefill}
       isLoggedIn={!!customerSession}
       paymentNotice={platba ? PAYMENT_NOTICES[platba] ?? null : null}

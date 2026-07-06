@@ -1289,6 +1289,7 @@ model Banner {
 
 enum HomepageSectionType {
   CAROUSEL             // carousel bannerů (data z modelu Banner)
+  USP_BAR              // lišta benefitů/důvěry (data z modelu UspItem)
   FEATURED_CATEGORIES  // výběr kategorií
   FEATURED_PRODUCTS    // doporučené nebo ručně vybrané produkty (nahrazeno SHELF_FEATURED, ponecháno kvůli kompatibilitě)
   ABOUT_TEXT           // krátký text o provozovně
@@ -1298,6 +1299,21 @@ enum HomepageSectionType {
   SHELF_SALE           // regál Akce (produkty isOnSale)
   SHELF_NEW            // regál Novinky (produkty isNew)
   SHELF_FEATURED       // regál Doporučujeme (produkty isFeatured)
+}
+
+// Benefity obchodu (USP) — lišta důvěry na homepage a v pokladně
+model UspItem {
+  id        String  @id @default(cuid())
+  icon      String // název ikony z pevné sady (src/lib/usp-icons.tsx)
+  title     String
+  subtitle  String?
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
 }
 
 model HomepageSection {
