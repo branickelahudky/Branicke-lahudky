@@ -616,7 +616,10 @@ export function ProductDetailClient({ product, categories, images, variants, rel
                     className={inputCls()}
                   />
                 </Field>
-                <Field label="Platí do" hint="Volitelné">
+                <Field
+                  label="Akce platí do"
+                  hint={'Zobrazí se na kartě jako „−X % do data". Po uplynutí data se akční cena přestane zobrazovat automaticky.'}
+                >
                   <input
                     type="date"
                     value={formState.saleEndsAt}

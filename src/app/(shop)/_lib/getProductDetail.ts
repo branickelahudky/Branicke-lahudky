@@ -28,6 +28,8 @@ export type ProductDetail = {
   vatRate: number
   salePriceWithVat: number | null
   salePriceWithoutVat: number | null
+  saleStartsAt: string | null
+  saleEndsAt: string | null
   isWeightBased: boolean
   unit: string
   approximateWeightKg: number | null
@@ -79,6 +81,7 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
       shortDescription: true, description: true,
       priceWithVat: true, priceWithoutVat: true, vatRate: true,
       salePriceWithVat: true, salePriceWithoutVat: true,
+      saleStartsAt: true, saleEndsAt: true,
       isWeightBased: true, unit: true, approximateWeightKg: true, weightGrams: true,
       stockStatus: true, stockQuantity: true, trackStock: true,
       isOnSale: true, isNew: true, isFeatured: true,
@@ -113,7 +116,7 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
             select: {
               id: true, slug: true, sku: true, name: true,
               priceWithVat: true, priceWithoutVat: true, vatRate: true,
-              salePriceWithVat: true,
+              salePriceWithVat: true, saleStartsAt: true, saleEndsAt: true,
               isWeightBased: true, unit: true, weightGrams: true,
               isOnSale: true, isNew: true, isFeatured: true,
               stockStatus: true, stockQuantity: true, trackStock: true,
@@ -141,6 +144,8 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
     priceWithoutVat: Number(r.priceWithoutVat),
     vatRate: Number(r.vatRate),
     salePriceWithVat: r.salePriceWithVat ? Number(r.salePriceWithVat) : null,
+    saleStartsAt: r.saleStartsAt?.toISOString() ?? null,
+    saleEndsAt: r.saleEndsAt?.toISOString() ?? null,
     isWeightBased: r.isWeightBased,
     unit: r.unit,
     weightGrams: r.weightGrams,
@@ -166,6 +171,8 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
     vatRate: Number(raw.vatRate),
     salePriceWithVat: raw.salePriceWithVat ? Number(raw.salePriceWithVat) : null,
     salePriceWithoutVat: raw.salePriceWithoutVat ? Number(raw.salePriceWithoutVat) : null,
+    saleStartsAt: raw.saleStartsAt?.toISOString() ?? null,
+    saleEndsAt: raw.saleEndsAt?.toISOString() ?? null,
     isWeightBased: raw.isWeightBased,
     unit: raw.unit,
     approximateWeightKg: raw.approximateWeightKg ? Number(raw.approximateWeightKg) : null,

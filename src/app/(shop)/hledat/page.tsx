@@ -30,7 +30,7 @@ export default async function HledatPage({ searchParams }: Props) {
           select: {
             id: true, slug: true, sku: true, name: true,
             priceWithVat: true, priceWithoutVat: true, vatRate: true,
-            salePriceWithVat: true,
+            salePriceWithVat: true, saleStartsAt: true, saleEndsAt: true,
             isWeightBased: true, unit: true, weightGrams: true,
             isNew: true, isOnSale: true, isFeatured: true,
             stockQuantity: true, stockStatus: true, trackStock: true,
@@ -46,6 +46,8 @@ export default async function HledatPage({ searchParams }: Props) {
     priceWithoutVat: Number(p.priceWithoutVat),
     vatRate: Number(p.vatRate),
     salePriceWithVat: p.salePriceWithVat ? Number(p.salePriceWithVat) : null,
+    saleStartsAt: p.saleStartsAt?.toISOString() ?? null,
+    saleEndsAt: p.saleEndsAt?.toISOString() ?? null,
     isWeightBased: p.isWeightBased,
     unit: p.unit, weightGrams: p.weightGrams,
     isNew: p.isNew, isOnSale: p.isOnSale, isFeatured: p.isFeatured,

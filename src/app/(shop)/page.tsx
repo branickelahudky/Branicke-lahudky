@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
+import { activeSaleWhere } from '@/lib/pricing'
 import { CarouselClient, type CarouselSlide } from './_components/CarouselClient'
 import { ProductCard, type ProductCardData } from './_components/ProductCard'
 import { HorizontalShelf } from './_components/HorizontalShelf'
@@ -32,6 +33,7 @@ function serializeProduct(p: {
   id: string; slug: string; sku: string; name: string
   priceWithVat: unknown; priceWithoutVat: unknown; vatRate: unknown
   salePriceWithVat: unknown
+  saleStartsAt: Date | null; saleEndsAt: Date | null
   isWeightBased: boolean; unit: string; weightGrams: number | null
   isNew: boolean; isOnSale: boolean; isFeatured: boolean
   stockQuantity: number; stockStatus: string; trackStock: boolean
@@ -44,6 +46,8 @@ function serializeProduct(p: {
     priceWithoutVat: Number(p.priceWithoutVat),
     vatRate:         Number(p.vatRate),
     salePriceWithVat: p.salePriceWithVat ? Number(p.salePriceWithVat) : null,
+    saleStartsAt: p.saleStartsAt?.toISOString() ?? null,
+    saleEndsAt: p.saleEndsAt?.toISOString() ?? null,
     isWeightBased: p.isWeightBased,
     unit: p.unit, weightGrams: p.weightGrams,
     isNew: p.isNew, isOnSale: p.isOnSale, isFeatured: p.isFeatured,
@@ -101,7 +105,7 @@ async function FeaturedCategoriesSection({ title, categoryIds }: { title: string
 const FLAG_SELECT = {
   id: true, slug: true, sku: true, name: true,
   priceWithVat: true, priceWithoutVat: true, vatRate: true,
-  salePriceWithVat: true,
+  salePriceWithVat: true, saleStartsAt: true, saleEndsAt: true,
   isWeightBased: true, unit: true, weightGrams: true,
   isNew: true, isOnSale: true, isFeatured: true,
   stockQuantity: true, stockStatus: true, trackStock: true,
@@ -111,16 +115,18 @@ const FLAG_SELECT = {
 
 type ShelfKind = 'SHELF_SALE' | 'SHELF_NEW' | 'SHELF_FEATURED'
 
-const SHELF_DEFS: Record<ShelfKind, { defaultTitle: string; where: { isOnSale: true } | { isNew: true } | { isFeatured: true }; limit: number; moreHref: string }> = {
-  SHELF_SALE:     { defaultTitle: 'Akce',        where: { isOnSale: true },   limit: 60, moreHref: '/akce' },
-  SHELF_NEW:      { defaultTitle: 'Novinky',     where: { isNew: true },      limit: 6,  moreHref: '/novinky' },
-  SHELF_FEATURED: { defaultTitle: 'Doporučujeme', where: { isFeatured: true }, limit: 18, moreHref: '/doporucujeme' },
+// Regál Akce filtruje jen AKTIVNÍ slevy — where se skládá až v době
+// dotazu (activeSaleWhere pracuje s aktuálním časem)
+const SHELF_DEFS: Record<ShelfKind, { defaultTitle: string; where: () => Record<string, unknown>; limit: number; moreHref: string }> = {
+  SHELF_SALE:     { defaultTitle: 'Akce',        where: () => activeSaleWhere(), limit: 60, moreHref: '/akce' },
+  SHELF_NEW:      { defaultTitle: 'Novinky',     where: () => ({ isNew: true }),      limit: 6,  moreHref: '/novinky' },
+  SHELF_FEATURED: { defaultTitle: 'Doporučujeme', where: () => ({ isFeatured: true }), limit: 18, moreHref: '/doporucujeme' },
 }
 
 async function ShelfSection({ kind, title }: { kind: ShelfKind; title: string | null }) {
   const def = SHELF_DEFS[kind]
   const products = await prisma.product.findMany({
-    where: { isActive: true, ...def.where },
+    where: { isActive: true, ...def.where() },
     orderBy: { updatedAt: 'desc' },
     select: FLAG_SELECT,
     take: def.limit,

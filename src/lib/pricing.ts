@@ -86,6 +86,73 @@ export function calculateWeightBasedPrice(
 }
 
 // ───────────────────────────────────────────────────────────────
+// Akční ceny — JEDINÁ logika platnosti pro server i klient.
+// Karta, detail, košík i /api/orders se ptají téhle funkce; nikde
+// jinde se platnost akce nevyhodnocuje.
+// ───────────────────────────────────────────────────────────────
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+export type SaleFields = {
+  isOnSale: boolean
+  salePriceWithVat: number | null
+  /** Datum se ukládá jako půlnoc UTC (z admin <input type="date">) */
+  saleStartsAt?: Date | string | null
+  saleEndsAt?: Date | string | null
+}
+
+/**
+ * Akční cena platí, když isOnSale && salePriceWithVat > 0 && akce už
+ * začala && (saleEndsAt je null NEBO ještě neuplynul CELÝ den konce —
+ * „platí do 8. 6." znamená včetně 8. 6.).
+ */
+export function isSaleActive(p: SaleFields, now: Date = new Date()): boolean {
+  if (!p.isOnSale || !p.salePriceWithVat || p.salePriceWithVat <= 0) return false
+  if (p.saleStartsAt && new Date(p.saleStartsAt).getTime() > now.getTime()) return false
+  if (p.saleEndsAt && new Date(p.saleEndsAt).getTime() + DAY_MS <= now.getTime()) return false
+  return true
+}
+
+/** Aktivní akční cena s DPH, nebo null (prošlá/nezačatá/žádná akce). */
+export function activeSalePrice(p: SaleFields, now: Date = new Date()): number | null {
+  return isSaleActive(p, now) ? p.salePriceWithVat : null
+}
+
+/** Sleva v celých procentech: 59,90 → 39,90 = −33 % */
+export function salePercent(priceWithVat: number, salePriceWithVat: number): number {
+  if (priceWithVat <= 0) return 0
+  return Math.round((1 - salePriceWithVat / priceWithVat) * 100)
+}
+
+/** „8. 6." pro štítek „−33 % do 8. 6." (UTC — datum je uložené jako půlnoc UTC) */
+export function formatSaleEnd(saleEndsAt: Date | string): string {
+  const d = new Date(saleEndsAt)
+  return `${d.getUTCDate()}. ${d.getUTCMonth() + 1}.`
+}
+
+/**
+ * Prisma where fragment pro výpisy „jen s AKTIVNÍ akcí" (regál Akce,
+ * /akce, filtr onSale). Stejná sémantika jako isSaleActive — konec
+ * akce platí včetně celého dne.
+ */
+export function activeSaleWhere(now: Date = new Date()) {
+  return {
+    isOnSale: true as const,
+    salePriceWithVat: { gt: 0 },
+    AND: [
+      { OR: [{ saleStartsAt: null }, { saleStartsAt: { lte: now } }] },
+      { OR: [{ saleEndsAt: null }, { saleEndsAt: { gt: new Date(now.getTime() - DAY_MS) } }] },
+    ],
+  }
+}
+
+/** Cena za kg pro kusový produkt se známou gramáží (39,90 / 0,26 kg = 153,46) */
+export function pricePerKg(priceWithVat: number, weightGrams: number | null | undefined): number | null {
+  if (!weightGrams || weightGrams <= 0 || priceWithVat <= 0) return null
+  return roundMoney(priceWithVat / (weightGrams / 1000))
+}
+
+// ───────────────────────────────────────────────────────────────
 // Souhrn objednávky
 // ───────────────────────────────────────────────────────────────
 

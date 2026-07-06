@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
+import { activeSaleWhere } from '@/lib/pricing'
 
 const listQuerySchema = z.object({
   category: z.string().optional(),
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
     }),
     ...(params.inStockOnly && { stockStatus: 'IN_STOCK' as const }),
     ...(params.featured && { isFeatured: true }),
-    ...(params.onSale && { isOnSale: true }),
+    ...(params.onSale && activeSaleWhere()),
   }
 
   const orderBy = {

@@ -7,6 +7,8 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import {
   calculateOrderTotals,
+  activeSalePrice,
+  priceWithoutVat as computePriceWithoutVat,
   type OrderLineInput,
 } from '@/lib/pricing'
 import { generateNextNumber } from '@/lib/number-series'
@@ -171,6 +173,22 @@ export async function POST(req: NextRequest) {
 
     let unitPriceWithoutVat = Number(product.priceWithoutVat)
     let unitPriceWithVat = Number(product.priceWithVat)
+
+    // Aktivní akční cena — sdílená logika platnosti (prošlá akce se
+    // NEPOUŽIJE, nikdo nesmí objednat za cenu po konci akce)
+    const salePrice = activeSalePrice({
+      isOnSale: product.isOnSale,
+      salePriceWithVat: product.salePriceWithVat ? Number(product.salePriceWithVat) : null,
+      saleStartsAt: product.saleStartsAt,
+      saleEndsAt: product.saleEndsAt,
+    })
+    if (salePrice !== null) {
+      unitPriceWithVat = salePrice
+      unitPriceWithoutVat = product.salePriceWithoutVat
+        ? Number(product.salePriceWithoutVat)
+        : computePriceWithoutVat(salePrice, Number(product.vatRate))
+    }
+
     let variantName: string | undefined
     // Priorita hmotnosti jednotky: varianta → přibližná váha → logistická váha produktu
     let expectedWeightKg: number | undefined = product.approximateWeightKg

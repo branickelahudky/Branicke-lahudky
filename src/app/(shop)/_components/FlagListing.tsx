@@ -1,15 +1,17 @@
 import { prisma } from '@/lib/prisma'
+import { activeSaleWhere } from '@/lib/pricing'
 import { ProductCard, type ProductCardData } from './ProductCard'
 
 // Sdílený výpis produktů dle příznaku — cílová stránka regálů z homepage
 // (Akce / Novinky / Doporučujeme). Řazeno dle updatedAt desc, stejně jako regály.
+// Akce ukazuje jen produkty s právě AKTIVNÍ slevou (where až v době dotazu).
 
 export type FlagKind = 'sale' | 'new' | 'featured'
 
-const FLAG_DEFS: Record<FlagKind, { title: string; where: { isOnSale: true } | { isNew: true } | { isFeatured: true } }> = {
-  sale:     { title: 'Akce',         where: { isOnSale: true } },
-  new:      { title: 'Novinky',      where: { isNew: true } },
-  featured: { title: 'Doporučujeme', where: { isFeatured: true } },
+const FLAG_DEFS: Record<FlagKind, { title: string; where: () => Record<string, unknown> }> = {
+  sale:     { title: 'Akce',         where: () => activeSaleWhere() },
+  new:      { title: 'Novinky',      where: () => ({ isNew: true }) },
+  featured: { title: 'Doporučujeme', where: () => ({ isFeatured: true }) },
 }
 
 export function flagTitle(flag: FlagKind) {
@@ -20,13 +22,13 @@ export async function FlagListing({ flag }: { flag: FlagKind }) {
   const def = FLAG_DEFS[flag]
 
   const products = await prisma.product.findMany({
-    where: { isActive: true, ...def.where },
+    where: { isActive: true, ...def.where() },
     orderBy: { updatedAt: 'desc' },
     take: 48,
     select: {
       id: true, slug: true, sku: true, name: true,
       priceWithVat: true, priceWithoutVat: true, vatRate: true,
-      salePriceWithVat: true,
+      salePriceWithVat: true, saleStartsAt: true, saleEndsAt: true,
       isWeightBased: true, unit: true, weightGrams: true,
       isNew: true, isOnSale: true, isFeatured: true,
       stockQuantity: true, stockStatus: true, trackStock: true,
@@ -41,6 +43,8 @@ export async function FlagListing({ flag }: { flag: FlagKind }) {
     priceWithoutVat: Number(p.priceWithoutVat),
     vatRate:         Number(p.vatRate),
     salePriceWithVat: p.salePriceWithVat ? Number(p.salePriceWithVat) : null,
+    saleStartsAt: p.saleStartsAt?.toISOString() ?? null,
+    saleEndsAt: p.saleEndsAt?.toISOString() ?? null,
     isWeightBased: p.isWeightBased,
     unit: p.unit, weightGrams: p.weightGrams,
     isNew: p.isNew, isOnSale: p.isOnSale, isFeatured: p.isFeatured,

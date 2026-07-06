@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCart } from '../_context/CartContext'
 import { flyToCart } from '../_lib/flyToCart'
+import { activeSalePrice, salePercent, formatSaleEnd, pricePerKg, priceWithoutVat } from '@/lib/pricing'
 
 export type ProductCardData = {
   id: string
@@ -15,6 +16,8 @@ export type ProductCardData = {
   priceWithoutVat: number
   vatRate: number
   salePriceWithVat: number | null
+  saleStartsAt: string | null
+  saleEndsAt: string | null
   isWeightBased: boolean
   unit: string
   weightGrams: number | null
@@ -36,6 +39,35 @@ function fmtKc(n: number) {
   }).format(n)
 }
 
+/** 39,90 → „39⁹⁰ Kč" — halíře menším písmem v horním indexu (Rohlík styl) */
+export function PriceWithCents({ value, prefix }: { value: number; prefix?: string }) {
+  const whole = Math.floor(value)
+  const cents = Math.round((value - whole) * 100)
+  return (
+    <>
+      {prefix}
+      {whole.toLocaleString('cs-CZ')}
+      {cents > 0 && <sup className="text-[0.6em] font-bold">{String(cents).padStart(2, '0')}</sup>}
+      {' Kč'}
+    </>
+  )
+}
+
+/** Popisek měrné jednotky váhového produktu („cena za kg" / „cena za 100 g") */
+export function weightUnitLabel(unit: string): string | null {
+  switch (unit) {
+    case 'KG':     return 'cena za kg'
+    case 'G_100':  return 'cena za 100 g'
+    case 'L':      return 'cena za litr'
+    case 'ML_100': return 'cena za 100 ml'
+    default:       return null
+  }
+}
+
+function fmtPerKg(n: number) {
+  return `${n.toLocaleString('cs-CZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} Kč/kg`
+}
+
 export function ProductCard({ product }: { product: ProductCardData }) {
   const { addItem, openCart } = useCart()
   const router = useRouter()
@@ -43,16 +75,15 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const isAvailable = product.stockStatus !== 'OUT_OF_STOCK'
   const hasPrice    = product.priceWithVat > 0
 
-  const activeSalePrice =
-    product.isOnSale && product.salePriceWithVat && product.salePriceWithVat > 0
-      ? product.salePriceWithVat
-      : null
-  const displayPrice = activeSalePrice ?? product.priceWithVat
+  // Sdílená logika platnosti — prošlá akce se nikde neukáže
+  const salePrice = activeSalePrice(product)
+  const displayPrice = salePrice ?? product.priceWithVat
   const prefix = product.isWeightBased ? 'od ' : ''
 
-  const badge = product.isOnSale ? { label: 'Akce',    cls: 'bg-red-500 text-white' }
-    : product.isNew              ? { label: 'Novinka', cls: 'bg-gold text-shop-bg'  }
-    : product.isFeatured         ? { label: 'Tip',     cls: 'bg-blue-600 text-white' }
+  // Červený štítek „Akce" jen při AKTIVNÍ slevě
+  const badge = salePrice     ? { label: 'Akce',    cls: 'bg-red-500 text-white' }
+    : product.isNew           ? { label: 'Novinka', cls: 'bg-gold text-shop-bg'  }
+    : product.isFeatured      ? { label: 'Tip',     cls: 'bg-blue-600 text-white' }
     : null
 
   const weightLabel = product.weightGrams
@@ -60,6 +91,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       ? `${(product.weightGrams / 1000).toLocaleString('cs-CZ', { maximumFractionDigits: 2 })} kg`
       : `${product.weightGrams} g`
     : null
+
+  // Spodní řádek: vlevo gramáž (u váhových „cena za kg"), vpravo Kč/kg
+  const unitLeft = product.isWeightBased ? weightUnitLabel(product.unit) : weightLabel
+  const perKg = !product.isWeightBased && hasPrice ? pricePerKg(displayPrice, product.weightGrams) : null
 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault()
@@ -84,7 +119,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       name:      product.name,
       thumbnailUrl:          product.thumbnailUrl,
       unitPriceWithVat:     displayPrice,
-      unitPriceWithoutVat:  product.priceWithoutVat,
+      unitPriceWithoutVat:  salePrice !== null
+        ? priceWithoutVat(salePrice, product.vatRate)
+        : product.priceWithoutVat,
       vatRate:              product.vatRate,
       isWeightBased:        product.isWeightBased,
       unit:                 product.unit,
@@ -145,26 +182,55 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
       {/* Info */}
       <div className="mt-2 px-0.5">
+        {/* Cenový řádek */}
         {!hasPrice ? (
           <p className="text-sm font-semibold text-shop-muted">Cena na dotaz</p>
+        ) : salePrice ? (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="rounded-md bg-[#FFE14D] px-1.5 py-0.5 text-[15px] font-bold text-stone-900 leading-tight">
+              <PriceWithCents value={salePrice} prefix={prefix} />
+            </span>
+            <span className="text-xs text-shop-muted line-through">{fmtKc(product.priceWithVat)}</span>
+          </div>
         ) : (
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="text-[15px] font-bold text-shop-fg leading-tight">
               {prefix}{fmtKc(displayPrice)}
             </span>
-            {activeSalePrice && (
-              <span className="text-xs text-shop-muted line-through">{fmtKc(product.priceWithVat)}</span>
-            )}
           </div>
         )}
 
+        {/* Štítek slevy s platností */}
+        {salePrice && (
+          <p className="mt-1">
+            <span className="inline-block rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-600 leading-none">
+              −{salePercent(product.priceWithVat, salePrice)} %
+              {product.saleEndsAt && (
+                <span className="font-medium"> do {formatSaleEnd(product.saleEndsAt)}</span>
+              )}
+            </span>
+          </p>
+        )}
+
+        {/* Název */}
         <p className="mt-0.5 text-xs font-medium text-shop-fg line-clamp-2 leading-snug">
           {product.name}
         </p>
 
-        {weightLabel && (
-          <p className="mt-0.5 text-[10px] text-shop-muted">{weightLabel}</p>
-        )}
+        {/* Spodní řádek: dostupnost + gramáž vlevo, Kč/kg vpravo */}
+        <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-shop-muted">
+          <span className="flex min-w-0 items-center gap-1">
+            <span
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${isAvailable ? 'bg-green-500' : 'bg-red-500'}`}
+              aria-hidden="true"
+            />
+            <span className="truncate">
+              {isAvailable ? 'Skladem' : 'Není skladem'}
+              {unitLeft && ` · ${unitLeft}`}
+            </span>
+          </span>
+          {perKg !== null && <span className="shrink-0">{fmtPerKg(perKg)}</span>}
+        </div>
       </div>
     </Link>
   )
