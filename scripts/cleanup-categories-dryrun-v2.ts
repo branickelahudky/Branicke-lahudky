@@ -261,6 +261,13 @@ async function main() {
         console.log(`      • MenuItem „${m.label}" → kategorie „${cat?.name}" (${cat?.slug})`)
       })
     }
+    if (bannerRefs.filter(b => deleteIds.has(b.categoryId!)).length) {
+      console.log('  ⚠️  Banner odkazuje na mazané kategorie (FK SetNull — banner by přišel o proklik):')
+      bannerRefs.filter(b => deleteIds.has(b.categoryId!)).forEach(b => {
+        const cat = byId.get(b.categoryId!)
+        console.log(`      • Banner ${b.id} → kategorie „${cat?.name}" (${cat?.slug})`)
+      })
+    }
     if (homepageConflicts.length) {
       console.log('  ⚠️  HomepageSection FEATURED_CATEGORIES obsahuje ID mazaných kategorií:')
       homepageConflicts.forEach(id => { const cat = byId.get(id); console.log(`      • ${cat?.name} (${cat?.slug})`) })
