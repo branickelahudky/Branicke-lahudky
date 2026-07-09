@@ -204,6 +204,12 @@ export function ProductsClient({
             >
               + PŘIDAT KATEGORII
             </button>
+            <Link
+              href="/admin/produkty/kategorie"
+              className="rounded border border-stone-300 px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
+            >
+              SEO KATEGORIÍ
+            </Link>
           </div>
         </div>
 

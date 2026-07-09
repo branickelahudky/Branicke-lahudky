@@ -2,6 +2,14 @@ import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { prisma } from '@/lib/prisma'
+import {
+  getSeoSettings,
+  SITE_URL,
+  SITE_NAME,
+  FALLBACK_SITE_TITLE,
+  FALLBACK_TITLE_TEMPLATE,
+  FALLBACK_DESCRIPTION,
+} from '@/lib/seo'
 import './globals.css'
 
 // Brandový font — self-hosted přes next/font (žádné requesty na Google).
@@ -14,18 +22,30 @@ const jakarta = Plus_Jakarta_Sans({
 
 export async function generateMetadata(): Promise<Metadata> {
   // Favicon z adminu (Vzhled → Identita) má přednost; fallback je
-  // /favicon.png vygenerovaný z loga MARKES
-  const identity = await prisma.siteIdentity
-    .findFirst({ select: { faviconUrl: true } })
-    .catch(() => null)
+  // /favicon.png vygenerovaný z loga MARKES.
+  // Titulky a popis se berou z adminu (Vzhled → SEO) s fallbacky na
+  // původní hodnoty.
+  const [identity, seo] = await Promise.all([
+    prisma.siteIdentity.findFirst({ select: { faviconUrl: true } }).catch(() => null),
+    getSeoSettings(),
+  ])
+
+  const siteTitle = seo?.siteTitle?.trim() || FALLBACK_SITE_TITLE
+  const description = seo?.metaDescription?.trim() || FALLBACK_DESCRIPTION
 
   return {
+    metadataBase: new URL(SITE_URL),
     title: {
-      default: 'Branické lahůdkářství — čerstvé maso, ryby a lahůdky',
-      template: '%s | Branické lahůdkářství',
+      default: siteTitle,
+      template: seo?.titleTemplate?.includes('%s') ? seo.titleTemplate : FALLBACK_TITLE_TEMPLATE,
     },
-    description:
-      'Rodinné řeznictví a lahůdkářství v Praze 4 od roku 1991. Čerstvé maso, ryby, uzeniny a poctivé lahůdky s rozvozem po ČR i Slovensku.',
+    description,
+    openGraph: {
+      siteName: SITE_NAME,
+      locale: 'cs_CZ',
+      type: 'website',
+      ...(seo?.ogImageUrl ? { images: [{ url: seo.ogImageUrl, width: 1200, height: 630 }] } : {}),
+    },
     icons: { icon: identity?.faviconUrl ?? '/favicon.png' },
   }
 }

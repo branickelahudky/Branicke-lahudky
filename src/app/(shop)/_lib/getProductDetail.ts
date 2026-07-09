@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { prisma } from '@/lib/prisma'
 import { prepareDescription } from '@/lib/sanitizeHtml'
 import type { ProductCardData } from '../_components/ProductCard'
@@ -71,14 +72,20 @@ export type ProductDetail = {
   storageTemp: string
   nutritionPer100g: NutritionData | null
   relatedProducts: ProductCardData[]
+  brandName: string | null
+  metaTitle: string | null
+  metaDescription: string | null
+  isIndexable: boolean
 }
 
-export async function getProductDetail(slug: string): Promise<ProductDetail | null> {
+// cache() = generateMetadata a page sdílí jeden dotaz na request
+export const getProductDetail = cache(async (slug: string): Promise<ProductDetail | null> => {
   const raw = await prisma.product.findUnique({
     where: { slug, isActive: true },
     select: {
       id: true, slug: true, sku: true, name: true,
       shortDescription: true, description: true,
+      brandName: true, metaTitle: true, metaDescription: true, isIndexable: true,
       priceWithVat: true, priceWithoutVat: true, vatRate: true,
       salePriceWithVat: true, salePriceWithoutVat: true,
       saleStartsAt: true, saleEndsAt: true,
@@ -207,5 +214,9 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
     storageTemp: raw.storageTemp,
     nutritionPer100g: raw.nutritionPer100g as NutritionData | null,
     relatedProducts,
+    brandName: raw.brandName,
+    metaTitle: raw.metaTitle,
+    metaDescription: raw.metaDescription,
+    isIndexable: raw.isIndexable,
   }
-}
+})

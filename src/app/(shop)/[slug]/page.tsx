@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { prisma } from '@/lib/prisma'
 import { sanitizeHtml } from '@/lib/sanitizeHtml'
+import { JsonLd } from '../_components/JsonLd'
+import { localBusinessJsonLd } from '@/lib/structured-data'
 
 // CMS stránky z adminu (Vzhled → Stránky). Statické routy (pokladna,
 // kategorie, produkt…) mají v Nextu přednost, sem propadne jen zbytek.
@@ -22,6 +24,7 @@ export async function generateMetadata({
   return {
     title: page.metaTitle?.trim() || page.title,
     description: page.metaDescription?.trim() || page.excerpt?.trim() || undefined,
+    alternates: { canonical: `/${page.slug}` },
     ...(page.robotsIndex ? {} : { robots: { index: false, follow: false } }),
   }
 }
@@ -37,8 +40,12 @@ export default async function CmsPage({
 
   const html = page.content?.trim() ? sanitizeHtml(page.content) : null
 
+  // LocalBusiness strukturovaná data na kontaktu (druhé místo je homepage)
+  const branch = slug === 'kontakt' ? await prisma.branchSettings.findFirst() : null
+
   return (
     <div className="mx-auto w-full max-w-[72ch] px-4 py-8 sm:py-12">
+      {branch && <JsonLd data={localBusinessJsonLd(branch)} />}
       <h1 className="text-2xl font-bold text-shop-fg sm:text-3xl">{page.title}</h1>
       {html ? (
         <div

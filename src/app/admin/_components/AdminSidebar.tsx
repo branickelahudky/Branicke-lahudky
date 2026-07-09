@@ -37,6 +37,7 @@ const NAV: NavEntry[] = [
       { label: 'Bannery',            href: '/admin/vzhled/bannery' },
       { label: 'Benefity (USP)',     href: '/admin/vzhled/benefity' },
       { label: 'Titulní strana',     href: '/admin/vzhled/titulni-strana' },
+      { label: 'SEO',                href: '/admin/vzhled/seo' },
     ],
   },
 ]

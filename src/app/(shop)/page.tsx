@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
@@ -5,6 +6,8 @@ import { activeSaleWhere } from '@/lib/pricing'
 import { CarouselClient, type CarouselSlide } from './_components/CarouselClient'
 import { ProductCard, type ProductCardData } from './_components/ProductCard'
 import { HorizontalShelf } from './_components/HorizontalShelf'
+import { JsonLd } from './_components/JsonLd'
+import { localBusinessJsonLd } from '@/lib/structured-data'
 
 // ── Sdílené řešení odkazu banneru dle linkType ────────────────────
 
@@ -301,19 +304,27 @@ async function FooterCardsSection() {
 
 // ── Homepage ──────────────────────────────────────────────────────
 
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
+
 export default async function HomePage({
   searchParams,
 }: {
   searchParams: Promise<{ kosik?: string }>
 }) {
   const { kosik } = await searchParams
-  const sections = await prisma.homepageSection.findMany({
-    where: { isVisible: true },
-    orderBy: { sortOrder: 'asc' },
-  })
+  const [sections, branch] = await Promise.all([
+    prisma.homepageSection.findMany({
+      where: { isVisible: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
+    prisma.branchSettings.findFirst(),
+  ])
 
   return (
     <>
+      {branch && <JsonLd data={localBusinessJsonLd(branch)} />}
       {kosik === 'prazdny' && (
         <div className="mx-auto max-w-7xl px-4 pt-4">
           <div className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-shop-fg">

@@ -1224,6 +1224,25 @@ model SiteIdentity {
 }
 
 // ───────────────────────────────────────────────────────────────
+// GLOBÁLNÍ SEO (singleton)
+// ───────────────────────────────────────────────────────────────
+
+model SeoSettings {
+  id              String  @id @default(cuid())
+
+  siteTitle       String  @default("Branické lahůdkářství — čerstvé maso, ryby a lahůdky")
+  titleTemplate   String  @default("%s | Branické lahůdkářství")
+  metaDescription String? @db.Text
+
+  // Výchozí OpenGraph obrázek (URL v R2)
+  ogImageUrl        String?
+  ogImageStorageKey String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ───────────────────────────────────────────────────────────────
 // COOKIES NASTAVENÍ (singleton)
 // ───────────────────────────────────────────────────────────────
 

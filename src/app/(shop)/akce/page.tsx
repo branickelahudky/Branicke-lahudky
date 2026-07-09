@@ -4,6 +4,7 @@ import { FlagListing } from '../_components/FlagListing'
 export const metadata: Metadata = {
   title: 'Akce',
   description: 'Aktuální akční nabídka — produkty ve slevě.',
+  alternates: { canonical: '/akce' },
 }
 
 // Vždy aktuální dle příznaků produktů (admin je mění v detailu produktu)

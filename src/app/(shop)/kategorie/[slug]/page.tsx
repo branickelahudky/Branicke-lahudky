@@ -1,12 +1,50 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import { cache } from 'react'
 import { prisma } from '@/lib/prisma'
 import { ProductCard, type ProductCardData } from '../../_components/ProductCard'
+import { JsonLd } from '../../_components/JsonLd'
+import { categoryAutoTitle, categoryAutoDescription } from '@/lib/seo'
+import { breadcrumbJsonLd } from '@/lib/structured-data'
 
 interface Props {
   params: Promise<{ slug: string }>
   searchParams: Promise<{ sub?: string }>
+}
+
+// cache() = generateMetadata a page sdílí jeden dotaz na request
+const getCategory = cache(async (slug: string) => {
+  return prisma.category.findUnique({
+    where: { slug },
+    include: {
+      parent: { select: { id: true, name: true, slug: true } },
+      children: { orderBy: { sortOrder: 'asc' }, select: { id: true, name: true, slug: true, imageUrl: true, _count: { select: { products: true } } } },
+    },
+  })
+})
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const category = await getCategory(slug)
+  if (!category) return {}
+
+  const title = categoryAutoTitle(category)
+  const description = categoryAutoDescription(category)
+
+  return {
+    title,
+    description,
+    // Varianty ?sub=... jsou jen filtr — kanonická je stránka kategorie
+    alternates: { canonical: `/kategorie/${category.slug}` },
+    openGraph: {
+      title,
+      description,
+      url: `/kategorie/${category.slug}`,
+      ...(category.imageUrl ? { images: [{ url: category.imageUrl }] } : {}),
+    },
+  }
 }
 
 // ── Rekurzivní sběr ID podkategorií ───────────────────────────────
@@ -29,13 +67,7 @@ export default async function KategoriePage({ params, searchParams }: Props) {
   const { sub } = await searchParams
 
   // Načti kategorii
-  const category = await prisma.category.findUnique({
-    where: { slug },
-    include: {
-      parent: { select: { id: true, name: true, slug: true } },
-      children: { orderBy: { sortOrder: 'asc' }, select: { id: true, name: true, slug: true, imageUrl: true, _count: { select: { products: true } } } },
-    },
-  })
+  const category = await getCategory(slug)
   if (!category) notFound()
 
   // Všechny descendant IDs pro rekurzivní načtení produktů
@@ -93,8 +125,15 @@ export default async function KategoriePage({ params, searchParams }: Props) {
     (c) => c._count.products > 0 || descendantIds.includes(c.id)
   )
 
+  const breadcrumbs = [
+    { name: 'Domů', path: '/' },
+    ...(category.parent ? [{ name: category.parent.name, path: `/kategorie/${category.parent.slug}` }] : []),
+    { name: category.name, path: `/kategorie/${category.slug}` },
+  ]
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
+      <JsonLd data={breadcrumbJsonLd(breadcrumbs)} />
       {/* Breadcrumb */}
       <nav className="mb-4 flex items-center gap-1.5 text-xs text-shop-muted">
         <Link href="/" className="hover:text-gold transition">Domů</Link>

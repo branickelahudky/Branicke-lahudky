@@ -4,6 +4,7 @@ import { FlagListing } from '../_components/FlagListing'
 export const metadata: Metadata = {
   title: 'Doporučujeme',
   description: 'Produkty, které doporučujeme z naší nabídky.',
+  alternates: { canonical: '/doporucujeme' },
 }
 
 // Vždy aktuální dle příznaků produktů (admin je mění v detailu produktu)
