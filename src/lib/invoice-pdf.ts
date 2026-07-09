@@ -1,6 +1,26 @@
-import puppeteer from 'puppeteer'
+import puppeteerCore, { type Browser } from 'puppeteer-core'
 import { prisma } from '@/lib/prisma'
 import { renderInvoiceHtml, type InvoiceItemData, type VatBreakdownEntry } from '@/lib/invoice-template'
+
+// Na Vercelu/AWS Lambda není Chrome a plný puppeteer se nevejde do limitu
+// funkce — používá se slim binář @sparticuz/chromium. Lokálně (dev) běží
+// plný puppeteer (devDependency) se svým staženým Chromem.
+async function launchBrowser(): Promise<Browser> {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    const chromium = (await import('@sparticuz/chromium')).default
+    return puppeteerCore.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    })
+  }
+
+  const puppeteer = (await import('puppeteer')).default
+  return puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+  }) as unknown as Promise<Browser>
+}
 
 export async function generateInvoicePdfBuffer(documentId: string): Promise<Buffer> {
   const [doc, supplierSettings] = await Promise.all([
@@ -68,10 +88,7 @@ export async function generateInvoicePdfBuffer(documentId: string): Promise<Buff
     invoiceFooterNote: supplierSettings?.invoiceFooterNote ?? null,
   })
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-  })
+  const browser = await launchBrowser()
   try {
     const page = await browser.newPage()
     await page.setContent(html, { waitUntil: 'load' })
