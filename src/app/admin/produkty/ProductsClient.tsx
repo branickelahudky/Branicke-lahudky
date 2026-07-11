@@ -14,6 +14,7 @@ export type SerializedProduct = {
   id: string
   sku: string
   name: string
+  slug: string
   isActive: boolean
   isNew: boolean
   isFeatured: boolean
@@ -168,15 +169,23 @@ export function ProductsClient({
     return <span className="ml-0.5 text-blue-600">{dir === 'asc' ? '↑' : '↓'}</span>
   }
 
-  const currentCatLabel = (() => {
-    if (!currentCategoryId) return 'Všechny kategorie'
+  const currentCat = (() => {
+    if (!currentCategoryId) return null
     for (const cat of categories) {
-      if (cat.id === currentCategoryId) return cat.name
+      if (cat.id === currentCategoryId) return cat
       const child = cat.children.find((c) => c.id === currentCategoryId)
-      if (child) return child.name
+      if (child) return child
     }
-    return 'Všechny kategorie'
+    return null
   })()
+  const currentCatLabel = currentCat?.name ?? 'Všechny kategorie'
+
+  // Aktuální filtry seznamu — editace je dostane v ?back=, aby návrat
+  // („Uložit a odejít", „Zpět") vrátil admina na stejně vyfiltrovaný seznam
+  const backQs = searchParams.toString()
+  function editHref(productId: string) {
+    return `/admin/produkty/${productId}${backQs ? `?back=${encodeURIComponent(backQs)}` : ''}`
+  }
 
   // ── Render ────────────────────────────────────────────────────
 
@@ -282,6 +291,19 @@ export function ProductsClient({
             )}
           </div>
 
+          {/* Proklik na web u aktivního filtru kategorie */}
+          {currentCat && (
+            <a
+              href={`/kategorie/${currentCat.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Zobrazit kategorii na webu"
+              className="-ml-1 text-sm text-stone-400 hover:text-blue-600"
+            >
+              ↗
+            </a>
+          )}
+
           {/* Filtr: produkty bez hmotnosti (doprava se u nich jen odhaduje) */}
           <Link
             href={buildUrl({ hmotnost: missingWeightOnly ? null : 'chybi', strana: null })}
@@ -386,7 +408,7 @@ export function ProductsClient({
                     {/* Název */}
                     <td className="p-3">
                       <Link
-                        href={`/admin/produkty/${product.id}`}
+                        href={editHref(product.id)}
                         className={`font-medium hover:underline ${
                           product.isActive
                             ? 'text-blue-600'
@@ -395,6 +417,24 @@ export function ProductsClient({
                       >
                         {product.name}
                       </Link>
+                      {product.isActive ? (
+                        <a
+                          href={`/produkt/${product.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Zobrazit na webu"
+                          className="ml-1.5 text-stone-400 hover:text-blue-600"
+                        >
+                          ↗
+                        </a>
+                      ) : (
+                        <span
+                          title="Produkt není viditelný na webu"
+                          className="ml-1.5 cursor-not-allowed text-stone-300"
+                        >
+                          ↗
+                        </span>
+                      )}
                     </td>
 
                     {/* SKU */}

@@ -238,6 +238,23 @@ export function ProductDetailClient({ product, categories, images, variants, rel
   const rawTab = searchParams.get('tab') ?? 'hlavni'
   const activeTab = VALID_TABS.includes(rawTab) ? rawTab : 'hlavni'
 
+  // Návrat na seznam se zachovanými filtry: seznam předal svůj query string
+  // v ?back=. Z hodnoty se přebírají JEN známé filtrační parametry seznamu —
+  // back tedy nemůže vést jinam než na /admin/produkty.
+  const BACK_FILTER_KEYS = ['kategorie', 'hledat', 'strana', 'sort', 'order', 'hmotnost']
+  const backToListUrl = (() => {
+    const raw = searchParams.get('back')
+    if (!raw) return '/admin/produkty'
+    const parsed = new URLSearchParams(raw)
+    const clean = new URLSearchParams()
+    for (const key of BACK_FILTER_KEYS) {
+      const value = parsed.get(key)
+      if (value) clean.set(key, value)
+    }
+    const qs = clean.toString()
+    return qs ? `/admin/produkty?${qs}` : '/admin/produkty'
+  })()
+
   function changeTab(newTab: string) {
     const params = new URLSearchParams(searchParams.toString())
     if (newTab === 'hlavni') {
@@ -351,7 +368,7 @@ export function ProductDetailClient({ product, categories, images, variants, rel
       try {
         await updateProduct(product.id, buildUpdateData())
         toast.success('Produkt uložen')
-        if (redirectAfter) router.push('/admin/produkty')
+        if (redirectAfter) router.push(backToListUrl)
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Chyba při ukládání')
       }
@@ -368,7 +385,7 @@ export function ProductDetailClient({ product, categories, images, variants, rel
     startTransition(async () => {
       try {
         await deleteProduct(product.id)
-        router.push('/admin/produkty')
+        router.push(backToListUrl)
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Chyba při mazání')
       }
@@ -377,7 +394,7 @@ export function ProductDetailClient({ product, categories, images, variants, rel
 
   function handleBack() {
     if (isDirty && !window.confirm('Máte neuložené změny. Opravdu chcete odejít?')) return
-    router.push('/admin/produkty')
+    router.push(backToListUrl)
   }
 
 
@@ -748,6 +765,24 @@ export function ProductDetailClient({ product, categories, images, variants, rel
         </div>
 
         <div className="flex items-center gap-2">
+          {product.isActive ? (
+            <a
+              href={`/produkt/${product.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded border border-stone-300 px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
+            >
+              Zobrazit na webu ↗
+            </a>
+          ) : (
+            <button
+              disabled
+              title="Produkt není viditelný na webu"
+              className="cursor-not-allowed rounded border border-stone-200 px-3 py-1.5 text-sm text-stone-400"
+            >
+              Zobrazit na webu ↗
+            </button>
+          )}
           <button
             disabled
             title="Brzy k dispozici"

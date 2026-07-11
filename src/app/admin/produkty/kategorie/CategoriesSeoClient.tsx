@@ -176,7 +176,16 @@ export function CategoriesSeoClient({ categories }: { categories: SerializedCate
                 <td className="max-w-[220px] truncate px-4 py-2 text-stone-500">
                   {cat.metaDescription || <span className="italic text-stone-300">automaticky</span>}
                 </td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-right whitespace-nowrap">
+                  <a
+                    href={`/kategorie/${cat.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Zobrazit kategorii na webu"
+                    className="mr-3 text-xs text-stone-500 hover:text-blue-600 hover:underline"
+                  >
+                    Zobrazit na webu ↗
+                  </a>
                   <button
                     onClick={() => setEditing(cat)}
                     className="text-xs text-blue-600 hover:underline"
