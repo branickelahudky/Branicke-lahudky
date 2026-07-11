@@ -5,14 +5,16 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '../_context/CartContext'
 import { flyToCart } from '../_lib/flyToCart'
-import { ProductCard, PriceWithCents, weightUnitLabel } from './ProductCard'
+import { ProductCard, PriceWithCents } from './ProductCard'
 import { HorizontalShelf } from './HorizontalShelf'
 import type { ProductDetail } from '../_lib/getProductDetail'
 import {
   activeSalePrice,
   salePercent,
   formatSaleEnd,
-  pricePerKg,
+  priceUnitSuffix,
+  unitPricePerKg,
+  formatUnitPrice,
 } from '@/lib/pricing'
 
 function fmtKc(n: number) {
@@ -93,16 +95,13 @@ export function ProductDetailContent({
     : product.isFeatured  ? { label: 'Tip',     cls: 'bg-blue-600 text-white' }
     : null
 
-  // Cena za kg: varianta s váhou → z varianty; kusový s gramáží → z produktu;
-  // váhový produkt → cena už JE za měrnou jednotku (nic navíc)
-  const perKg = selectedVariant
-    ? pricePerKg(selectedVariant.priceWithVat, selectedVariant.weightGrams)
-    : !product.isWeightBased
-      ? pricePerKg(displayPrice, product.weightGrams)
-      : null
-  const perKgLabel = perKg !== null
-    ? `${perKg.toLocaleString('cs-CZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} Kč/kg`
-    : null
+  // Měrná cena (sdílený výpočet s kartou i košíkem): varianta → z ceny/váhy
+  // varianty; jinak z produktu (G_100/ML_100 ×10 na kg/l, KG/L nic — cena už
+  // měrná je, kusový dle gramáže). U aktivní slevy počítáno ze SLEVOVÉ ceny.
+  const measure = selectedVariant
+    ? unitPricePerKg(selectedVariant.priceWithVat, 'KS', selectedVariant.weightGrams)
+    : unitPricePerKg(displayPrice, product.unit, product.weightGrams)
+  const measureLabel = measure ? formatUnitPrice(measure) : null
 
   const mainImage = product.images[activeImg]
   const mainSrc   = mainImage?.url || null
@@ -258,10 +257,13 @@ export function ProductDetailContent({
               </div>
             ) : variantPrice ? (
               <div>
-                <p className="text-2xl font-extrabold text-shop-fg">{fmtKc(variantPrice)}</p>
+                <p className="text-2xl font-extrabold text-shop-fg">
+                  {fmtKc(variantPrice)}
+                  <span className="text-sm font-medium text-shop-muted">{' '}/ ks</span>
+                </p>
                 <p className="text-xs text-shop-muted">
                   {fmtKc(selectedVariant!.priceWithoutVat)} bez DPH
-                  {perKgLabel && <span> · {perKgLabel}</span>}
+                  {measureLabel && <span> · {measureLabel}</span>}
                 </p>
               </div>
             ) : (
@@ -269,12 +271,25 @@ export function ProductDetailContent({
                 <div className="flex items-center gap-2 flex-wrap">
                   {salePrice ? (
                     <span className="rounded-lg bg-[#FFE14D] px-2 py-0.5 text-2xl font-extrabold text-stone-900">
-                      <PriceWithCents value={salePrice} prefix={prefix} />
+                      <PriceWithCents
+                        value={salePrice}
+                        prefix={prefix}
+                        suffix={product.isWeightBased ? priceUnitSuffix(product.unit) : undefined}
+                      />
                     </span>
                   ) : (
                     <span className="text-2xl font-extrabold text-shop-fg">
                       {prefix}{fmtKc(displayPrice)}
+                      {/* jednotka přímo u částky — u váhových povinná a viditelná, u kusových decentní */}
+                      {product.isWeightBased ? (
+                        <span className="text-base font-bold">{' '}{priceUnitSuffix(product.unit)}</span>
+                      ) : (
+                        <span className="text-sm font-medium text-shop-muted">{' '}/ ks</span>
+                      )}
                     </span>
+                  )}
+                  {salePrice && !product.isWeightBased && (
+                    <span className="text-sm font-medium text-shop-muted">/ ks</span>
                   )}
                   {salePrice && (
                     <span className="text-base text-shop-muted line-through">{fmtKc(product.priceWithVat)}</span>
@@ -294,8 +309,7 @@ export function ProductDetailContent({
                   {prefix}{fmtKc(salePrice !== null && product.salePriceWithoutVat !== null
                     ? product.salePriceWithoutVat
                     : product.priceWithoutVat)} bez DPH
-                  {product.isWeightBased && weightUnitLabel(product.unit) && ` · ${weightUnitLabel(product.unit)}`}
-                  {perKgLabel && ` · ${perKgLabel}`}
+                  {measureLabel && ` · ${measureLabel}`}
                 </p>
               </div>
             )}

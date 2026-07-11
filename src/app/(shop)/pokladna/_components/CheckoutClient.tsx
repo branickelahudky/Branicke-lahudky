@@ -10,7 +10,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCart, cartItemKey } from '../../_context/CartContext'
 import { fmtKc } from '../../_components/cart/fmtKc'
-import { calculateOrderTotals, formatCZK } from '@/lib/pricing'
+import { calculateOrderTotals, formatCZK, priceUnitSuffix } from '@/lib/pricing'
 import { UspIcon } from '@/lib/usp-icons'
 import {
   calculateCartWeightKg,
@@ -719,7 +719,9 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, usp
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-shop-fg">{i.name}</p>
                     {i.variantName && <p className="text-xs text-gold">{i.variantName}</p>}
-                    <p className="text-xs text-shop-muted">{i.qty} × {fmtKc(i.unitPriceWithVat)}</p>
+                    <p className="text-xs text-shop-muted">
+                      {i.qty} × {fmtKc(i.unitPriceWithVat)}{i.isWeightBased && ` ${priceUnitSuffix(i.unit)}`}
+                    </p>
                   </div>
                   <span className="shrink-0 text-sm font-medium text-shop-fg">{fmtKc(i.qty * i.unitPriceWithVat)}</span>
                 </li>

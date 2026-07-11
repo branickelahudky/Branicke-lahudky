@@ -152,6 +152,50 @@ export function pricePerKg(priceWithVat: number, weightGrams: number | null | un
   return roundMoney(priceWithVat / (weightGrams / 1000))
 }
 
+/** Jednotka zobrazená přímo u částky: „37 Kč / 100 g", „189 Kč / kg", „37 Kč / ks" */
+export function priceUnitSuffix(unit: Unit | string): string {
+  switch (unit) {
+    case 'KG':     return '/ kg'
+    case 'G_100':  return '/ 100 g'
+    case 'L':      return '/ l'
+    case 'ML_100': return '/ 100 ml'
+    default:       return '/ ks'
+  }
+}
+
+export type UnitPricePerKg = { value: number; per: 'kg' | 'l' }
+
+/**
+ * Měrná cena (přepočet na kg/litr) pod hlavní cenou — JEDINÝ výpočet
+ * pro detail, kartu i košík:
+ *  - G_100 / ML_100 → ×10 („37 Kč / 100 g" → 370 Kč/kg)
+ *  - KG / L → null (hlavní cena už měrná JE — neduplikovat)
+ *  - kusový se známou gramáží → cena / váha (F20)
+ * U aktivní slevy sem patří SLEVOVÁ cena.
+ */
+export function unitPricePerKg(
+  priceWithVat: number,
+  unit: Unit | string,
+  weightGrams?: number | null,
+): UnitPricePerKg | null {
+  if (priceWithVat <= 0) return null
+  switch (unit) {
+    case 'G_100':  return { value: roundMoney(priceWithVat * 10), per: 'kg' }
+    case 'ML_100': return { value: roundMoney(priceWithVat * 10), per: 'l' }
+    case 'KG':
+    case 'L':      return null
+    default: {
+      const perKg = pricePerKg(priceWithVat, weightGrams)
+      return perKg !== null ? { value: perKg, per: 'kg' } : null
+    }
+  }
+}
+
+/** „370 Kč/kg" */
+export function formatUnitPrice(p: UnitPricePerKg): string {
+  return `${p.value.toLocaleString('cs-CZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} Kč/${p.per}`
+}
+
 // ───────────────────────────────────────────────────────────────
 // Souhrn objednávky
 // ───────────────────────────────────────────────────────────────

@@ -5,7 +5,10 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCart } from '../_context/CartContext'
 import { flyToCart } from '../_lib/flyToCart'
-import { activeSalePrice, salePercent, formatSaleEnd, pricePerKg, priceWithoutVat } from '@/lib/pricing'
+import {
+  activeSalePrice, salePercent, formatSaleEnd, priceWithoutVat,
+  priceUnitSuffix, unitPricePerKg, formatUnitPrice,
+} from '@/lib/pricing'
 
 export type ProductCardData = {
   id: string
@@ -40,7 +43,7 @@ function fmtKc(n: number) {
 }
 
 /** 39,90 → „39⁹⁰ Kč" — halíře menším písmem v horním indexu (Rohlík styl) */
-export function PriceWithCents({ value, prefix }: { value: number; prefix?: string }) {
+export function PriceWithCents({ value, prefix, suffix }: { value: number; prefix?: string; suffix?: string }) {
   const whole = Math.floor(value)
   const cents = Math.round((value - whole) * 100)
   return (
@@ -49,23 +52,14 @@ export function PriceWithCents({ value, prefix }: { value: number; prefix?: stri
       {whole.toLocaleString('cs-CZ')}
       {cents > 0 && <sup className="text-[0.6em] font-extrabold">{String(cents).padStart(2, '0')}</sup>}
       {' Kč'}
+      {suffix && <span className="text-[0.7em] font-bold">{' '}{suffix}</span>}
     </>
   )
 }
 
-/** Popisek měrné jednotky váhového produktu („cena za kg" / „cena za 100 g") */
-export function weightUnitLabel(unit: string): string | null {
-  switch (unit) {
-    case 'KG':     return 'cena za kg'
-    case 'G_100':  return 'cena za 100 g'
-    case 'L':      return 'cena za litr'
-    case 'ML_100': return 'cena za 100 ml'
-    default:       return null
-  }
-}
-
-function fmtPerKg(n: number) {
-  return `${n.toLocaleString('cs-CZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} Kč/kg`
+/** Kompaktní jednotka pro kartu: „/ 100 g" → „/100 g" (ať se vejde) */
+function compactUnitSuffix(unit: string): string {
+  return priceUnitSuffix(unit).replace('/ ', '/')
 }
 
 export function ProductCard({ product }: { product: ProductCardData }) {
@@ -92,9 +86,12 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       : `${product.weightGrams} g`
     : null
 
-  // Spodní řádek: vlevo gramáž (u váhových „cena za kg"), vpravo Kč/kg
-  const unitLeft = product.isWeightBased ? weightUnitLabel(product.unit) : weightLabel
-  const perKg = !product.isWeightBased && hasPrice ? pricePerKg(displayPrice, product.weightGrams) : null
+  // Jednotka u ceny — u váhových povinná („od 37 Kč/100 g")
+  const unitSuffix = product.isWeightBased ? compactUnitSuffix(product.unit) : null
+  // Spodní řádek: vlevo gramáž, vpravo měrná cena (sdílený výpočet s detailem;
+  // u aktivní slevy se počítá ze SLEVOVÉ ceny — displayPrice)
+  const unitLeft = weightLabel
+  const measure = hasPrice ? unitPricePerKg(displayPrice, product.unit, product.weightGrams) : null
 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault()
@@ -188,7 +185,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         ) : salePrice ? (
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="rounded-md bg-[#FFE14D] px-1.5 py-0.5 text-[15px] font-extrabold text-stone-900 leading-tight">
-              <PriceWithCents value={salePrice} prefix={prefix} />
+              <PriceWithCents value={salePrice} prefix={prefix} suffix={unitSuffix ?? undefined} />
             </span>
             <span className="text-xs text-shop-muted line-through">{fmtKc(product.priceWithVat)}</span>
           </div>
@@ -196,6 +193,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="text-[15px] font-extrabold text-shop-fg leading-tight">
               {prefix}{fmtKc(displayPrice)}
+              {unitSuffix && <span className="text-[11px] font-bold">{' '}{unitSuffix}</span>}
             </span>
           </div>
         )}
@@ -229,7 +227,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
               {unitLeft && ` · ${unitLeft}`}
             </span>
           </span>
-          {perKg !== null && <span className="shrink-0">{fmtPerKg(perKg)}</span>}
+          {measure && <span className="shrink-0">{formatUnitPrice(measure)}</span>}
         </div>
       </div>
     </Link>
