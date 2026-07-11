@@ -220,6 +220,386 @@ function ageDays(iso: string) {
   return `${days} dní`
 }
 
+// ── Sub-komponenty formuláře ──────────────────────────────────────
+// POZOR: musí být definované MIMO ProductDetailClient. Komponenta
+// definovaná uvnitř jiné komponenty dostane při každém renderu NOVÝ
+// typ → React ji re-mountne → input ztratí focus po každém znaku.
+
+type SetField = <K extends keyof FormState>(key: K, value: FormState[K]) => void
+
+type TabFormProps = {
+  formState: FormState
+  setField: SetField
+  errors: Record<string, string>
+}
+
+function Field({
+  label,
+  error,
+  hint,
+  children,
+}: {
+  label: string
+  error?: string
+  hint?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium text-stone-700">{label}</label>
+      {children}
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+      {!error && hint && <p className="mt-1 text-xs text-stone-400">{hint}</p>}
+    </div>
+  )
+}
+
+function Toggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-3">
+      <span className="text-sm text-stone-700">{label}</span>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+          checked ? 'bg-green-500' : 'bg-stone-300'
+        }`}
+      >
+        <span
+          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+            checked ? 'translate-x-4' : 'translate-x-0.5'
+          }`}
+        />
+      </button>
+    </label>
+  )
+}
+
+function inputCls(hasError?: boolean) {
+  return `w-full rounded border px-3 py-1.5 text-sm focus:outline-none focus:border-blue-400 ${
+    hasError ? 'border-red-400' : 'border-stone-300'
+  }`
+}
+
+
+// ── Tab: Hlavní údaje ──────────────────────────────────────────
+
+function TabHlavni({ formState, setField, errors, showSlugSuggest }: TabFormProps & { showSlugSuggest: boolean }) {
+  return (
+    <div className="space-y-5">
+      <Field label="Název" error={errors.name}>
+        <input
+          type="text"
+          value={formState.name}
+          onChange={(e) => setField('name', e.target.value)}
+          maxLength={255}
+          className={inputCls(!!errors.name)}
+        />
+      </Field>
+
+      <Field
+        label="URL adresa (slug)"
+        error={errors.slug}
+        hint='Automaticky generovaná z názvu. Změna ovlivní existující odkazy.'
+      >
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 overflow-hidden rounded border border-stone-300 focus-within:border-blue-400">
+            <span className="flex items-center border-r border-stone-200 bg-stone-50 px-2 py-1.5 text-xs text-stone-400 whitespace-nowrap">
+              branickelahudky.cz/
+            </span>
+            <input
+              type="text"
+              value={formState.slug}
+              onChange={(e) =>
+                setField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+              }
+              className="flex-1 bg-transparent px-2 py-1.5 text-sm focus:outline-none font-mono"
+            />
+          </div>
+          {showSlugSuggest && (
+            <button
+              type="button"
+              onClick={() => setField('slug', slugify(formState.name))}
+              className="shrink-0 rounded border border-blue-300 px-2 py-1.5 text-xs text-blue-600 hover:bg-blue-50"
+              title="Přepsat URL ze jména"
+            >
+              ← Přepsat ze jména
+            </button>
+          )}
+        </div>
+      </Field>
+
+      <Field label="SKU / Kód" error={errors.sku} hint="Unikátní interní kód produktu">
+        <input
+          type="text"
+          value={formState.sku}
+          onChange={(e) => setField('sku', e.target.value)}
+          className={`${inputCls(!!errors.sku)} font-mono`}
+        />
+      </Field>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Field
+          label="Přibližná hmotnost kusu (g)"
+          error={errors.weightGrams}
+          hint="U celých kusů (králík, krůta…): z ceny za kg se spočítá orientační cena kusu."
+        >
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={formState.weightGrams}
+            onChange={(e) => setField('weightGrams', e.target.value)}
+            className={inputCls(!!errors.weightGrams)}
+          />
+        </Field>
+        <div className="flex items-start pt-7">
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={formState.sellsAsWholePiece}
+              onChange={(e) => setField('sellsAsWholePiece', e.target.checked)}
+              className="rounded"
+            />
+            <span className="text-sm font-medium text-stone-700">Prodej po celých kusech</span>
+          </label>
+        </div>
+      </div>
+
+      <Field label="Krátký popis" hint="Max. 500 znaků. Zobrazuje se v přehledu produktů.">
+        <textarea
+          value={formState.shortDescription}
+          onChange={(e) => setField('shortDescription', e.target.value)}
+          maxLength={500}
+          rows={3}
+          className={inputCls()}
+        />
+      </Field>
+
+      <Field
+        label="Detailní popis"
+        hint="Lze použít HTML (tučně: <strong>, odstavce: <p>, seznamy: <ul><li>)."
+      >
+        <textarea
+          value={formState.description}
+          onChange={(e) => setField('description', e.target.value)}
+          rows={8}
+          className={`${inputCls()} font-mono text-xs leading-relaxed`}
+        />
+      </Field>
+    </div>
+  )
+}
+
+// ── Tab: Ceník ─────────────────────────────────────────────────
+
+function TabCenik({
+  formState, setField, errors,
+  computedPriceWithoutVat, priceWithVatNum, salePriceWithVatNum, saleDiscount,
+}: TabFormProps & {
+  computedPriceWithoutVat: number
+  priceWithVatNum: number
+  salePriceWithVatNum: number
+  saleDiscount: number
+}) {
+  return (
+    <div className="space-y-6">
+      {/* Ceny */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-stone-700">Základní cena</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Cena bez DPH (Kč)" hint="Automaticky přepočítáno">
+            <input
+              type="text"
+              value={formatCZK(computedPriceWithoutVat)}
+              disabled
+              className="w-full rounded border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-stone-500"
+            />
+          </Field>
+
+          <Field label="Cena s DPH (Kč)" error={errors.priceWithVat}>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={formState.priceWithVat}
+              onChange={(e) => setField('priceWithVat', e.target.value)}
+              className={inputCls(!!errors.priceWithVat)}
+            />
+          </Field>
+
+          <Field label="Sazba DPH" error={errors.vatRate}>
+            <select
+              value={formState.vatRate}
+              onChange={(e) => setField('vatRate', e.target.value)}
+              className={inputCls(!!errors.vatRate)}
+            >
+              <option value="12">12 % (potraviny)</option>
+              <option value="21">21 % (standard)</option>
+              <option value="0">0 % (osvobozeno)</option>
+            </select>
+          </Field>
+        </div>
+      </div>
+
+      {/* Akční cena */}
+      <div className="rounded-lg border border-stone-200 p-4">
+        <label className="flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={formState.isOnSale}
+            onChange={(e) => setField('isOnSale', e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-sm font-semibold text-stone-700">Aktivní akční cena</span>
+        </label>
+
+        {formState.isOnSale && (
+          <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Akční cena s DPH (Kč)">
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formState.salePriceWithVat}
+                  onChange={(e) => setField('salePriceWithVat', e.target.value)}
+                  className={inputCls()}
+                />
+              </Field>
+              <div className="flex items-end pb-1.5">
+                {saleDiscount > 0 && (
+                  <p className="text-sm font-medium text-green-700">
+                    Sleva: −{formatCZK(priceWithVatNum - salePriceWithVatNum)} ({saleDiscount} %)
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Platí od" hint="Volitelné">
+                <input
+                  type="date"
+                  value={formState.saleStartsAt}
+                  onChange={(e) => setField('saleStartsAt', e.target.value)}
+                  className={inputCls()}
+                />
+              </Field>
+              <Field
+                label="Akce platí do"
+                hint={'Zobrazí se na kartě jako „−X % do data". Po uplynutí data se akční cena přestane zobrazovat automaticky.'}
+              >
+                <input
+                  type="date"
+                  value={formState.saleEndsAt}
+                  onChange={(e) => setField('saleEndsAt', e.target.value)}
+                  className={inputCls()}
+                />
+              </Field>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Váhový režim */}
+      <div className="rounded-lg border border-stone-200 p-4">
+        <label className="flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={formState.isWeightBased}
+            onChange={(e) => setField('isWeightBased', e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-sm font-semibold text-stone-700">
+            Cena za jednotku váhy (váhový produkt)
+          </span>
+        </label>
+
+        {formState.isWeightBased && (
+          <div className="mt-4">
+            <Field label="Jednotka" hint="Za jakou jednotku platí zadaná cena">
+              <select
+                value={formState.unit}
+                onChange={(e) => setField('unit', e.target.value)}
+                className={inputCls()}
+              >
+                {UNIT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <p className="mt-2 text-xs text-blue-600">
+              Finální cena se přepočítá podle navážení v objednávce.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Tab: Sklad ─────────────────────────────────────────────────
+
+function TabSklad({ formState, setField }: Pick<TabFormProps, 'formState' | 'setField'>) {
+  return (
+    <div className="space-y-5">
+      <label className="flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          checked={formState.trackStock}
+          onChange={(e) => setField('trackStock', e.target.checked)}
+          className="rounded"
+        />
+        <span className="text-sm font-semibold text-stone-700">Sledovat skladové zásoby</span>
+      </label>
+
+      {formState.trackStock && (
+        <div className="grid grid-cols-2 gap-4">
+          <Field
+            label="Aktuální množství"
+            hint="Počet kusů na skladě"
+          >
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={formState.stockQuantity}
+              onChange={(e) => setField('stockQuantity', e.target.value)}
+              className={inputCls()}
+            />
+          </Field>
+        </div>
+      )}
+
+      <Field
+        label="Stav skladu"
+        hint="Stav se automaticky nastaví podle množství, nebo můžete přepsat ručně."
+      >
+        <select
+          value={formState.stockStatus}
+          onChange={(e) => setField('stockStatus', e.target.value)}
+          className={inputCls()}
+        >
+          {STOCK_STATUS_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </Field>
+    </div>
+  )
+}
+
 // ── Hlavní komponenta ─────────────────────────────────────────────
 
 interface Props {
@@ -407,378 +787,6 @@ export function ProductDetailClient({ product, categories, images, variants, rel
   }
 
 
-  // ── Sub-komponenty ─────────────────────────────────────────────
-
-  function Field({
-    label,
-    error,
-    hint,
-    children,
-  }: {
-    label: string
-    error?: string
-    hint?: string
-    children: React.ReactNode
-  }) {
-    return (
-      <div>
-        <label className="mb-1 block text-sm font-medium text-stone-700">{label}</label>
-        {children}
-        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-        {!error && hint && <p className="mt-1 text-xs text-stone-400">{hint}</p>}
-      </div>
-    )
-  }
-
-  function Toggle({
-    label,
-    checked,
-    onChange,
-  }: {
-    label: string
-    checked: boolean
-    onChange: (v: boolean) => void
-  }) {
-    return (
-      <label className="flex cursor-pointer items-center justify-between gap-3">
-        <span className="text-sm text-stone-700">{label}</span>
-        <button
-          type="button"
-          onClick={() => onChange(!checked)}
-          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-            checked ? 'bg-green-500' : 'bg-stone-300'
-          }`}
-        >
-          <span
-            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-              checked ? 'translate-x-4' : 'translate-x-0.5'
-            }`}
-          />
-        </button>
-      </label>
-    )
-  }
-
-  function inputCls(hasError?: boolean) {
-    return `w-full rounded border px-3 py-1.5 text-sm focus:outline-none focus:border-blue-400 ${
-      hasError ? 'border-red-400' : 'border-stone-300'
-    }`
-  }
-
-  function PlaceholderTab({ sprint }: { sprint: string }) {
-    return (
-      <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-stone-200">
-        <div className="text-center text-stone-400">
-          <p className="font-medium">Brzy</p>
-          <p className="mt-1 text-xs">{sprint}</p>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Tab: Hlavní údaje ──────────────────────────────────────────
-
-  function TabHlavni() {
-    return (
-      <div className="space-y-5">
-        <Field label="Název" error={errors.name}>
-          <input
-            type="text"
-            value={formState.name}
-            onChange={(e) => setField('name', e.target.value)}
-            maxLength={255}
-            className={inputCls(!!errors.name)}
-          />
-        </Field>
-
-        <Field
-          label="URL adresa (slug)"
-          error={errors.slug}
-          hint='Automaticky generovaná z názvu. Změna ovlivní existující odkazy.'
-        >
-          <div className="flex items-center gap-2">
-            <div className="flex flex-1 overflow-hidden rounded border border-stone-300 focus-within:border-blue-400">
-              <span className="flex items-center border-r border-stone-200 bg-stone-50 px-2 py-1.5 text-xs text-stone-400 whitespace-nowrap">
-                branickelahudky.cz/
-              </span>
-              <input
-                type="text"
-                value={formState.slug}
-                onChange={(e) =>
-                  setField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
-                }
-                className="flex-1 bg-transparent px-2 py-1.5 text-sm focus:outline-none font-mono"
-              />
-            </div>
-            {showSlugSuggest && (
-              <button
-                type="button"
-                onClick={() => setField('slug', slugify(formState.name))}
-                className="shrink-0 rounded border border-blue-300 px-2 py-1.5 text-xs text-blue-600 hover:bg-blue-50"
-                title="Přepsat URL ze jména"
-              >
-                ← Přepsat ze jména
-              </button>
-            )}
-          </div>
-        </Field>
-
-        <Field label="SKU / Kód" error={errors.sku} hint="Unikátní interní kód produktu">
-          <input
-            type="text"
-            value={formState.sku}
-            onChange={(e) => setField('sku', e.target.value)}
-            className={`${inputCls(!!errors.sku)} font-mono`}
-          />
-        </Field>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Field
-            label="Přibližná hmotnost kusu (g)"
-            error={errors.weightGrams}
-            hint="U celých kusů (králík, krůta…): z ceny za kg se spočítá orientační cena kusu."
-          >
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={formState.weightGrams}
-              onChange={(e) => setField('weightGrams', e.target.value)}
-              className={inputCls(!!errors.weightGrams)}
-            />
-          </Field>
-          <div className="flex items-start pt-7">
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formState.sellsAsWholePiece}
-                onChange={(e) => setField('sellsAsWholePiece', e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm font-medium text-stone-700">Prodej po celých kusech</span>
-            </label>
-          </div>
-        </div>
-
-        <Field label="Krátký popis" hint="Max. 500 znaků. Zobrazuje se v přehledu produktů.">
-          <textarea
-            value={formState.shortDescription}
-            onChange={(e) => setField('shortDescription', e.target.value)}
-            maxLength={500}
-            rows={3}
-            className={inputCls()}
-          />
-        </Field>
-
-        <Field
-          label="Detailní popis"
-          hint="Lze použít HTML (tučně: <strong>, odstavce: <p>, seznamy: <ul><li>)."
-        >
-          <textarea
-            value={formState.description}
-            onChange={(e) => setField('description', e.target.value)}
-            rows={8}
-            className={`${inputCls()} font-mono text-xs leading-relaxed`}
-          />
-        </Field>
-      </div>
-    )
-  }
-
-  // ── Tab: Ceník ─────────────────────────────────────────────────
-
-  function TabCenik() {
-    return (
-      <div className="space-y-6">
-        {/* Ceny */}
-        <div>
-          <h3 className="mb-3 text-sm font-semibold text-stone-700">Základní cena</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Cena bez DPH (Kč)" hint="Automaticky přepočítáno">
-              <input
-                type="text"
-                value={formatCZK(computedPriceWithoutVat)}
-                disabled
-                className="w-full rounded border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-stone-500"
-              />
-            </Field>
-
-            <Field label="Cena s DPH (Kč)" error={errors.priceWithVat}>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formState.priceWithVat}
-                onChange={(e) => setField('priceWithVat', e.target.value)}
-                className={inputCls(!!errors.priceWithVat)}
-              />
-            </Field>
-
-            <Field label="Sazba DPH" error={errors.vatRate}>
-              <select
-                value={formState.vatRate}
-                onChange={(e) => setField('vatRate', e.target.value)}
-                className={inputCls(!!errors.vatRate)}
-              >
-                <option value="12">12 % (potraviny)</option>
-                <option value="21">21 % (standard)</option>
-                <option value="0">0 % (osvobozeno)</option>
-              </select>
-            </Field>
-          </div>
-        </div>
-
-        {/* Akční cena */}
-        <div className="rounded-lg border border-stone-200 p-4">
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={formState.isOnSale}
-              onChange={(e) => setField('isOnSale', e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm font-semibold text-stone-700">Aktivní akční cena</span>
-          </label>
-
-          {formState.isOnSale && (
-            <div className="mt-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Akční cena s DPH (Kč)">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formState.salePriceWithVat}
-                    onChange={(e) => setField('salePriceWithVat', e.target.value)}
-                    className={inputCls()}
-                  />
-                </Field>
-                <div className="flex items-end pb-1.5">
-                  {saleDiscount > 0 && (
-                    <p className="text-sm font-medium text-green-700">
-                      Sleva: −{formatCZK(priceWithVatNum - salePriceWithVatNum)} ({saleDiscount} %)
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Platí od" hint="Volitelné">
-                  <input
-                    type="date"
-                    value={formState.saleStartsAt}
-                    onChange={(e) => setField('saleStartsAt', e.target.value)}
-                    className={inputCls()}
-                  />
-                </Field>
-                <Field
-                  label="Akce platí do"
-                  hint={'Zobrazí se na kartě jako „−X % do data". Po uplynutí data se akční cena přestane zobrazovat automaticky.'}
-                >
-                  <input
-                    type="date"
-                    value={formState.saleEndsAt}
-                    onChange={(e) => setField('saleEndsAt', e.target.value)}
-                    className={inputCls()}
-                  />
-                </Field>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Váhový režim */}
-        <div className="rounded-lg border border-stone-200 p-4">
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={formState.isWeightBased}
-              onChange={(e) => setField('isWeightBased', e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm font-semibold text-stone-700">
-              Cena za jednotku váhy (váhový produkt)
-            </span>
-          </label>
-
-          {formState.isWeightBased && (
-            <div className="mt-4">
-              <Field label="Jednotka" hint="Za jakou jednotku platí zadaná cena">
-                <select
-                  value={formState.unit}
-                  onChange={(e) => setField('unit', e.target.value)}
-                  className={inputCls()}
-                >
-                  {UNIT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <p className="mt-2 text-xs text-blue-600">
-                Finální cena se přepočítá podle navážení v objednávce.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // ── Tab: Sklad ─────────────────────────────────────────────────
-
-  function TabSklad() {
-    return (
-      <div className="space-y-5">
-        <label className="flex cursor-pointer items-center gap-2">
-          <input
-            type="checkbox"
-            checked={formState.trackStock}
-            onChange={(e) => setField('trackStock', e.target.checked)}
-            className="rounded"
-          />
-          <span className="text-sm font-semibold text-stone-700">Sledovat skladové zásoby</span>
-        </label>
-
-        {formState.trackStock && (
-          <div className="grid grid-cols-2 gap-4">
-            <Field
-              label="Aktuální množství"
-              hint="Počet kusů na skladě"
-            >
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={formState.stockQuantity}
-                onChange={(e) => setField('stockQuantity', e.target.value)}
-                className={inputCls()}
-              />
-            </Field>
-          </div>
-        )}
-
-        <Field
-          label="Stav skladu"
-          hint="Stav se automaticky nastaví podle množství, nebo můžete přepsat ručně."
-        >
-          <select
-            value={formState.stockStatus}
-            onChange={(e) => setField('stockStatus', e.target.value)}
-            className={inputCls()}
-          >
-            {STOCK_STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
-    )
-  }
-
-
   // ── Render ─────────────────────────────────────────────────────
 
   return (
@@ -880,9 +888,21 @@ export function ProductDetailClient({ product, categories, images, variants, rel
 
             {/* Tab obsah */}
             <div className="p-6">
-              {activeTab === 'hlavni' && <TabHlavni />}
-              {activeTab === 'cenik' && <TabCenik />}
-              {activeTab === 'sklad' && <TabSklad />}
+              {activeTab === 'hlavni' && (
+                <TabHlavni formState={formState} setField={setField} errors={errors} showSlugSuggest={showSlugSuggest} />
+              )}
+              {activeTab === 'cenik' && (
+                <TabCenik
+                  formState={formState}
+                  setField={setField}
+                  errors={errors}
+                  computedPriceWithoutVat={computedPriceWithoutVat}
+                  priceWithVatNum={priceWithVatNum}
+                  salePriceWithVatNum={salePriceWithVatNum}
+                  saleDiscount={saleDiscount}
+                />
+              )}
+              {activeTab === 'sklad' && <TabSklad formState={formState} setField={setField} />}
               {activeTab === 'kategorie' && (
                 <CategoryTab
                   productId={product.id}
