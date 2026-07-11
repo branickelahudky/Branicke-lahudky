@@ -19,6 +19,9 @@ export type CartItem = {
   qty: number
   isWeightBased: boolean
   unit: string
+  /** Celý kus (králík, krůta): cena je ORIENTAČNÍ (cena/kg × váha kusu),
+   *  konečná dle navážení → v UI se ukazuje s „cca" */
+  sellsAsWholePiece?: boolean
 }
 
 /** Identita položky v košíku — stejný produkt v různých variantách = různé řádky. */

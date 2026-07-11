@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useCart, cartItemKey, type CartItem } from '../../_context/CartContext'
 import { fmtKc } from './fmtKc'
-import { itemUnitSuffix } from '@/lib/pricing'
+import { itemUnitSuffix, pricePerKg, formatUnitPrice } from '@/lib/pricing'
 
 // Mini řádek položky košíku — používá flyout (CartFlyout).
 // `highlight` = krátká vizuální odezva po přidání z karty.
@@ -28,8 +28,21 @@ export function CartItemRow({ item, highlight = false }: { item: CartItem; highl
           <p className="text-xs text-gold">{item.variantName}</p>
         )}
         <p className="mt-0.5 text-xs text-shop-muted">
+          {item.sellsAsWholePiece && 'cca '}
           {fmtKc(item.unitPriceWithVat)} {itemUnitSuffix(item)}
         </p>
+        {/* Celý kus: orientační váha + měrná cena; konečná částka dle navážení */}
+        {item.sellsAsWholePiece && item.weightGrams != null && item.weightGrams > 0 && (() => {
+          const perKg = pricePerKg(item.unitPriceWithVat, item.weightGrams)
+          const w = item.weightGrams >= 1000
+            ? `${(item.weightGrams / 1000).toLocaleString('cs-CZ', { maximumFractionDigits: 2 })} kg`
+            : `${item.weightGrams} g`
+          return (
+            <p className="text-[11px] text-shop-muted">
+              cca {w}{perKg !== null && ` · ${formatUnitPrice({ value: perKg, per: 'kg' })}`}
+            </p>
+          )
+        })()}
 
         <div className="mt-2 flex items-center justify-between gap-2">
           {/* Qty */}
@@ -44,7 +57,10 @@ export function CartItemRow({ item, highlight = false }: { item: CartItem; highl
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <span className="text-sm font-bold text-gold">{fmtKc(item.qty * item.unitPriceWithVat)}</span>
+            <span className="text-sm font-bold text-gold">
+              {item.sellsAsWholePiece && 'cca '}
+              {fmtKc(item.qty * item.unitPriceWithVat)}
+            </span>
             <button onClick={() => removeItem(key)}
               className="p-1 text-shop-muted transition hover:text-red-400" aria-label="Odebrat">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

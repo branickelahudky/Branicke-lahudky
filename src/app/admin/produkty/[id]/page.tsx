@@ -84,6 +84,7 @@ export default async function ProductDetailPage({ params }: Props) {
     saleEndsAt: product.saleEndsAt ? product.saleEndsAt.toISOString().slice(0, 10) : null,
     isWeightBased: product.isWeightBased,
     unit: product.unit,
+    sellsAsWholePiece: product.sellsAsWholePiece,
     stockQuantity: product.stockQuantity,
     stockStatus: product.stockStatus,
     trackStock: product.trackStock,

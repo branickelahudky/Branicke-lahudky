@@ -171,6 +171,42 @@ export function packWeightSuffix(weightGrams: number | null | undefined): string
     : `/ ${weightGrams} g`
 }
 
+// ───────────────────────────────────────────────────────────────
+// Celé kusy (králík, krůta, celé kuře): cena v DB je ZA KG, prodává
+// se ale po kusech. Hlavní cena = orientační cena kusu (cena/kg ×
+// váha kusu), konečná částka dle skutečně navážené váhy.
+// ───────────────────────────────────────────────────────────────
+
+export type WholePiece = {
+  /** Orientační cena kusu s DPH, zaokrouhlená na koruny („cca 498 Kč") */
+  piecePriceWithVat: number
+  /** Měrná cena za kg s DPH (= cena produktu v DB) */
+  perKgWithVat: number
+  /** Přibližná hmotnost kusu v gramech */
+  weightGrams: number
+}
+
+/**
+ * JEDINÝ výpočet ceny celého kusu pro kartu, detail, košík i server
+ * (/api/orders). Vrací null, pokud produkt není celý kus (chybí
+ * příznak, váha kusu nebo cena není za kg) — pak se chování nemění.
+ * U aktivní slevy sem patří SLEVOVÁ cena za kg.
+ */
+export function wholePiece(p: {
+  sellsAsWholePiece: boolean
+  unit: Unit | string
+  weightGrams: number | null | undefined
+  priceWithVat: number
+}): WholePiece | null {
+  if (!p.sellsAsWholePiece || p.unit !== 'KG') return null
+  if (!p.weightGrams || p.weightGrams <= 0 || p.priceWithVat <= 0) return null
+  return {
+    piecePriceWithVat: Math.round(p.priceWithVat * (p.weightGrams / 1000)),
+    perKgWithVat: p.priceWithVat,
+    weightGrams: p.weightGrams,
+  }
+}
+
 /**
  * Jednotka u ceny položky — JEDINÉ místo pro detail (zvolená varianta),
  * košík i pokladnu. Varianta je balení → jednotkou je VÁHA VARIANTY

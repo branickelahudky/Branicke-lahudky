@@ -60,6 +60,10 @@ export type UpdateProductData = {
   saleEndsAt: string | null
   isWeightBased: boolean
   unit: string
+  /** Přibližná hmotnost kusu/balení v gramech (celé kusy: králík, krůta…) */
+  weightGrams: number | null
+  /** Prodej po celých kusech — zobrazuje se orientační cena kusu (cena/kg × váha) */
+  sellsAsWholePiece: boolean
   trackStock: boolean
   stockQuantity: number
   stockStatus: string
@@ -80,6 +84,7 @@ export async function updateProduct(productId: string, data: UpdateProductData) 
   if (data.priceWithVat < 0) throw new Error('Cena musí být nezáporná.')
   if (![0, 12, 21].includes(data.vatRate)) throw new Error('Neplatná sazba DPH.')
   if (data.stockQuantity < 0) throw new Error('Množství musí být nezáporné.')
+  if (data.weightGrams !== null && data.weightGrams < 0) throw new Error('Hmotnost musí být nezáporná.')
 
   // Unique checks (exclude self)
   const [existingSku, existingSlug, current] = await Promise.all([
@@ -131,6 +136,8 @@ export async function updateProduct(productId: string, data: UpdateProductData) 
       isOnSale: data.isOnSale,
       isWeightBased: data.isWeightBased,
       unit: data.unit as Unit,
+      weightGrams: data.weightGrams,
+      sellsAsWholePiece: data.sellsAsWholePiece,
       trackStock: data.trackStock,
       stockQuantity: data.stockQuantity,
       stockStatus: data.stockStatus as StockStatus,

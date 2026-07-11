@@ -722,7 +722,7 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, usp
                     <p className="truncate text-sm text-shop-fg">{i.name}</p>
                     {i.variantName && <p className="text-xs text-gold">{i.variantName}</p>}
                     <p className="text-xs text-shop-muted">
-                      {i.qty} × {fmtKc(i.unitPriceWithVat)} {itemUnitSuffix(i)}
+                      {i.qty} × {i.sellsAsWholePiece && 'cca '}{fmtKc(i.unitPriceWithVat)} {itemUnitSuffix(i)}
                     </p>
                   </div>
                   <span className="shrink-0 text-sm font-medium text-shop-fg">{fmtKc(i.qty * i.unitPriceWithVat)}</span>

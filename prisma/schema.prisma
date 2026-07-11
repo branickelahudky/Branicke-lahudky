@@ -83,6 +83,11 @@ model Product {
   // Pro váhové produkty - přibližná hmotnost balení (kvůli zobrazení "cca 250g")
   approximateWeightKg Decimal? @db.Decimal(10, 3)
 
+  // Prodej po celých kusech (králík, krůta, celé kuře): cena je za kg,
+  // zobrazuje se ORIENTAČNÍ cena kusu = cena/kg × weightGrams ("cca 498 Kč / ks");
+  // konečná částka dle skutečně navážené váhy
+  sellsAsWholePiece Boolean @default(false)
+
   // Varianty (250g / 500g / 1kg) - když má produkt fixní porce
   variants ProductVariant[]
 

@@ -7,7 +7,7 @@ import { useCart } from '../_context/CartContext'
 import { flyToCart } from '../_lib/flyToCart'
 import {
   activeSalePrice, salePercent, formatSaleEnd, priceWithoutVat,
-  priceUnitSuffix, unitPricePerKg, formatUnitPrice,
+  priceUnitSuffix, unitPricePerKg, formatUnitPrice, wholePiece,
 } from '@/lib/pricing'
 
 export type ProductCardData = {
@@ -24,6 +24,8 @@ export type ProductCardData = {
   isWeightBased: boolean
   unit: string
   weightGrams: number | null
+  /** Celý kus (králík, krůta): cena je za kg, zobrazuje se cca cena kusu */
+  sellsAsWholePiece: boolean
   isNew: boolean
   isOnSale: boolean
   isFeatured: boolean
@@ -72,7 +74,15 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   // Sdílená logika platnosti — prošlá akce se nikde neukáže
   const salePrice = activeSalePrice(product)
   const displayPrice = salePrice ?? product.priceWithVat
-  const prefix = product.isWeightBased ? 'od ' : ''
+
+  // Celý kus: hlavní cena = orientační cena kusu (cena/kg × váha),
+  // skutečná váha se liší → prefix „cca"
+  const whole = hasPrice ? wholePiece({ ...product, priceWithVat: displayPrice }) : null
+  const shownPrice = whole ? whole.piecePriceWithVat : displayPrice
+  const struckPrice = whole && salePrice
+    ? (wholePiece({ ...product, priceWithVat: product.priceWithVat })?.piecePriceWithVat ?? product.priceWithVat)
+    : product.priceWithVat
+  const prefix = whole ? 'cca ' : product.isWeightBased ? 'od ' : ''
 
   // Červený štítek „Akce" jen při AKTIVNÍ slevě
   const badge = salePrice     ? { label: 'Akce',    cls: 'bg-red-500 text-white' }
@@ -87,12 +97,14 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     : null
 
   // Jednotka u ceny — u váhových povinná („od 37 Kč/100 g"), u kusových „/ks";
-  // stejná sdílená priceUnitSuffix jako na detailu
-  const unitSuffix = compactSuffix(product.isWeightBased ? priceUnitSuffix(product.unit) : '/ ks')
-  // Spodní řádek: vlevo gramáž, vpravo měrná cena (sdílený výpočet s detailem;
-  // u aktivní slevy se počítá ze SLEVOVÉ ceny — displayPrice)
-  const unitLeft = weightLabel
-  const measure = hasPrice ? unitPricePerKg(displayPrice, product.unit, product.weightGrams) : null
+  // stejná sdílená priceUnitSuffix jako na detailu. Celý kus → „/ks".
+  const unitSuffix = compactSuffix(!whole && product.isWeightBased ? priceUnitSuffix(product.unit) : '/ ks')
+  // Spodní řádek: vlevo gramáž (u celého kusu „cca 2 kg"), vpravo měrná cena
+  // (sdílený výpočet s detailem; u aktivní slevy ze SLEVOVÉ ceny — displayPrice)
+  const unitLeft = whole && weightLabel ? `cca ${weightLabel}` : weightLabel
+  const measure = whole
+    ? { value: whole.perKgWithVat, per: 'kg' as const }
+    : hasPrice ? unitPricePerKg(displayPrice, product.unit, product.weightGrams) : null
 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault()
@@ -116,12 +128,17 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       sku:       product.sku,
       name:      product.name,
       thumbnailUrl:          product.thumbnailUrl,
-      unitPriceWithVat:     displayPrice,
-      unitPriceWithoutVat:  salePrice !== null
-        ? priceWithoutVat(salePrice, product.vatRate)
-        : product.priceWithoutVat,
+      // Celý kus: do košíku jde orientační cena KUSU, množství jsou kusy
+      unitPriceWithVat:     shownPrice,
+      unitPriceWithoutVat:  whole
+        ? priceWithoutVat(whole.piecePriceWithVat, product.vatRate)
+        : salePrice !== null
+          ? priceWithoutVat(salePrice, product.vatRate)
+          : product.priceWithoutVat,
       vatRate:              product.vatRate,
-      isWeightBased:        product.isWeightBased,
+      // kus = balení s pevnou váhou → váha pro dopravu z weightGrams × ks
+      isWeightBased:        whole ? false : product.isWeightBased,
+      sellsAsWholePiece:    !!whole,
       unit:                 product.unit,
     }, 1)
     // Klik → fotka letí do košíku → po doletu se vysune flyout (bez toastu)
@@ -186,14 +203,14 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         ) : salePrice ? (
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="rounded-md bg-[#FFE14D] px-1.5 py-0.5 text-[15px] font-extrabold text-stone-900 leading-tight">
-              <PriceWithCents value={salePrice} prefix={prefix} suffix={unitSuffix ?? undefined} />
+              <PriceWithCents value={shownPrice} prefix={prefix} suffix={unitSuffix ?? undefined} />
             </span>
-            <span className="text-xs text-shop-muted line-through">{fmtKc(product.priceWithVat)}</span>
+            <span className="text-xs text-shop-muted line-through">{fmtKc(struckPrice)}</span>
           </div>
         ) : (
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="text-[15px] font-extrabold text-shop-fg leading-tight">
-              {prefix}{fmtKc(displayPrice)}
+              {prefix}{fmtKc(shownPrice)}
               {unitSuffix && <span className="text-[11px] font-bold">{' '}{unitSuffix}</span>}
             </span>
           </div>

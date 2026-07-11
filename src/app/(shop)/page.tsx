@@ -37,7 +37,7 @@ function serializeProduct(p: {
   priceWithVat: unknown; priceWithoutVat: unknown; vatRate: unknown
   salePriceWithVat: unknown
   saleStartsAt: Date | null; saleEndsAt: Date | null
-  isWeightBased: boolean; unit: string; weightGrams: number | null
+  isWeightBased: boolean; unit: string; weightGrams: number | null; sellsAsWholePiece: boolean
   isNew: boolean; isOnSale: boolean; isFeatured: boolean
   stockQuantity: number; stockStatus: string; trackStock: boolean
   images: Array<{ thumbnailUrl: string; url: string; fileSize: number }>
@@ -52,7 +52,7 @@ function serializeProduct(p: {
     saleStartsAt: p.saleStartsAt?.toISOString() ?? null,
     saleEndsAt: p.saleEndsAt?.toISOString() ?? null,
     isWeightBased: p.isWeightBased,
-    unit: p.unit, weightGrams: p.weightGrams,
+    unit: p.unit, weightGrams: p.weightGrams, sellsAsWholePiece: p.sellsAsWholePiece,
     isNew: p.isNew, isOnSale: p.isOnSale, isFeatured: p.isFeatured,
     stockQuantity: p.stockQuantity,
     stockStatus:   p.stockStatus,
@@ -109,7 +109,7 @@ const FLAG_SELECT = {
   id: true, slug: true, sku: true, name: true,
   priceWithVat: true, priceWithoutVat: true, vatRate: true,
   salePriceWithVat: true, saleStartsAt: true, saleEndsAt: true,
-  isWeightBased: true, unit: true, weightGrams: true,
+  isWeightBased: true, unit: true, weightGrams: true, sellsAsWholePiece: true,
   isNew: true, isOnSale: true, isFeatured: true,
   stockQuantity: true, stockStatus: true, trackStock: true,
   images: { where: { isPrimary: true }, select: { thumbnailUrl: true, url: true, fileSize: true }, take: 1 },

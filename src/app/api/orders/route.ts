@@ -9,6 +9,7 @@ import {
   calculateOrderTotals,
   activeSalePrice,
   priceWithoutVat as computePriceWithoutVat,
+  wholePiece,
   type OrderLineInput,
 } from '@/lib/pricing'
 import { generateNextNumber } from '@/lib/number-series'
@@ -197,6 +198,23 @@ export async function POST(req: NextRequest) {
         ? product.weightGrams / 1000
         : undefined
 
+    // Celý kus (králík, krůta): cena v DB je za kg → účtuje se orientační
+    // cena kusu (stejný sdílený výpočet jako karta/detail/košík); konečnou
+    // částku upraví obsluha po navážení. Množství = kusy, jednotka „ks".
+    const whole = !item.variantId
+      ? wholePiece({
+          sellsAsWholePiece: product.sellsAsWholePiece,
+          unit: product.unit,
+          weightGrams: product.weightGrams,
+          priceWithVat: unitPriceWithVat,
+        })
+      : null
+    if (whole) {
+      unitPriceWithVat = whole.piecePriceWithVat
+      unitPriceWithoutVat = computePriceWithoutVat(whole.piecePriceWithVat, Number(product.vatRate))
+      expectedWeightKg = whole.weightGrams / 1000
+    }
+
     if (item.variantId) {
       const variant = variants.find((v) => v.id === item.variantId)
       if (!variant || variant.productId !== product.id) {
@@ -228,7 +246,8 @@ export async function POST(req: NextRequest) {
 
     weightItems.push({
       quantity: item.quantity,
-      isWeightBased: product.isWeightBased,
+      // celý kus = balení s pevnou váhou (jako varianta): váha = weightGrams × ks
+      isWeightBased: whole ? false : product.isWeightBased,
       isVariant: !!item.variantId,
       unit: product.unit,
       weightGrams: expectedWeightKg != null ? expectedWeightKg * 1000 : null,
@@ -245,7 +264,8 @@ export async function POST(req: NextRequest) {
       unitPriceWithoutVat,
       unitPriceWithVat,
       vatRate: Number(product.vatRate),
-      unit: product.unit,
+      // celý kus se objednává po kusech — snapshot jednotky „ks"
+      unit: whole ? 'KS' : product.unit,
       expectedWeightKg,
     })
   }

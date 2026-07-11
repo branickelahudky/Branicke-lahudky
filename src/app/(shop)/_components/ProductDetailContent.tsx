@@ -16,6 +16,8 @@ import {
   itemUnitSuffix,
   unitPricePerKg,
   formatUnitPrice,
+  wholePiece,
+  priceWithoutVat,
 } from '@/lib/pricing'
 
 function fmtKc(n: number) {
@@ -76,11 +78,26 @@ export function ProductDetailContent({
   )
 
   const isAvailable  = product.stockStatus !== 'OUT_OF_STOCK'
-  const prefix       = product.isWeightBased ? 'od ' : ''
 
   // Sdílená logika platnosti akce — stejná jako karta, košík i API
   const salePrice = activeSalePrice(product)
   const displayPrice = salePrice ?? product.priceWithVat
+
+  // Celý kus (králík, krůta): hlavní cena = orientační cena kusu
+  // (cena/kg × váha kusu), konečná částka dle skutečně navážené váhy
+  const whole = wholePiece({
+    sellsAsWholePiece: product.sellsAsWholePiece,
+    unit: product.unit,
+    weightGrams: product.weightGrams,
+    priceWithVat: displayPrice,
+  })
+  const prefix = whole ? 'cca ' : product.isWeightBased ? 'od ' : ''
+  const shownPrice = whole ? whole.piecePriceWithVat : displayPrice
+  const shownPriceWithoutVat = whole
+    ? priceWithoutVat(whole.piecePriceWithVat, product.vatRate)
+    : salePrice !== null && product.salePriceWithoutVat !== null
+      ? product.salePriceWithoutVat
+      : product.priceWithoutVat
 
   const selectedVariant = activeVariant
     ? product.variants.find(v => v.id === activeVariant) ?? null
@@ -97,11 +114,14 @@ export function ProductDetailContent({
     : null
 
   // Měrná cena (sdílený výpočet s kartou i košíkem): varianta → z ceny/váhy
-  // varianty; jinak z produktu (G_100/ML_100 ×10 na kg/l, KG/L nic — cena už
-  // měrná je, kusový dle gramáže). U aktivní slevy počítáno ze SLEVOVÉ ceny.
+  // varianty; celý kus → cena za kg z DB; jinak z produktu (G_100/ML_100 ×10
+  // na kg/l, KG/L nic — cena už měrná je, kusový dle gramáže). U aktivní
+  // slevy počítáno ze SLEVOVÉ ceny.
   const measure = selectedVariant
     ? unitPricePerKg(selectedVariant.priceWithVat, 'KS', selectedVariant.weightGrams)
-    : unitPricePerKg(displayPrice, product.unit, product.weightGrams)
+    : whole
+      ? { value: whole.perKgWithVat, per: 'kg' as const }
+      : unitPricePerKg(displayPrice, product.unit, product.weightGrams)
   const measureLabel = measure ? formatUnitPrice(measure) : null
 
   const mainImage = product.images[activeImg]
@@ -110,7 +130,8 @@ export function ProductDetailContent({
   function handleAdd(e: React.MouseEvent) {
     if (!isAvailable || !canBuy) return
     const origin = e.currentTarget as HTMLElement
-    const price = variantPrice ?? displayPrice
+    // Celý kus: do košíku jde orientační cena KUSU, množství jsou kusy
+    const price = variantPrice ?? shownPrice
     const thumb = mainImage?.thumbnailUrl ?? mainImage?.url ?? null
     addItem({
       productId:           product.id,
@@ -124,12 +145,11 @@ export function ProductDetailContent({
       name:                product.name,
       thumbnailUrl:        thumb,
       unitPriceWithVat:    price,
-      unitPriceWithoutVat: selectedVariant?.priceWithoutVat
-        ?? (salePrice !== null && product.salePriceWithoutVat !== null
-          ? product.salePriceWithoutVat
-          : product.priceWithoutVat),
+      unitPriceWithoutVat: selectedVariant?.priceWithoutVat ?? shownPriceWithoutVat,
       vatRate:             product.vatRate,
-      isWeightBased:       product.isWeightBased,
+      // kus = balení s pevnou váhou → váha pro dopravu z weightGrams × ks
+      isWeightBased:       whole && !selectedVariant ? false : product.isWeightBased,
+      sellsAsWholePiece:   !!whole && !selectedVariant,
       unit:                product.unit,
     }, qty)
     // Letící fotka z tlačítka „Do košíku" k ikoně v hlavičce (nad backdropem modalu)
@@ -282,27 +302,38 @@ export function ProductDetailContent({
                   {salePrice ? (
                     <span className="rounded-lg bg-[#FFE14D] px-2 py-0.5 text-2xl font-extrabold text-stone-900">
                       <PriceWithCents
-                        value={salePrice}
+                        value={shownPrice}
                         prefix={prefix}
-                        suffix={product.isWeightBased ? priceUnitSuffix(product.unit) : undefined}
+                        suffix={whole ? '/ ks' : product.isWeightBased ? priceUnitSuffix(product.unit) : undefined}
                       />
                     </span>
                   ) : (
                     <span className="text-2xl font-extrabold text-shop-fg">
-                      {prefix}{fmtKc(displayPrice)}
-                      {/* jednotka přímo u částky — u váhových povinná a viditelná, u kusových decentní */}
-                      {product.isWeightBased ? (
+                      {prefix}{fmtKc(shownPrice)}
+                      {/* jednotka přímo u částky — u váhových a celých kusů povinná a viditelná, u kusových decentní */}
+                      {whole ? (
+                        <span className="text-base font-bold">{' '}/ ks</span>
+                      ) : product.isWeightBased ? (
                         <span className="text-base font-bold">{' '}{priceUnitSuffix(product.unit)}</span>
                       ) : (
                         <span className="text-sm font-medium text-shop-muted">{' '}/ ks</span>
                       )}
                     </span>
                   )}
-                  {salePrice && !product.isWeightBased && (
+                  {salePrice && !whole && !product.isWeightBased && (
                     <span className="text-sm font-medium text-shop-muted">/ ks</span>
                   )}
                   {salePrice && (
-                    <span className="text-base text-shop-muted line-through">{fmtKc(product.priceWithVat)}</span>
+                    <span className="text-base text-shop-muted line-through">
+                      {fmtKc(whole
+                        ? (wholePiece({
+                            sellsAsWholePiece: product.sellsAsWholePiece,
+                            unit: product.unit,
+                            weightGrams: product.weightGrams,
+                            priceWithVat: product.priceWithVat,
+                          })?.piecePriceWithVat ?? product.priceWithVat)
+                        : product.priceWithVat)}
+                    </span>
                   )}
                 </div>
                 {salePrice && (
@@ -316,11 +347,15 @@ export function ProductDetailContent({
                   </p>
                 )}
                 <p className="mt-1 text-xs text-shop-muted">
-                  {prefix}{fmtKc(salePrice !== null && product.salePriceWithoutVat !== null
-                    ? product.salePriceWithoutVat
-                    : product.priceWithoutVat)} bez DPH
+                  {prefix}{fmtKc(shownPriceWithoutVat)} bez DPH
+                  {whole && weightLabel && ` · cca ${weightLabel}`}
                   {measureLabel && ` · ${measureLabel}`}
                 </p>
+                {(whole || product.isWeightBased) && (
+                  <p className="mt-1 text-xs text-shop-muted">
+                    Konečná cena se určí podle skutečné hmotnosti.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -328,8 +363,8 @@ export function ProductDetailContent({
           {/* Dostupnost */}
           <StockBadge status={product.stockStatus} qty={product.stockQuantity} track={product.trackStock} />
 
-          {/* Váha/jednotka */}
-          {weightLabel && (
+          {/* Váha/jednotka (u celého kusu už je „cca 2 kg" u ceny) */}
+          {weightLabel && !whole && (
             <p className="text-sm text-shop-muted">Obsah: {weightLabel}</p>
           )}
 

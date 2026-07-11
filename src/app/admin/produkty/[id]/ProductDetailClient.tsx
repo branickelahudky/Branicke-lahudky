@@ -31,6 +31,7 @@ export type SerializedProductDetail = {
   saleEndsAt: string | null
   isWeightBased: boolean
   unit: string
+  sellsAsWholePiece: boolean
   stockQuantity: number
   stockStatus: string
   trackStock: boolean
@@ -122,6 +123,8 @@ type FormState = {
   saleEndsAt: string
   isWeightBased: boolean
   unit: string
+  weightGrams: string
+  sellsAsWholePiece: boolean
   trackStock: boolean
   stockQuantity: string
   stockStatus: string
@@ -191,6 +194,8 @@ function buildInitialState(p: SerializedProductDetail): FormState {
     saleEndsAt: p.saleEndsAt ?? '',
     isWeightBased: p.isWeightBased,
     unit: p.unit,
+    weightGrams: p.weightGrams != null ? String(p.weightGrams) : '',
+    sellsAsWholePiece: p.sellsAsWholePiece,
     trackStock: p.trackStock,
     stockQuantity: String(p.stockQuantity),
     stockStatus: p.stockStatus,
@@ -324,6 +329,8 @@ export function ProductDetailClient({ product, categories, images, variants, rel
     const price = parseFloat(formState.priceWithVat)
     if (isNaN(price) || price < 0) e.priceWithVat = 'Cena musí být ≥ 0.'
     if (![0, 12, 21].includes(parseFloat(formState.vatRate))) e.vatRate = 'Neplatná sazba DPH.'
+    if (formState.weightGrams !== '' && (parseInt(formState.weightGrams) || 0) < 0)
+      e.weightGrams = 'Hmotnost musí být ≥ 0.'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -348,6 +355,8 @@ export function ProductDetailClient({ product, categories, images, variants, rel
       saleEndsAt: formState.saleEndsAt || null,
       isWeightBased: formState.isWeightBased,
       unit: formState.unit,
+      weightGrams: formState.weightGrams !== '' ? parseInt(formState.weightGrams) || 0 : null,
+      sellsAsWholePiece: formState.sellsAsWholePiece,
       trackStock: formState.trackStock,
       stockQuantity: parseInt(formState.stockQuantity) || 0,
       stockStatus: formState.stockStatus,
@@ -522,6 +531,34 @@ export function ProductDetailClient({ product, categories, images, variants, rel
             className={`${inputCls(!!errors.sku)} font-mono`}
           />
         </Field>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Field
+            label="Přibližná hmotnost kusu (g)"
+            error={errors.weightGrams}
+            hint="U celých kusů (králík, krůta…): z ceny za kg se spočítá orientační cena kusu."
+          >
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={formState.weightGrams}
+              onChange={(e) => setField('weightGrams', e.target.value)}
+              className={inputCls(!!errors.weightGrams)}
+            />
+          </Field>
+          <div className="flex items-start pt-7">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formState.sellsAsWholePiece}
+                onChange={(e) => setField('sellsAsWholePiece', e.target.checked)}
+                className="rounded"
+              />
+              <span className="text-sm font-medium text-stone-700">Prodej po celých kusech</span>
+            </label>
+          </div>
+        </div>
 
         <Field label="Krátký popis" hint="Max. 500 znaků. Zobrazuje se v přehledu produktů.">
           <textarea

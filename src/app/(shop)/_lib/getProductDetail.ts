@@ -35,6 +35,7 @@ export type ProductDetail = {
   unit: string
   approximateWeightKg: number | null
   weightGrams: number | null
+  sellsAsWholePiece: boolean
   stockStatus: string
   stockQuantity: number
   trackStock: boolean
@@ -90,6 +91,7 @@ export const getProductDetail = cache(async (slug: string): Promise<ProductDetai
       salePriceWithVat: true, salePriceWithoutVat: true,
       saleStartsAt: true, saleEndsAt: true,
       isWeightBased: true, unit: true, approximateWeightKg: true, weightGrams: true,
+      sellsAsWholePiece: true,
       stockStatus: true, stockQuantity: true, trackStock: true,
       isOnSale: true, isNew: true, isFeatured: true,
       ingredients: true, allergenInfo: true, allergenCodes: true,
@@ -125,6 +127,7 @@ export const getProductDetail = cache(async (slug: string): Promise<ProductDetai
               priceWithVat: true, priceWithoutVat: true, vatRate: true,
               salePriceWithVat: true, saleStartsAt: true, saleEndsAt: true,
               isWeightBased: true, unit: true, weightGrams: true,
+              sellsAsWholePiece: true,
               isOnSale: true, isNew: true, isFeatured: true,
               stockStatus: true, stockQuantity: true, trackStock: true,
               images: {
@@ -156,6 +159,7 @@ export const getProductDetail = cache(async (slug: string): Promise<ProductDetai
     isWeightBased: r.isWeightBased,
     unit: r.unit,
     weightGrams: r.weightGrams,
+    sellsAsWholePiece: r.sellsAsWholePiece,
     isOnSale: r.isOnSale, isNew: r.isNew, isFeatured: r.isFeatured,
     stockStatus: r.stockStatus, stockQuantity: r.stockQuantity, trackStock: r.trackStock,
     hasVariants: r._count.variants > 0,
@@ -182,6 +186,7 @@ export const getProductDetail = cache(async (slug: string): Promise<ProductDetai
     saleEndsAt: raw.saleEndsAt?.toISOString() ?? null,
     isWeightBased: raw.isWeightBased,
     unit: raw.unit,
+    sellsAsWholePiece: raw.sellsAsWholePiece,
     approximateWeightKg: raw.approximateWeightKg ? Number(raw.approximateWeightKg) : null,
     weightGrams: raw.weightGrams,
     stockStatus: raw.stockStatus,
