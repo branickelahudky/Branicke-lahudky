@@ -10,7 +10,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCart, cartItemKey } from '../../_context/CartContext'
 import { fmtKc } from '../../_components/cart/fmtKc'
-import { calculateOrderTotals, formatCZK, priceUnitSuffix } from '@/lib/pricing'
+import { calculateOrderTotals, formatCZK, itemUnitSuffix } from '@/lib/pricing'
 import { UspIcon } from '@/lib/usp-icons'
 import {
   calculateCartWeightKg,
@@ -278,6 +278,7 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, usp
         items.map((i) => ({
           quantity: i.qty,
           isWeightBased: i.isWeightBased,
+          isVariant: !!i.variantId,
           unit: i.unit,
           weightGrams: i.weightGrams,
         })),
@@ -301,6 +302,7 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, usp
         items.map((i) => ({
           quantity: i.qty,
           isWeightBased: i.isWeightBased,
+          isVariant: !!i.variantId,
           unit: i.unit,
           weightGrams: i.weightGrams,
         })),
@@ -720,7 +722,7 @@ export function CheckoutClient({ shippingOptions, paymentOptions, termsSlug, usp
                     <p className="truncate text-sm text-shop-fg">{i.name}</p>
                     {i.variantName && <p className="text-xs text-gold">{i.variantName}</p>}
                     <p className="text-xs text-shop-muted">
-                      {i.qty} × {fmtKc(i.unitPriceWithVat)}{i.isWeightBased && ` ${priceUnitSuffix(i.unit)}`}
+                      {i.qty} × {fmtKc(i.unitPriceWithVat)} {itemUnitSuffix(i)}
                     </p>
                   </div>
                   <span className="shrink-0 text-sm font-medium text-shop-fg">{fmtKc(i.qty * i.unitPriceWithVat)}</span>

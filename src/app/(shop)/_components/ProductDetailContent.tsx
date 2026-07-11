@@ -13,6 +13,7 @@ import {
   salePercent,
   formatSaleEnd,
   priceUnitSuffix,
+  itemUnitSuffix,
   unitPricePerKg,
   formatUnitPrice,
 } from '@/lib/pricing'
@@ -259,7 +260,16 @@ export function ProductDetailContent({
               <div>
                 <p className="text-2xl font-extrabold text-shop-fg">
                   {fmtKc(variantPrice)}
-                  <span className="text-sm font-medium text-shop-muted">{' '}/ ks</span>
+                  {/* jednotkou je váha varianty (balení), nikdy „/ ks" */}
+                  <span className="text-base font-bold">
+                    {' '}
+                    {itemUnitSuffix({
+                      unit: product.unit,
+                      isWeightBased: product.isWeightBased,
+                      variantId: selectedVariant!.id,
+                      weightGrams: selectedVariant!.weightGrams,
+                    })}
+                  </span>
                 </p>
                 <p className="text-xs text-shop-muted">
                   {fmtKc(selectedVariant!.priceWithoutVat)} bez DPH

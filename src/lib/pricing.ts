@@ -163,6 +163,30 @@ export function priceUnitSuffix(unit: Unit | string): string {
   }
 }
 
+/** Váha balení jako jednotka u ceny varianty: 500 → „/ 500 g", 1000 → „/ 1 kg" */
+export function packWeightSuffix(weightGrams: number | null | undefined): string | null {
+  if (!weightGrams || weightGrams <= 0) return null
+  return weightGrams >= 1000
+    ? `/ ${(weightGrams / 1000).toLocaleString('cs-CZ', { maximumFractionDigits: 2 })} kg`
+    : `/ ${weightGrams} g`
+}
+
+/**
+ * Jednotka u ceny položky — JEDINÉ místo pro detail (zvolená varianta),
+ * košík i pokladnu. Varianta je balení → jednotkou je VÁHA VARIANTY
+ * („/ 500 g", „/ 1 kg"), nikdy „/ ks"; bez varianty jednotka produktu.
+ */
+export function itemUnitSuffix(item: {
+  unit: Unit | string
+  isWeightBased: boolean
+  variantId?: string | null
+  /** u položky s variantou váha varianty (v košíku už vyřešená) */
+  weightGrams?: number | null
+}): string {
+  if (item.variantId) return packWeightSuffix(item.weightGrams) ?? '/ ks'
+  return item.isWeightBased ? priceUnitSuffix(item.unit) : '/ ks'
+}
+
 export type UnitPricePerKg = { value: number; per: 'kg' | 'l' }
 
 /**

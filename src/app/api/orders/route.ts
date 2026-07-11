@@ -229,6 +229,7 @@ export async function POST(req: NextRequest) {
     weightItems.push({
       quantity: item.quantity,
       isWeightBased: product.isWeightBased,
+      isVariant: !!item.variantId,
       unit: product.unit,
       weightGrams: expectedWeightKg != null ? expectedWeightKg * 1000 : null,
     })

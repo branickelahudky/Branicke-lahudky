@@ -57,9 +57,9 @@ export function PriceWithCents({ value, prefix, suffix }: { value: number; prefi
   )
 }
 
-/** Kompaktní jednotka pro kartu: „/ 100 g" → „/100 g" (ať se vejde) */
-function compactUnitSuffix(unit: string): string {
-  return priceUnitSuffix(unit).replace('/ ', '/')
+/** Kompaktní zápis jednotky pro kartu: „/ 100 g" → „/100 g" (ať se vejde) */
+function compactSuffix(suffix: string): string {
+  return suffix.replace('/ ', '/')
 }
 
 export function ProductCard({ product }: { product: ProductCardData }) {
@@ -86,8 +86,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       : `${product.weightGrams} g`
     : null
 
-  // Jednotka u ceny — u váhových povinná („od 37 Kč/100 g")
-  const unitSuffix = product.isWeightBased ? compactUnitSuffix(product.unit) : null
+  // Jednotka u ceny — u váhových povinná („od 37 Kč/100 g"), u kusových „/ks";
+  // stejná sdílená priceUnitSuffix jako na detailu
+  const unitSuffix = compactSuffix(product.isWeightBased ? priceUnitSuffix(product.unit) : '/ ks')
   // Spodní řádek: vlevo gramáž, vpravo měrná cena (sdílený výpočet s detailem;
   // u aktivní slevy se počítá ze SLEVOVÉ ceny — displayPrice)
   const unitLeft = weightLabel

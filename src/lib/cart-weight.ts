@@ -16,6 +16,9 @@ export const DEFAULT_ITEM_WEIGHT_GRAMS = 500
 export type CartWeightItem = {
   quantity: number
   isWeightBased: boolean
+  /** Položka s variantou = balení s pevnou váhou → váhový režim (a) se
+   *  NEPOUŽIJE ani u váhového produktu (množství jsou balení, ne kg) */
+  isVariant?: boolean
   /** Prisma Unit jako string: 'KS' | 'KG' | 'G_100' | 'L' | 'ML_100' */
   unit: string
   /** Hmotnost JEDNÉ jednotky v gramech — u varianty její váha, jinak váha
@@ -32,8 +35,8 @@ export function calculateItemWeightKg(
   item: CartWeightItem,
   defaultItemWeightGrams: number = DEFAULT_ITEM_WEIGHT_GRAMS,
 ): number {
-  // a) váhový produkt — objednané množství JE hmotnost
-  if (item.isWeightBased) {
+  // a) váhový produkt — objednané množství JE hmotnost (mimo variant)
+  if (item.isWeightBased && !item.isVariant) {
     switch (item.unit) {
       case 'KG':
       case 'L':

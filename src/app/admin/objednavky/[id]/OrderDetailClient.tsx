@@ -873,6 +873,7 @@ export function OrderDetailClient({
                           {formatWeightKg(calculateCartWeightKg(order.items.map((i) => ({
                             quantity: i.quantity,
                             isWeightBased: i.isWeightBased,
+                            isVariant: i.variantName != null,
                             unit: i.unit,
                             weightGrams: i.expectedWeightKg != null ? i.expectedWeightKg * 1000 : null,
                           }))))}

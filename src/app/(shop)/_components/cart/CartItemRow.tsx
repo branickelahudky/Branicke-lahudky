@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useCart, cartItemKey, type CartItem } from '../../_context/CartContext'
 import { fmtKc } from './fmtKc'
-import { priceUnitSuffix } from '@/lib/pricing'
+import { itemUnitSuffix } from '@/lib/pricing'
 
 // Mini řádek položky košíku — používá flyout (CartFlyout).
 // `highlight` = krátká vizuální odezva po přidání z karty.
@@ -28,7 +28,7 @@ export function CartItemRow({ item, highlight = false }: { item: CartItem; highl
           <p className="text-xs text-gold">{item.variantName}</p>
         )}
         <p className="mt-0.5 text-xs text-shop-muted">
-          {fmtKc(item.unitPriceWithVat)} {item.isWeightBased ? priceUnitSuffix(item.unit) : '/ ks'}
+          {fmtKc(item.unitPriceWithVat)} {itemUnitSuffix(item)}
         </p>
 
         <div className="mt-2 flex items-center justify-between gap-2">
